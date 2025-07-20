@@ -1,0 +1,117 @@
+package dbop
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestMarshalEventJSON(t *testing.T) {
+	e := &Event{
+		ID:          1,
+		Start:       "01-02-2023 10:00",
+		End:         "01-02-2023 11:00",
+		ActualEnd:   "01-02-2023 11:00",
+		Group:       "Group A",
+		AllDay:      false,
+		Title:       "Event A",
+		URL:         "http://example.com/a",
+		Description: "Description A",
+	}
+
+	data, err := e.MarshalJSON()
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"id":1`)
+	assert.Contains(t, string(data), `"start":"01-02-2023 10:00"`)
+	assert.Contains(t, string(data), `"title":"Event A"`)
+}
+
+func TestUnmarshalEventJSON(t *testing.T) {
+	jsonData := `{
+		"id": 1,
+		"start": "01-02-2023 10:00",
+		"end": "01-02-2023 11:00",
+		"actualEnd": "01-02-2023 11:00",
+		"group": "Group A",
+		"allDay": false,
+		"title": "Event A",
+		"url": "http://example.com/a",
+		"description": "Description A"
+	}`
+
+	var e Event
+	err := e.UnmarshalJSON([]byte(jsonData))
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), e.ID)
+	assert.Equal(t, "01-02-2023 10:00", e.Start)
+	assert.Equal(t, "01-02-2023 11:00", e.End)
+	assert.Equal(t, "Group A", e.Group)
+	assert.Equal(t, false, e.AllDay)
+	assert.Equal(t, "Event A", e.Title)
+	assert.Equal(t, "http://example.com/a", e.URL)
+	assert.Equal(t, "Description A", e.Description)
+}
+
+func TestUnmarshalEventJSONInvalidStart(t *testing.T) {
+	jsonData := `{
+		"id": 1,
+		"start": "invalid-date",
+		"title": "Event A"
+	}`
+
+	var e Event
+	err := e.UnmarshalJSON([]byte(jsonData))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid start format")
+}
+func TestUnmarshallEvents(t *testing.T) {
+	jsonData := `[
+		{
+			"id": 1,
+			"start": "01-02-2023 10:00",
+			"end": "01-02-2023 11:00",
+			"actualEnd": "01-02-2023 11:00",
+			"group": "Group A",
+			"allDay": false,
+			"title": "Event A",
+			"url": "http://example.com/a",
+			"description": "Description A"
+		},
+		{
+			"id": 2,
+			"start": "01-02-2023 12:00",
+			"title": "Event B"
+		}
+	]`
+
+	var events []Event
+	events, err := UnmarshalEvents([]byte(jsonData))
+	assert.NoError(t, err)
+	assert.Len(t, events, 2)
+}
+
+func TestMarshallEvents(t *testing.T) {
+	events := []Event{
+		{
+			ID:          1,
+			Start:       "01-02-2023 10:00",
+			End:         "01-02-2023 11:00",
+			ActualEnd:   "01-02-2023 11:00",
+			Group:       "Group A",
+			AllDay:      false,
+			Title:       "Event A",
+			URL:         "http://example.com/a",
+			Description: "Description A",
+		},
+		{
+			ID:    2,
+			Start: "01-02-2023 12:00",
+			Title: "Event B",
+		},
+	}
+
+	data, err := MarshalEvents(events)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"id":1`)
+	assert.Contains(t, string(data), `"id":2`)
+}

@@ -203,7 +203,6 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 
 		var description string
 		if debug {
-			// BUG for now
 			description = event.Description + "\n" + event.Start + "\n" + event.End
 		} else {
 			description = event.Description

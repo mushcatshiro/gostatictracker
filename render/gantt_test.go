@@ -18,14 +18,14 @@ func TestGetRowRectWidth(t *testing.T) {
 	t1, _ := time.Parse(TimeLayout, "12-27-2024")
 	t2, _ := time.Parse(TimeLayout, "12-29-2024")
 	t.Run("", func(t *testing.T) {
-		result := getRowRectWidth(t1, t2, 26)
+		result := getRowRectWidth(t1, t2, 26, float64(24))
 		assert.Equal(t, 3*26, result)
 	})
 
 	t3, _ := time.Parse(TimeLayout, "12-27-2024")
 	t4, _ := time.Parse(TimeLayout, "12-27-2024")
 	t.Run("", func(t *testing.T) {
-		result := getRowRectWidth(t3, t4, 26)
+		result := getRowRectWidth(t3, t4, 26, float64(24))
 		assert.Equal(t, 1*26, result)
 	})
 }
@@ -51,6 +51,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		headerRectHeight:     24,
 		headerRectMargin:     2,
 		headerTextYOffset:    2,
+		divisor:              24,
 	}
 
 	// trick for converting a defined size array into a slice
@@ -178,6 +179,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		headerRectHeight:     24,
 		headerRectMargin:     2,
 		headerTextYOffset:    2,
+		divisor:              24,
 	}
 
 	r7 := eventGanttRow{
@@ -194,7 +196,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:], g1, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:8], g1, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))

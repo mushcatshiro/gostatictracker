@@ -1,0 +1,6 @@
+{{define "dayGanttHeader"}}
+<g {{if .DataDate }}data-date="{{.DataDate}}"{{ end }}>
+  <rect x="{{.RectX}}" {{ if .RectWidth }}width="{{.RectWidth}}"{{end}}/>
+  <text x="{{.TextX}}" y="{{.TextY}}">{{.TextVal}}</text>
+</g>
+{{end}}

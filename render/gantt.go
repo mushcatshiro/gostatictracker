@@ -135,39 +135,61 @@ func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpac
 	return daysSpan * headerWidthWithSpacing
 }
 
+func parseEventTimes(s, e, layout string) (time.Time, time.Time, error) {
+	iStartTime, err := time.Parse(TimeLayout, s)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse start time: %w", err)
+	}
+	iEndTime, err := time.Parse(TimeLayout, e)
+	if err != nil {
+		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse end time: %w", err)
+	}
+	return iStartTime, iEndTime, nil
+}
+
+func processRectAndLine(spacing, rowIdx, rowRectWidth int, g ganttRenderMetadata) (int, int, int, int) {
+	rectX := spacing * (g.baseHeaderRectWidth + g.headerRectMargin)
+	rectY := (rowIdx * (g.rowRectHeight + g.rowRectMargin)) + g.headersOffset
+	lineX1 := rectX + rowRectWidth
+	lineX2 := rectX + rowRectWidth
+	return rectX, rectY, lineX1, lineX2
+}
+
+func processOverFlowDays(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
+	overFlowDays := float64(maxWidth-rowEndWidth) / float64(g.baseHeaderRectWidth+g.headerRectMargin)
+	if overFlowDays < 0.2 {
+		return 0
+	}
+	return int(math.Ceil(overFlowDays))
+}
+
 func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
-	// refactor function
 	rSlice := []eventGanttRow{}
 
 	var maxWidth, rowEndWidth int
-	var overFlowDays float64
 
 	lineY1 := g.headersOffset - 2
 	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, err := time.Parse(TimeLayout, event.Start)
+		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, TimeLayout)
 		if err != nil {
-			return rSlice, -1, fmt.Errorf("not able to parse start time from events[%v]: %w", idx, err)
+			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
 		}
-		iEndTime, err := time.Parse(TimeLayout, event.End)
-		if err != nil {
-			return rSlice, -1, fmt.Errorf("not able to parse end time from events[%v]: %w", idx, err)
-		}
-
 		duration := iStartTime.Sub(g.groupStartTime)
 		daysSpacing := int(duration.Hours() / 24)
 
 		titleWidth := getTextEstimateWidth(event.Title)
 		rowRectWidth := getRowRectWidth(iStartTime, iEndTime, g.baseHeaderRectWidth+g.headerRectMargin)
 
-		var rectX, rectY, textX, lineX1, lineX2 int
+		var textX int
 		var textY float32
 
-		rectX = daysSpacing * (g.baseHeaderRectWidth + g.headerRectMargin)
-		rectY = (idx * (g.rowRectHeight + g.rowRectMargin)) + g.headersOffset
+		rectX, rectY, lineX1, lineX2 := processRectAndLine(daysSpacing, idx, rowRectWidth, g)
+
+		// keeping text here since `maxWidth` is coupled with `textX`
 		textY = float32(rectY) + g.textYOffset
 		rowEndWidth = max(rowEndWidth, rectX+rowRectWidth)
 		if rowRectWidth-g.rowRectMargin < titleWidth {
@@ -178,15 +200,13 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 			textX = (rowRectWidth / 2) + rectX
 			maxWidth = max(maxWidth, rectX+rowRectWidth+g.rectToTextMargin)
 		}
-		lineX1 = rectX + rowRectWidth
-		lineX2 = rectX + rowRectWidth
 
 		var description string
 		if debug {
 			// BUG for now
 			description = event.Description + "\n" + event.Start + "\n" + event.End
 		} else {
-			description = event.Description + "\n" + event.Start + "\n" + event.End
+			description = event.Description
 		}
 		e := eventGanttRow{
 			RectX:       rectX,
@@ -203,14 +223,9 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 		}
 		rSlice = append(rSlice, e)
 	}
-	var retOverFlowDays int
-	overFlowDays = float64(maxWidth-rowEndWidth) / float64(g.baseHeaderRectWidth+g.headerRectMargin)
-	if overFlowDays < 0.2 {
-		retOverFlowDays = 0
-	} else {
-		retOverFlowDays = int(math.Ceil(overFlowDays))
-	}
-	return rSlice, retOverFlowDays, nil
+
+	overFlowDays := processOverFlowDays(maxWidth, rowEndWidth, g)
+	return rSlice, overFlowDays, nil
 }
 
 func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {

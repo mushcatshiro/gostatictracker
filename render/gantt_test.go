@@ -147,7 +147,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	}
 
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[:7], g0, false)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[:7], g0, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 0, resultOverflowDay)
 		assert.Equal(t, 7, len(resultGanttEventRow))
@@ -194,7 +194,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:], g1, false)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:], g1, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))

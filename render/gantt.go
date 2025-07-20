@@ -307,7 +307,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeade
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []dbop.Event, padding int, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
+func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
 	e := eventGanttBase{
 		HeaderRectWidth:  g.baseHeaderRectWidth,
@@ -315,7 +315,7 @@ func getGanttEventBase(events []dbop.Event, padding int, g ganttRenderMetadata, 
 		RowRectHeight:    g.rowRectHeight,
 		Group:            g.groupName,
 	}
-	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+padding)
+	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
 
 	rSlice, overflowDays, err := getGanttEventRows(events, g, debug)
 	if err != nil {
@@ -338,7 +338,6 @@ func renderGanttHTML(events []dbop.Event, file *os.File, g ganttRenderMetadata, 
 	var err error
 
 	if g.isDayView {
-		// t, err = template.ParseFiles("dayGantt.html")
 		t, err = template.ParseGlob(filepath.Join(".", "day*.html"))
 	} else {
 		// t, err = template.ParseFiles("weekGantt.html")
@@ -348,7 +347,7 @@ func renderGanttHTML(events []dbop.Event, file *os.File, g ganttRenderMetadata, 
 	if err != nil {
 		return fmt.Errorf("failed to create template:\n\t%w", err)
 	}
-	data, err := getGanttEventBase(events, 2, g, debug)
+	data, err := getGanttEventBase(events, g, debug)
 	if err != nil {
 		return err
 	}

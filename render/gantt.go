@@ -89,7 +89,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	}
 	query := `SELECT
 		TO_CHAR(MIN(d), 'MM-DD-YYYY') AS startDate,
-		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate,
+		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate
 	FROM (
 		SELECT "start" d FROM events WHERE "group" = $1
 		UNION ALL
@@ -287,7 +287,10 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 			cumForYear++
 		} else {
 			if trackWeek != iterWeek {
-				// fmt.Printf("t: %d; i: %d\n", trackWeek, iterWeek)
+				// limitation: last monday of the year + remaining days in jan,
+				// startTime will result in the next year's first day
+				t := isoweek.StartTime(iterYear, iterWeek, time.UTC)
+				_, _, iterDay = t.Date()
 				d = eventGanttHeader{
 					RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
 					RectWidth: g.baseHeaderRectWidth,

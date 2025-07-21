@@ -37,7 +37,6 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewMockData[6].End)
 	g0 := ganttRenderMetadata{
 		isDayView:            true,
-		fullTaskDuration:     10,
 		groupStartTime:       groupStartTime,
 		groupEndTime:         groupEndTime,
 		groupName:            "test",
@@ -165,7 +164,6 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewOverflowMockData[0].End)
 	g1 := ganttRenderMetadata{
 		isDayView:            true,
-		fullTaskDuration:     2,
 		groupStartTime:       groupStartTime,
 		groupEndTime:         groupEndTime,
 		groupName:            "test",

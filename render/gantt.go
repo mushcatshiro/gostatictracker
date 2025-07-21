@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -165,12 +164,20 @@ func processRectAndLine(spacing, rowIdx, rowRectWidth int, g ganttRenderMetadata
 	return rectX, rectY, lineX1, lineX2
 }
 
-func processOverFlowDays(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
-	overFlowDays := float64(maxWidth-rowEndWidth) / float64(g.baseHeaderRectWidth+g.headerRectMargin)
-	if overFlowDays < 0.2 {
-		return 0
+func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
+	// visually still blocking last few chars due to padding 0.5rem
+	diff := maxWidth - rowEndWidth
+	var overflowUnits int
+	if diff <= 0 {
+		return overflowUnits
 	}
-	return int(math.Ceil(overFlowDays))
+
+	for diff > 0 {
+		diff = diff - (g.baseHeaderRectWidth + g.headerRectMargin)
+		overflowUnits++
+	}
+
+	return overflowUnits
 }
 
 func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
@@ -208,7 +215,7 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.rectToTextMargin*2)+titleWidth)
 		} else {
 			textX = (rowRectWidth / 2) + rectX
-			maxWidth = max(maxWidth, rectX+rowRectWidth+g.rectToTextMargin)
+			maxWidth = max(maxWidth, rectX+rowRectWidth)
 		}
 
 		var description string
@@ -233,13 +240,26 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 		rSlice = append(rSlice, e)
 	}
 
-	overFlowDays := processOverFlowDays(maxWidth, rowEndWidth, g)
-	return rSlice, overFlowDays, nil
+	overFlowUnits := processOverFlowUnits(maxWidth, rowEndWidth, g)
+	return rSlice, overFlowUnits, nil
 }
 
-func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
+func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
 	startTime := g.groupStartTime
-	endTime := g.groupEndTime.AddDate(0, 0, overflowDays)
+	endTime := g.groupEndTime
+
+	var overflowDays int
+	if g.isDayView {
+		overflowDays = overflowUnits
+	} else {
+		var mult int
+		for overflowDays < overflowUnits {
+			overflowDays = overflowDays + 7
+			mult++
+		}
+
+	}
+	endTime = endTime.AddDate(0, 0, overflowDays)
 
 	yearGanttHeader := []eventGanttHeader{}
 	monthGanttHeader := []eventGanttHeader{}
@@ -269,7 +289,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeade
 			cumForYear++
 		} else {
 			if trackWeek != iterWeek {
-				fmt.Printf("t: %d; i: %d\n", trackWeek, iterWeek)
+				// fmt.Printf("t: %d; i: %d\n", trackWeek, iterWeek)
 				d = eventGanttHeader{
 					RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
 					RectWidth: g.baseHeaderRectWidth,
@@ -348,13 +368,13 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	}
 	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
 
-	rSlice, overflowDays, err := getGanttEventRows(events, g, debug)
+	rSlice, overflowUnits, err := getGanttEventRows(events, g, debug)
 	if err != nil {
 		return eventGanttBase{}, err
 	}
 	e.Rows = rSlice
 
-	y, m, d := getGanttHeaders(g, overflowDays)
+	y, m, d := getGanttHeaders(g, overflowUnits)
 	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
 
 	e.Years = y

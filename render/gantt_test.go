@@ -9,6 +9,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func mockGetGanttRenderMetadata(groupStartTime, groupEndTime time.Time) ganttRenderMetadata {
+	return ganttRenderMetadata{
+		isDayView:            true,
+		groupStartTime:       groupStartTime,
+		groupEndTime:         groupEndTime,
+		groupName:            "test",
+		rowTextInRectPadding: 4,
+		rectToTextMargin:     2,
+		textYOffset:          6.3,
+		rowRectMargin:        2,
+		rowRectHeight:        10,
+		headersOffset:        (24 + 2) * 3,
+		baseHeaderRectWidth:  30,
+		headerRectHeight:     24,
+		headerRectMargin:     2,
+		headerTextYOffset:    2,
+		divisor:              24,
+	}
+}
+
 func TestGetTextEstimateWidth(t *testing.T) {
 	assert.Equal(t, 4*7, getTextEstimateWidth("Test"))
 	assert.Equal(t, 5*7, getTextEstimateWidth("Test "))
@@ -35,23 +55,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	var groupStartTime, groupEndTime time.Time
 	groupStartTime, _ = time.Parse(TimeLayout, mock.DayViewMockData[0].Start)
 	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewMockData[6].End)
-	g0 := ganttRenderMetadata{
-		isDayView:            true,
-		groupStartTime:       groupStartTime,
-		groupEndTime:         groupEndTime,
-		groupName:            "test",
-		rowTextInRectPadding: 4,
-		rectToTextMargin:     2,
-		textYOffset:          6.3,
-		rowRectMargin:        2,
-		rowRectHeight:        10,
-		headersOffset:        (24 + 2) * 3,
-		baseHeaderRectWidth:  30,
-		headerRectHeight:     24,
-		headerRectMargin:     2,
-		headerTextYOffset:    2,
-		divisor:              24,
-	}
+	g0 := mockGetGanttRenderMetadata(groupStartTime, groupEndTime)
 
 	// trick for converting a defined size array into a slice
 	r0 := eventGanttRow{
@@ -162,23 +166,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 
 	groupStartTime, _ = time.Parse(TimeLayout, mock.DayViewOverflowMockData[0].Start)
 	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewOverflowMockData[0].End)
-	g1 := ganttRenderMetadata{
-		isDayView:            true,
-		groupStartTime:       groupStartTime,
-		groupEndTime:         groupEndTime,
-		groupName:            "test",
-		rowTextInRectPadding: 4,
-		rectToTextMargin:     2,
-		textYOffset:          6.3,
-		rowRectMargin:        2,
-		rowRectHeight:        10,
-		headersOffset:        (24 + 2) * 3,
-		baseHeaderRectWidth:  30,
-		headerRectHeight:     24,
-		headerRectMargin:     2,
-		headerTextYOffset:    2,
-		divisor:              24,
-	}
+	g1 := mockGetGanttRenderMetadata(groupStartTime, groupEndTime)
 
 	r7 := eventGanttRow{
 		RectX:       0,

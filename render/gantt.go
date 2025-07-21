@@ -55,7 +55,6 @@ type eventGanttBase struct {
 
 type ganttRenderMetadata struct {
 	isDayView            bool
-	fullTaskDuration     int
 	groupStartTime       time.Time
 	groupEndTime         time.Time
 	groupName            string
@@ -91,7 +90,6 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	query := `SELECT
 		TO_CHAR(MIN(d), 'MM-DD-YYYY') AS startDate,
 		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate,
-		EXTRACT(DAY FROM MAX(d) - MIN(d)) + 1 AS taskFullDuration
 	FROM (
 		SELECT "start" d FROM events WHERE "group" = $1
 		UNION ALL
@@ -99,7 +97,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	)`
 	row := db.QueryRow(query, groupName)
 	var groupStartTime, groupEndTime string
-	if err := row.Scan(&groupStartTime, &groupEndTime, &g.fullTaskDuration); err != nil {
+	if err := row.Scan(&groupStartTime, &groupEndTime); err != nil {
 		return ganttRenderMetadata{}, fmt.Errorf("\nfailed to scan start/end time and full duration:\n%w", err)
 	}
 	var tGroupStartTime, tGroupEndTime time.Time

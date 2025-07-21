@@ -2,7 +2,7 @@ package mock
 
 import "github.com/mushcatshiro/gostatictracker/dbop"
 
-var MockData = [...]dbop.Event{
+var DayViewMockData = [...]dbop.Event{
 	{
 		Start:       "12-27-2024",
 		End:         "01-01-2025",
@@ -66,6 +66,9 @@ var MockData = [...]dbop.Event{
 		URL:         "http://example.com/event1",
 		Description: "This is a mock event for testing purposes.",
 	},
+}
+
+var DayViewOverflowMockData = [...]dbop.Event{
 	{
 		Start:       "01-04-2025",
 		End:         "01-05-2025",
@@ -75,6 +78,9 @@ var MockData = [...]dbop.Event{
 		URL:         "http://example.com/event1",
 		Description: "This is a mock event for testing purposes.",
 	},
+}
+
+var WeekViewMockData = [...]dbop.Event{
 	{
 		Start:       "12-22-2024",
 		End:         "01-03-2025",

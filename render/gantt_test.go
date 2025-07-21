@@ -33,8 +33,8 @@ func TestGetRowRectWidth(t *testing.T) {
 func TestGetGanttEventRowsDayView(t *testing.T) {
 	// hardcoded `ganttRenderMetadata`
 	var groupStartTime, groupEndTime time.Time
-	groupStartTime, _ = time.Parse(TimeLayout, mock.MockData[0].Start)
-	groupEndTime, _ = time.Parse(TimeLayout, mock.MockData[6].End)
+	groupStartTime, _ = time.Parse(TimeLayout, mock.DayViewMockData[0].Start)
+	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewMockData[6].End)
 	g0 := ganttRenderMetadata{
 		isDayView:            true,
 		fullTaskDuration:     10,
@@ -148,7 +148,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	}
 
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[:7], g0, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.DayViewMockData[:], g0, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 0, resultOverflowDay)
 		assert.Equal(t, 7, len(resultGanttEventRow))
@@ -161,8 +161,8 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		assert.Equal(t, r6, resultGanttEventRow[6])
 	})
 
-	groupStartTime, _ = time.Parse(TimeLayout, mock.MockData[7].Start)
-	groupEndTime, _ = time.Parse(TimeLayout, mock.MockData[7].End)
+	groupStartTime, _ = time.Parse(TimeLayout, mock.DayViewOverflowMockData[0].Start)
+	groupEndTime, _ = time.Parse(TimeLayout, mock.DayViewOverflowMockData[0].End)
 	g1 := ganttRenderMetadata{
 		isDayView:            true,
 		fullTaskDuration:     2,
@@ -196,7 +196,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:8], g1, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.DayViewOverflowMockData[:], g1, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))

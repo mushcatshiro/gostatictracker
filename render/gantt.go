@@ -115,7 +115,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	g.groupStartTime = tGroupStartTime
 	g.groupEndTime = tGroupEndTime
 
-	query = `SELECT MIN(EXTRACT(DAY FROM "end" - start)) AS minTaskDuration FROM events WHERE "group" = $1`
+	query = `SELECT MIN(("end"::date - start::date)+1) AS minTaskDuration FROM events WHERE "group" = $1`
 	var minTaskDuration sql.NullInt64
 	err = db.QueryRow(query, groupName).Scan(&minTaskDuration)
 	if err != nil {
@@ -123,7 +123,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 			return ganttRenderMetadata{}, fmt.Errorf("\nno events found for group %s:\n%w", groupName, err)
 		}
 		log.Printf("Failed to scan minimum task duration: %v; using default day view", err)
-	} else if minTaskDuration.Valid && minTaskDuration.Int64 > 7 {
+	} else if minTaskDuration.Valid && minTaskDuration.Int64 >= 7 {
 		g.isDayView = false
 		g.divisor = 7 * 24
 	}
@@ -354,6 +354,7 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	}
 	e.Rows = rSlice
 
+	// handle differently for week/day difference
 	e.SvgWidth = (g.fullTaskDuration+overflowDays)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
 
 	y, m, d := getGanttHeaders(g, overflowDays)

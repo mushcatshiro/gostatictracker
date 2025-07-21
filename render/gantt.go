@@ -354,10 +354,8 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	}
 	e.Rows = rSlice
 
-	// handle differently for week/day difference
-	e.SvgWidth = (g.fullTaskDuration+overflowDays)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
-
 	y, m, d := getGanttHeaders(g, overflowDays)
+	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
 
 	e.Years = y
 	e.Months = m

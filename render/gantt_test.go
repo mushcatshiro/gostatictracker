@@ -59,7 +59,7 @@ func TestGetRowRectWidth(t *testing.T) {
 	})
 }
 
-func TestGetGanttEventRowsDayView(t *testing.T) {
+func TestGetGanttEventRows(t *testing.T) {
 	// hardcoded `ganttRenderMetadata`
 	g0 := mockGetGanttRenderMetadata(mock.DayViewMockData[:], true)
 
@@ -287,13 +287,13 @@ func TestGetGanttHeaders(t *testing.T) {
 		TextVal:   "16",
 		DataDate:  "2024-12-22",
 	}
-	dArr := [9]string{"16", "23", "1", "6", "13", "20", "27", "3", "10"}
+	dArr := [11]string{"16", "23", "1", "6", "13", "20", "27", "3", "10", "17", "24"}
 
-	t.Run("day gantt overflow view", func(t *testing.T) {
-		yh, mh, dh := getGanttHeaders(g2, 2)
+	t.Run("week gantt view", func(t *testing.T) {
+		yh, mh, dh := getGanttHeaders(g2, 3)
 		assert.Equal(t, 2, len(yh))
 		assert.Equal(t, 3, len(mh))
-		assert.Equal(t, 9, len(dh)) // got 48?
+		assert.Equal(t, 11, len(dh))
 		assert.Equal(t, yh0, yh[0])
 		assert.Equal(t, mh0, mh[0])
 		assert.Equal(t, dh0, dh[0])
@@ -305,6 +305,8 @@ func TestGetGanttHeaders(t *testing.T) {
 		assert.Equal(t, dArr[6], dh[6].TextVal)
 		assert.Equal(t, dArr[7], dh[7].TextVal)
 		assert.Equal(t, dArr[8], dh[8].TextVal)
+		assert.Equal(t, dArr[9], dh[9].TextVal)
+		assert.Equal(t, dArr[10], dh[10].TextVal)
 	})
 
 }

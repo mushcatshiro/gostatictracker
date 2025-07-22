@@ -253,14 +253,16 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 	if g.isDayView {
 		overflowDays = overflowUnits
 	} else {
-		var mult int
-		for overflowDays < overflowUnits {
+		for overflowDays < overflowUnits*7 {
 			overflowDays = overflowDays + 7
-			mult++
 		}
 
 	}
 	endTime = endTime.AddDate(0, 0, overflowDays)
+	if !g.isDayView {
+		ey, ew := endTime.ISOWeek()
+		endTime = isoweek.StartTime(ey, ew, time.UTC)
+	}
 
 	yearGanttHeader := []eventGanttHeader{}
 	monthGanttHeader := []eventGanttHeader{}

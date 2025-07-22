@@ -193,6 +193,9 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 		if err != nil {
 			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
 		}
+		if !g.isDayView && idx == 0 {
+			g.groupStartTime = iStartTime
+		}
 		duration := iStartTime.Sub(g.groupStartTime)
 		daysSpacing := int(duration.Hours() / float64(g.divisor))
 

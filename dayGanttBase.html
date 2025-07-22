@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+    svg text{
+      alignment-baseline: middle;
+      dominant-baseline: middle;
+      text-anchor: middle;
+      font-size: 18px;
+      fill: #666;
+    }
+    svg .header rect{
+      width: {{.HeaderRectWidth}}px;
+      height: {{.HeaderRectHeight}}px;
+      fill: #FFF;
+    }
+    svg .year rect{
+      y: 0;
+    }
+    svg .month rect{
+      y: 26;
+    }
+    .gantt .rows rect {
+      cursor: pointer;
+      transition: fill 0.2s ease;
+      fill: #CCC;
+      height: {{.RowRectHeight}}px;
+      rx: 2;
+      opacity: 0.8;
+    }
+    .gantt .rows rect:hover {
+      fill: #555;
+    }
+    .tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 14px;
+      white-space: nowrap;
+      width: 250px;
+      max-height: 100px; /* fixed max height, content will scroll if longer */
+      overflow-y: auto; /* Enable vertical scrolling */
+      white-space: normal; /* Allow text to wrap within the fixed width */
+      pointer-events: none; /* Allows interaction with elements behind it */
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      transform: translate(-50%, -10px); /* Initial offset for smooth appearance */
+      z-index: 1000; /* Ensure tooltip is on top */
+    }
+    .tooltip.active {
+      opacity: 1;
+      transform: translate(-50%, 0); /* Move to final position */
+    }
+    .date rect {
+      y: 52;
+    }
+    .rows line {
+      stroke: #AAA;
+    }
+    .rows text {
+      font-size: 12px;
+    }
+  </style>
+  <title>{{.Group}} Gantt Chart</title>
+</head>
+<body>
+  <h2>{{.Group}} Gantt Chart</h2>
+    <div style="overflow: auto; margin: 1rem;padding: 0.2rem;">
+    <svg class="gantt" height="{{.SvgHeight}}" width="{{.SvgWidth}}" 
+      style="padding: 0.5rem;outline-width: 0.5px; outline-style: solid; outline-color: rgb(200, 200, 200); border-radius: 0.5rem;" id="gantt-svg">
+      <g class="header year">
+        {{range .Years}}{{template "dayGanttHeader" .}}{{end}}
+      </g>
+      <g class="header month">
+        {{range .Months}}{{template "dayGanttHeader" .}}{{end}}
+      </g>
+      <g class="header date" id="date-layer">
+        {{range .Days}}{{template "dayGanttHeader" .}}{{end}}
+      </g>
+      <g class="rows">
+        {{range .Rows}}{{template "row" .}}{{end}}
+      </g>
+    </svg>
+<div class="tooltip" id="ganttTooltip"></div>
+</body>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    // const todayStr = "2024-12-28"
+    const dateGroups = document.getElementById("date-layer").querySelectorAll("g");
+
+    let matched = null;
+
+    dateGroups.forEach(g => {
+      const dateAttr = g.getAttribute("data-date");
+      if (dateAttr === todayStr) { matched = g;}
+    });
+
+    if (matched) {
+      const svg = document.getElementById("gantt-svg");
+      const highlight = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      const rectStyle = getComputedStyle(matched.querySelector("rect"));
+      highlight.setAttribute("x", parseInt(rectStyle.x)+2);
+      highlight.setAttribute("y", rectStyle.y);
+      highlight.setAttribute("width", parseInt(rectStyle.width)-4);
+      highlight.setAttribute("height", 110);  // how to calculate
+      highlight.setAttribute("class", "highlight-today");
+      highlight.setAttribute("fill", "red")
+      highlight.setAttribute("opacity", 0.1)
+      highlight.setAttribute("rx", 4);
+      svg.appendChild(highlight);
+    }
+  });
+</script>
+<script>
+  const ganttRows = document.querySelectorAll('.gantt .rows rect');
+  const tooltip = document.getElementById('ganttTooltip');
+
+  ganttRows.forEach(row => {
+    row.addEventListener('mouseenter', (event) => {
+      const details = row.dataset.details; // Get details from data-details attribute
+      if (details) {
+        tooltip.textContent = details;
+        tooltip.classList.add('active');
+
+        // Position the tooltip near the mouse cursor
+        // We need to get the SVG element's position relative to the viewport
+        const svgRect = row.ownerSVGElement.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+
+        // Calculate position relative to the viewport
+        // Center the tooltip horizontally with the hovered element
+        const x = rowRect.left + rowRect.width / 2;
+        // Position it above the hovered element, with a small offset
+        const y = rowRect.top - 10; // 10px above the row
+
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+      }
+    });
+
+    row.addEventListener('mouseleave', () => {
+      tooltip.classList.remove('active');
+    });
+  });
+</script>
+</html>

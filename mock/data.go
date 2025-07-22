@@ -2,7 +2,7 @@ package mock
 
 import "github.com/mushcatshiro/gostatictracker/dbop"
 
-var MockData = [...]dbop.Event{
+var DayViewMockData = [...]dbop.Event{
 	{
 		Start:       "12-27-2024",
 		End:         "01-01-2025",
@@ -66,12 +66,72 @@ var MockData = [...]dbop.Event{
 		URL:         "http://example.com/event1",
 		Description: "This is a mock event for testing purposes.",
 	},
+}
+
+var DayViewOverflowMockData = [...]dbop.Event{
 	{
 		Start:       "01-04-2025",
 		End:         "01-05-2025",
 		Group:       "day view overflow example",
 		AllDay:      false,
 		Title:       "Mock task 1",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+}
+
+var WeekViewMockData = [...]dbop.Event{
+	{
+		Start:       "12-22-2024",
+		End:         "01-03-2025",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 1",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+	{
+		Start:       "12-23-2024",
+		End:         "01-02-2025",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 2",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+	{
+		Start:       "12-23-2024",
+		End:         "01-06-2025",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 3",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+	{
+		Start:       "12-23-2024",
+		End:         "12-30-2024",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 4",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+	{
+		Start:       "01-13-2025",
+		End:         "01-24-2025",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 5",
+		URL:         "http://example.com/event1",
+		Description: "This is a mock event for testing purposes.",
+	},
+	{
+		Start:       "01-30-2025",
+		End:         "02-05-2025",
+		Group:       "week view example",
+		AllDay:      false,
+		Title:       "Mock task 6",
 		URL:         "http://example.com/event1",
 		Description: "This is a mock event for testing purposes.",
 	},

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/snabb/isoweek"
 )
 
 const TimeLayout = "01-02-2006" // MM-DD-YYYY
@@ -55,7 +55,6 @@ type eventGanttBase struct {
 
 type ganttRenderMetadata struct {
 	isDayView            bool
-	fullTaskDuration     int
 	groupStartTime       time.Time
 	groupEndTime         time.Time
 	groupName            string
@@ -69,6 +68,7 @@ type ganttRenderMetadata struct {
 	headerRectHeight     int
 	headerRectMargin     int
 	headerTextYOffset    int // somehow it needs +2 after dividing height by 2
+	divisor              int
 }
 
 func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, error) {
@@ -85,11 +85,11 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 		headerRectHeight:     24,
 		headerRectMargin:     2,
 		headerTextYOffset:    2,
+		divisor:              24,
 	}
 	query := `SELECT
 		TO_CHAR(MIN(d), 'MM-DD-YYYY') AS startDate,
-		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate,
-		EXTRACT(DAY FROM MAX(d) - MIN(d)) + 1 AS taskFullDuration
+		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate
 	FROM (
 		SELECT "start" d FROM events WHERE "group" = $1
 		UNION ALL
@@ -97,7 +97,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	)`
 	row := db.QueryRow(query, groupName)
 	var groupStartTime, groupEndTime string
-	if err := row.Scan(&groupStartTime, &groupEndTime, &g.fullTaskDuration); err != nil {
+	if err := row.Scan(&groupStartTime, &groupEndTime); err != nil {
 		return ganttRenderMetadata{}, fmt.Errorf("\nfailed to scan start/end time and full duration:\n%w", err)
 	}
 	var tGroupStartTime, tGroupEndTime time.Time
@@ -112,7 +112,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 	g.groupStartTime = tGroupStartTime
 	g.groupEndTime = tGroupEndTime
 
-	query = `SELECT MIN(EXTRACT(DAY FROM "end" - start)) AS minTaskDuration FROM events WHERE "group" = $1`
+	query = `SELECT MIN(("end"::date - start::date)+1) AS minTaskDuration FROM events WHERE "group" = $1`
 	var minTaskDuration sql.NullInt64
 	err = db.QueryRow(query, groupName).Scan(&minTaskDuration)
 	if err != nil {
@@ -120,8 +120,9 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 			return ganttRenderMetadata{}, fmt.Errorf("\nno events found for group %s:\n%w", groupName, err)
 		}
 		log.Printf("Failed to scan minimum task duration: %v; using default day view", err)
-	} else if minTaskDuration.Valid && minTaskDuration.Int64 > 7 {
+	} else if minTaskDuration.Valid && minTaskDuration.Int64 >= 7 {
 		g.isDayView = false
+		g.divisor = 7 * 24
 	}
 	return g, nil
 }
@@ -130,12 +131,12 @@ func getTextEstimateWidth(text string) int {
 	return len([]rune(text)) * 7
 }
 
-func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpacing int) int {
-	daysSpan := int(endTime.Sub(startTime).Hours()/24) + 1 // include starting day
+func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpacing int, divisor float64) int {
+	daysSpan := int(endTime.Sub(startTime).Hours()/divisor) + 1 // include starting day
 	return daysSpan * headerWidthWithSpacing
 }
 
-func parseEventTimes(s, e, layout string) (time.Time, time.Time, error) {
+func parseEventTimes(s, e, layout string, isDayView bool) (time.Time, time.Time, error) {
 	iStartTime, err := time.Parse(TimeLayout, s)
 	if err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse start time: %w", err)
@@ -143,6 +144,12 @@ func parseEventTimes(s, e, layout string) (time.Time, time.Time, error) {
 	iEndTime, err := time.Parse(TimeLayout, e)
 	if err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse end time: %w", err)
+	}
+	if !isDayView {
+		sy, sw := iStartTime.ISOWeek()
+		iStartTime = isoweek.StartTime(sy, sw, time.UTC)
+		ey, ew := iEndTime.ISOWeek()
+		iEndTime = isoweek.StartTime(ey, ew, time.UTC) // is `time.UTC` the correct time location?
 	}
 	return iStartTime, iEndTime, nil
 }
@@ -155,12 +162,20 @@ func processRectAndLine(spacing, rowIdx, rowRectWidth int, g ganttRenderMetadata
 	return rectX, rectY, lineX1, lineX2
 }
 
-func processOverFlowDays(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
-	overFlowDays := float64(maxWidth-rowEndWidth) / float64(g.baseHeaderRectWidth+g.headerRectMargin)
-	if overFlowDays < 0.2 {
-		return 0
+func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
+	// visually still blocking last few chars due to padding 0.5rem
+	diff := maxWidth - rowEndWidth
+	var overflowUnits int
+	if diff <= 0 {
+		return overflowUnits
 	}
-	return int(math.Ceil(overFlowDays))
+
+	for diff > 0 {
+		diff = diff - (g.baseHeaderRectWidth + g.headerRectMargin)
+		overflowUnits++
+	}
+
+	return overflowUnits
 }
 
 func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
@@ -174,15 +189,18 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, TimeLayout)
+		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, TimeLayout, g.isDayView)
 		if err != nil {
 			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
 		}
+		if !g.isDayView && idx == 0 {
+			g.groupStartTime = iStartTime
+		}
 		duration := iStartTime.Sub(g.groupStartTime)
-		daysSpacing := int(duration.Hours() / 24)
+		daysSpacing := int(duration.Hours() / float64(g.divisor))
 
 		titleWidth := getTextEstimateWidth(event.Title)
-		rowRectWidth := getRowRectWidth(iStartTime, iEndTime, g.baseHeaderRectWidth+g.headerRectMargin)
+		rowRectWidth := getRowRectWidth(iStartTime, iEndTime, g.baseHeaderRectWidth+g.headerRectMargin, float64(g.divisor))
 
 		var textX int
 		var textY float32
@@ -198,7 +216,7 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.rectToTextMargin*2)+titleWidth)
 		} else {
 			textX = (rowRectWidth / 2) + rectX
-			maxWidth = max(maxWidth, rectX+rowRectWidth+g.rectToTextMargin)
+			maxWidth = max(maxWidth, rectX+rowRectWidth)
 		}
 
 		var description string
@@ -223,40 +241,79 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 		rSlice = append(rSlice, e)
 	}
 
-	overFlowDays := processOverFlowDays(maxWidth, rowEndWidth, g)
-	return rSlice, overFlowDays, nil
+	overFlowUnits := processOverFlowUnits(maxWidth, rowEndWidth, g)
+	return rSlice, overFlowUnits, nil
 }
 
-func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
+func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
 	startTime := g.groupStartTime
-	endTime := g.groupEndTime.AddDate(0, 0, overflowDays)
+	endTime := g.groupEndTime
+
+	var overflowDays int
+	if g.isDayView {
+		overflowDays = overflowUnits
+	} else {
+		for overflowDays < overflowUnits*7 {
+			overflowDays = overflowDays + 7
+		}
+
+	}
+	endTime = endTime.AddDate(0, 0, overflowDays)
+	if !g.isDayView {
+		ey, ew := endTime.ISOWeek()
+		endTime = isoweek.StartTime(ey, ew, time.UTC)
+	}
 
 	yearGanttHeader := []eventGanttHeader{}
 	monthGanttHeader := []eventGanttHeader{}
 	dayGanttHeader := []eventGanttHeader{}
 
-	var iterYear, iterDay, dIdx, monthRectEndX, yearRectEndX int
-	var cumDaysForMonth, cumDaysForYear int
+	var iterYear, iterDay, iterWeek, trackWeek, dIdx, monthRectEndX, yearRectEndX int
+	var cumForMonth, cumForYear int
 	var iterMonth time.Month
 
 	for !startTime.After(endTime) {
 		iterYear, iterMonth, iterDay = startTime.Date()
+		_, iterWeek = startTime.ISOWeek()
 
-		d := eventGanttHeader{
-			RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
-			RectWidth: g.baseHeaderRectWidth,
-			TextX:     dIdx*(g.baseHeaderRectWidth+g.headerRectMargin) + int(g.baseHeaderRectWidth/2),
-			TextY:     2*(g.headerRectHeight+g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
-			TextVal:   strconv.Itoa(iterDay),
-			DataDate:  startTime.Format("2006-01-02"), // YYYY-MM-DD
+		var d eventGanttHeader
+		if g.isDayView {
+			d = eventGanttHeader{
+				RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
+				RectWidth: g.baseHeaderRectWidth,
+				TextX:     dIdx*(g.baseHeaderRectWidth+g.headerRectMargin) + int(g.baseHeaderRectWidth/2),
+				TextY:     2*(g.headerRectHeight+g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+				TextVal:   strconv.Itoa(iterDay),
+				DataDate:  startTime.Format("2006-01-02"), // YYYY-MM-DD, BUG?
+			}
+			dayGanttHeader = append(dayGanttHeader, d)
+			dIdx++
+			cumForMonth++
+			cumForYear++
+		} else {
+			if trackWeek != iterWeek {
+				// limitation: last monday of the year + remaining days in jan,
+				// startTime will result in the next year's first day
+				t := isoweek.StartTime(iterYear, iterWeek, time.UTC)
+				_, _, iterDay = t.Date()
+				d = eventGanttHeader{
+					RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
+					RectWidth: g.baseHeaderRectWidth,
+					TextX:     dIdx*(g.baseHeaderRectWidth+g.headerRectMargin) + int(g.baseHeaderRectWidth/2),
+					TextY:     2*(g.headerRectHeight+g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+					TextVal:   strconv.Itoa(iterDay),
+					DataDate:  startTime.Format("2006-01-02"), // YYYY-MM-DD, BUG?
+				}
+				trackWeek = iterWeek
+				dayGanttHeader = append(dayGanttHeader, d)
+				dIdx++
+				cumForMonth++
+				cumForYear++
+			}
 		}
-		dayGanttHeader = append(dayGanttHeader, d)
-		dIdx++
-		cumDaysForMonth++
-		cumDaysForYear++
 
 		if startTime.AddDate(0, 0, 1).Month() != startTime.Month() {
-			currentMonthWidth := (cumDaysForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+			currentMonthWidth := (cumForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
 			m := eventGanttHeader{
 				RectX:     monthRectEndX,
 				RectWidth: currentMonthWidth,
@@ -266,10 +323,10 @@ func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeade
 			}
 			monthGanttHeader = append(monthGanttHeader, m)
 			monthRectEndX += currentMonthWidth + g.headerRectMargin
-			cumDaysForMonth = 0
+			cumForMonth = 0
 		}
 		if startTime.AddDate(0, 0, 1).Year() != startTime.Year() {
-			currentYearWidth := (cumDaysForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+			currentYearWidth := (cumForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
 			y := eventGanttHeader{
 				RectX:     yearRectEndX,
 				RectWidth: currentYearWidth,
@@ -278,13 +335,13 @@ func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeade
 				TextVal:   strconv.Itoa(iterYear)}
 			yearGanttHeader = append(yearGanttHeader, y)
 			yearRectEndX += currentYearWidth + g.headerRectMargin
-			cumDaysForYear = 0
+			cumForYear = 0
 		}
 
 		startTime = startTime.AddDate(0, 0, 1)
 	}
-	if cumDaysForMonth > 0 {
-		currentMonthWidth := (cumDaysForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+	if cumForMonth > 0 {
+		currentMonthWidth := (cumForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
 		m := eventGanttHeader{
 			RectX:     monthRectEndX,
 			RectWidth: currentMonthWidth,
@@ -294,8 +351,8 @@ func getGanttHeaders(g ganttRenderMetadata, overflowDays int) ([]eventGanttHeade
 		}
 		monthGanttHeader = append(monthGanttHeader, m)
 	}
-	if cumDaysForYear > 0 {
-		currentYearWidth := (cumDaysForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+	if cumForYear > 0 {
+		currentYearWidth := (cumForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
 		y := eventGanttHeader{
 			RectX:     yearRectEndX,
 			RectWidth: currentYearWidth,
@@ -317,15 +374,14 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	}
 	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
 
-	rSlice, overflowDays, err := getGanttEventRows(events, g, debug)
+	rSlice, overflowUnits, err := getGanttEventRows(events, g, debug)
 	if err != nil {
 		return eventGanttBase{}, err
 	}
 	e.Rows = rSlice
 
-	e.SvgWidth = (g.fullTaskDuration+overflowDays)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
-
-	y, m, d := getGanttHeaders(g, overflowDays)
+	y, m, d := getGanttHeaders(g, overflowUnits)
+	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
 
 	e.Years = y
 	e.Months = m
@@ -337,12 +393,7 @@ func renderGanttHTML(events []dbop.Event, file *os.File, g ganttRenderMetadata, 
 	var t *template.Template
 	var err error
 
-	if g.isDayView {
-		t, err = template.ParseGlob(filepath.Join(".", "day*.html"))
-	} else {
-		// t, err = template.ParseFiles("weekGantt.html")
-		return fmt.Errorf("not supporting week view gantt")
-	}
+	t, err = template.ParseGlob(filepath.Join(".", "day*.html"))
 
 	if err != nil {
 		return fmt.Errorf("failed to create template:\n\t%w", err)

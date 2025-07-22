@@ -4,40 +4,23 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/mock"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetTextEstimateWidth(t *testing.T) {
-	assert.Equal(t, 4*7, getTextEstimateWidth("Test"))
-	assert.Equal(t, 5*7, getTextEstimateWidth("Test "))
-}
-
-func TestGetRowRectWidth(t *testing.T) {
-	t1, _ := time.Parse(TimeLayout, "12-27-2024")
-	t2, _ := time.Parse(TimeLayout, "12-29-2024")
-	t.Run("", func(t *testing.T) {
-		result := getRowRectWidth(t1, t2, 26)
-		assert.Equal(t, 3*26, result)
-	})
-
-	t3, _ := time.Parse(TimeLayout, "12-27-2024")
-	t4, _ := time.Parse(TimeLayout, "12-27-2024")
-	t.Run("", func(t *testing.T) {
-		result := getRowRectWidth(t3, t4, 26)
-		assert.Equal(t, 1*26, result)
-	})
-}
-
-func TestGetGanttEventRowsDayView(t *testing.T) {
-	// hardcoded `ganttRenderMetadata`
-	var groupStartTime, groupEndTime time.Time
-	groupStartTime, _ = time.Parse(TimeLayout, mock.MockData[0].Start)
-	groupEndTime, _ = time.Parse(TimeLayout, mock.MockData[6].End)
-	g0 := ganttRenderMetadata{
-		isDayView:            true,
-		fullTaskDuration:     10,
+func mockGetGanttRenderMetadata(mockData []dbop.Event, isDayView bool) ganttRenderMetadata {
+	groupStartTime, _ := time.Parse(TimeLayout, mockData[0].Start)
+	groupEndTime, _ := time.Parse(TimeLayout, mockData[len(mockData)-1].End)
+	var divisor int
+	if isDayView {
+		divisor = 24
+	} else {
+		divisor = 7 * 24
+	}
+	return ganttRenderMetadata{
+		isDayView:            isDayView,
 		groupStartTime:       groupStartTime,
 		groupEndTime:         groupEndTime,
 		groupName:            "test",
@@ -51,7 +34,34 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		headerRectHeight:     24,
 		headerRectMargin:     2,
 		headerTextYOffset:    2,
+		divisor:              divisor,
 	}
+}
+
+func TestGetTextEstimateWidth(t *testing.T) {
+	assert.Equal(t, 4*7, getTextEstimateWidth("Test"))
+	assert.Equal(t, 5*7, getTextEstimateWidth("Test "))
+}
+
+func TestGetRowRectWidth(t *testing.T) {
+	t1, _ := time.Parse(TimeLayout, "12-27-2024")
+	t2, _ := time.Parse(TimeLayout, "12-29-2024")
+	t.Run("", func(t *testing.T) {
+		result := getRowRectWidth(t1, t2, 26, float64(24))
+		assert.Equal(t, 3*26, result)
+	})
+
+	t3, _ := time.Parse(TimeLayout, "12-27-2024")
+	t4, _ := time.Parse(TimeLayout, "12-27-2024")
+	t.Run("", func(t *testing.T) {
+		result := getRowRectWidth(t3, t4, 26, float64(24))
+		assert.Equal(t, 1*26, result)
+	})
+}
+
+func TestGetGanttEventRows(t *testing.T) {
+	// hardcoded `ganttRenderMetadata`
+	g0 := mockGetGanttRenderMetadata(mock.DayViewMockData[:], true)
 
 	// trick for converting a defined size array into a slice
 	r0 := eventGanttRow{
@@ -147,7 +157,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 	}
 
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[:7], g0, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.DayViewMockData[:], g0, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 0, resultOverflowDay)
 		assert.Equal(t, 7, len(resultGanttEventRow))
@@ -160,25 +170,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		assert.Equal(t, r6, resultGanttEventRow[6])
 	})
 
-	groupStartTime, _ = time.Parse(TimeLayout, mock.MockData[7].Start)
-	groupEndTime, _ = time.Parse(TimeLayout, mock.MockData[7].End)
-	g1 := ganttRenderMetadata{
-		isDayView:            true,
-		fullTaskDuration:     2,
-		groupStartTime:       groupStartTime,
-		groupEndTime:         groupEndTime,
-		groupName:            "test",
-		rowTextInRectPadding: 4,
-		rectToTextMargin:     2,
-		textYOffset:          6.3,
-		rowRectMargin:        2,
-		rowRectHeight:        10,
-		headersOffset:        (24 + 2) * 3,
-		baseHeaderRectWidth:  30,
-		headerRectHeight:     24,
-		headerRectMargin:     2,
-		headerTextYOffset:    2,
-	}
+	g1 := mockGetGanttRenderMetadata(mock.DayViewOverflowMockData[:], true)
 
 	r7 := eventGanttRow{
 		RectX:       0,
@@ -194,7 +186,7 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.MockData[7:], g1, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttEventRows(mock.DayViewOverflowMockData[:], g1, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))
@@ -203,6 +195,118 @@ func TestGetGanttEventRowsDayView(t *testing.T) {
 
 }
 
-func TestGetGanttHeadersDayView(t *testing.T) {
-	// getGanttHeaders()
+func TestGetGanttHeaders(t *testing.T) {
+	g0 := mockGetGanttRenderMetadata(mock.DayViewMockData[:], true)
+	yh0 := eventGanttHeader{
+		RectX:     0,
+		RectWidth: 158,
+		TextX:     79,
+		TextY:     14,
+		TextVal:   "2024",
+	}
+	mh0 := eventGanttHeader{
+		RectX:     0,
+		RectWidth: 158,
+		TextX:     79,
+		TextY:     40,
+		TextVal:   "12",
+	}
+	dh0 := eventGanttHeader{
+		RectX:     0,
+		RectWidth: 30,
+		TextX:     15,
+		TextY:     66,
+		TextVal:   "27",
+		DataDate:  "2024-12-27",
+	}
+
+	t.Run("day gantt view", func(t *testing.T) {
+		yh, mh, dh := getGanttHeaders(g0, 0)
+		assert.Equal(t, 2, len(yh))
+		assert.Equal(t, 2, len(mh))
+		assert.Equal(t, 10, len(dh))
+		assert.Equal(t, yh0, yh[0])
+		assert.Equal(t, mh0, mh[0])
+		assert.Equal(t, dh0, dh[0])
+	})
+
+	g1 := mockGetGanttRenderMetadata(mock.DayViewOverflowMockData[:], true)
+	yh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 158,
+		TextX:     79,
+		TextY:     14,
+		TextVal:   "2025",
+	}
+	mh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 158,
+		TextX:     79,
+		TextY:     40,
+		TextVal:   "1",
+	}
+	dh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 30,
+		TextX:     15,
+		TextY:     66,
+		TextVal:   "4",
+		DataDate:  "2025-01-04",
+	}
+
+	t.Run("day gantt overflow view", func(t *testing.T) {
+		yh, mh, dh := getGanttHeaders(g1, 3)
+		assert.Equal(t, 1, len(yh))
+		assert.Equal(t, 1, len(mh))
+		assert.Equal(t, 5, len(dh))
+		assert.Equal(t, yh0, yh[0])
+		assert.Equal(t, mh0, mh[0])
+		assert.Equal(t, dh0, dh[0])
+	})
+
+	g2 := mockGetGanttRenderMetadata(mock.WeekViewMockData[:], false)
+	yh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 94,
+		TextX:     47,
+		TextY:     14,
+		TextVal:   "2024",
+	}
+	mh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 94,
+		TextX:     47,
+		TextY:     40,
+		TextVal:   "12",
+	}
+	dh0 = eventGanttHeader{
+		RectX:     0,
+		RectWidth: 30,
+		TextX:     15,
+		TextY:     66,
+		TextVal:   "16",
+		DataDate:  "2024-12-22",
+	}
+	dArr := [11]string{"16", "23", "1", "6", "13", "20", "27", "3", "10", "17", "24"}
+
+	t.Run("week gantt view", func(t *testing.T) {
+		yh, mh, dh := getGanttHeaders(g2, 3)
+		assert.Equal(t, 2, len(yh))
+		assert.Equal(t, 3, len(mh))
+		assert.Equal(t, 11, len(dh))
+		assert.Equal(t, yh0, yh[0])
+		assert.Equal(t, mh0, mh[0])
+		assert.Equal(t, dh0, dh[0])
+		assert.Equal(t, dArr[1], dh[1].TextVal)
+		assert.Equal(t, dArr[2], dh[2].TextVal)
+		assert.Equal(t, dArr[3], dh[3].TextVal)
+		assert.Equal(t, dArr[4], dh[4].TextVal)
+		assert.Equal(t, dArr[5], dh[5].TextVal)
+		assert.Equal(t, dArr[6], dh[6].TextVal)
+		assert.Equal(t, dArr[7], dh[7].TextVal)
+		assert.Equal(t, dArr[8], dh[8].TextVal)
+		assert.Equal(t, dArr[9], dh[9].TextVal)
+		assert.Equal(t, dArr[10], dh[10].TextVal)
+	})
+
 }

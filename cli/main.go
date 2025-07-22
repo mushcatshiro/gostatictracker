@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"slices"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/mock"
@@ -44,14 +45,16 @@ func main() {
 	}
 	defer conn.Close()
 
+	mockData := slices.Concat(mock.DayViewMockData[:], mock.DayViewOverflowMockData[:], mock.WeekViewMockData[:])
+
 	if *insertMock {
-		for _, event := range mock.MockData {
+		for _, event := range mockData {
 			_, err := dbop.InsertEvent(conn, event)
 			if err != nil {
 				log.Fatalf("Failed to insert mock event: %v", err)
 			}
 		}
-		log.Printf("inserted %d entries to table `events`\n", len(mock.MockData))
+		log.Printf("inserted %d entries to table `events`\n", len(mockData))
 	}
 
 	if *renderGantt {

@@ -49,13 +49,13 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Validate Start
-	if _, err := time.Parse(TimeLayout, aux.Start); err != nil {
-		return fmt.Errorf("invalid start format: %q (expected MM-DD-YYYY HH:MM): %w", aux.Start, err)
+	if aux.Start != "" {
+		if _, err := time.Parse(TimeLayout, aux.Start); err != nil {
+			return fmt.Errorf("invalid start format: %q (expected MM-DD-YYYY HH:MM): %w", aux.Start, err)
+		}
+		e.Start = aux.Start
 	}
-	e.Start = aux.Start
 
-	// Validate End if present
 	if aux.End != "" {
 		if _, err := time.Parse(TimeLayout, aux.End); err != nil {
 			return fmt.Errorf("invalid end format: %q (expected MM-DD-YYYY HH:MM): %w", aux.End, err)
@@ -64,13 +64,12 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	}
 
 	if aux.ActualStart != "" {
-		// Validate ActualStart if present
 		if _, err := time.Parse(TimeLayout, aux.ActualStart); err != nil {
 			return fmt.Errorf("invalid actualStart format: %q (expected MM-DD-YYYY HH:MM): %w", aux.ActualStart, err)
 		}
+		e.ActualStart = aux.ActualStart
 	}
 
-	// Validate ActualEnd if present
 	if aux.ActualEnd != "" {
 		if _, err := time.Parse(TimeLayout, aux.ActualEnd); err != nil {
 			return fmt.Errorf("invalid actualEnd format: %q (expected MM-DD-YYYY HH:MM): %w", aux.ActualEnd, err)

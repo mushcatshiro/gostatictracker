@@ -28,6 +28,10 @@ func (e *groups) MarshalJSON() ([]byte, error) {
 	return json.Marshal((*Alias)(e))
 }
 
+func handlerHealthCheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 func handleAddEvent(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost || r.Method == http.MethodPut {
 
@@ -37,7 +41,7 @@ func handleAddEvent(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bad request: ", http.StatusBadRequest)
 			return
 		}
-		if e.Start == "" || e.End == "" || e.Group == "" {
+		if e.Start == "" || e.Group == "" {
 			http.Error(w, "bad request: missing fields", http.StatusBadRequest)
 			return
 		}
@@ -120,6 +124,7 @@ func main() {
 
 	http.HandleFunc("/events", handleAddEvent)
 	http.HandleFunc("/UI", handlerUI)
+	http.HandleFunc("/healthcheck", handlerHealthCheck)
 	fmt.Printf("Server running on http://%s:%s\n", *serverHost, *serverPort)
 	addr := *serverHost + ":" + *serverPort
 	log.Fatal(http.ListenAndServe(addr, nil))

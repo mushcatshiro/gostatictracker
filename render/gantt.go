@@ -136,7 +136,7 @@ func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpac
 	return daysSpan * headerWidthWithSpacing
 }
 
-func parseEventTimes(s, e, layout string, isDayView bool) (time.Time, time.Time, error) {
+func parseEventTimes(s, e string, isDayView bool) (time.Time, time.Time, error) {
 	iStartTime, err := time.Parse(TimeLayout, s)
 	if err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse start time: %w", err)
@@ -178,7 +178,7 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int 
 	return overflowUnits
 }
 
-func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
+func getGanttRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
 	rSlice := []eventGanttRow{}
@@ -189,7 +189,7 @@ func getGanttEventRows(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, TimeLayout, g.isDayView)
+		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, g.isDayView)
 		if err != nil {
 			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
 		}
@@ -374,7 +374,7 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	}
 	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
 
-	rSlice, overflowUnits, err := getGanttEventRows(events, g, debug)
+	rSlice, overflowUnits, err := getGanttRows(events, g, debug)
 	if err != nil {
 		return eventGanttBase{}, err
 	}

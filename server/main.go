@@ -120,6 +120,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
+	defer conn.Close()
 	dbop.InitDB(conn)
 
 	http.HandleFunc("/events", handleAddEvent)

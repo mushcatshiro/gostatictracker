@@ -10,14 +10,20 @@ func InitDB(db *sql.DB) error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS events (
 		id SERIAL PRIMARY KEY,
-		start TIMESTAMP NOT NULL,
+		start TIMESTAMP,
 		"end" TIMESTAMP,
+		actualStart TIMESTAMP,
 		actualEnd TIMESTAMP,
+		insertTime TIMESTAMP,
 		"group" TEXT DEFAULT 'default' NOT NULL,
 		allDay BOOLEAN DEFAULT FALSE,
 		title TEXT NOT NULL,
 		url TEXT,
-		description TEXT
+		description TEXT,
+		pid INT,
+		priority INT,
+		metadata TEXT,
+		status TEXT
 	);`
 	_, err := db.Exec(createTableQuery)
 	if err != nil {

@@ -45,6 +45,8 @@ func main() {
 	}
 	defer conn.Close()
 
+	dbop.InitDB(conn)
+
 	mockData := slices.Concat(mock.DayViewMockData[:], mock.DayViewOverflowMockData[:], mock.WeekViewMockData[:])
 
 	if *insertMock {

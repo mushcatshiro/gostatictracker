@@ -14,7 +14,7 @@ func InitDB(db *sql.DB) error {
 		"end" TIMESTAMP,
 		actualStart TIMESTAMP,
 		actualEnd TIMESTAMP,
-		insertTime TIMESTAMP,
+		insertTime TIMESTAMP NOT NULL,
 		"group" TEXT DEFAULT 'default' NOT NULL,
 		allDay BOOLEAN DEFAULT FALSE,
 		title TEXT NOT NULL,
@@ -34,16 +34,15 @@ func InitDB(db *sql.DB) error {
 
 func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	insertQuery := `
-	INSERT INTO events (start, "end", actualEnd, "group", allDay, title, url, description)
+	INSERT INTO events (start, "end", "group", allDay, title, url, description)
 	VALUES (
 	  TO_TIMESTAMP($1, 'MM-DD-YYYY HH24:MI'),
 		TO_TIMESTAMP($2, 'MM-DD-YYYY HH24:MI'),
-		TO_TIMESTAMP($3, 'MM-DD-YYYY HH24:MI'),
+		$3,
 		$4,
 		$5,
 		$6,
-		$7,
-		$8
+		$7
 	)
 	RETURNING id;`
 
@@ -51,7 +50,6 @@ func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	err := db.QueryRow(insertQuery,
 		event.Start,
 		event.End,
-		event.ActualEnd,
 		event.Group,
 		event.AllDay,
 		event.Title,
@@ -109,7 +107,6 @@ func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]Event, 
 	  "id",
 		TO_CHAR(start, '%s'),
 		TO_CHAR("end", '%s'),
-		actualEnd,
 		"group",
 		allDay,
 		title,
@@ -125,7 +122,7 @@ func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]Event, 
 	defer rows.Close()
 	for rows.Next() {
 		var e Event
-		if err := rows.Scan(&e.ID, &e.Start, &e.End, &e.ActualEnd, &e.Group, &e.AllDay, &e.Title, &e.URL, &e.Description); err != nil {
+		if err := rows.Scan(&e.ID, &e.Start, &e.End, &e.Group, &e.AllDay, &e.Title, &e.URL, &e.Description); err != nil {
 			return events, fmt.Errorf("failed to scan event: %v", err)
 		}
 		events = append(events, e)

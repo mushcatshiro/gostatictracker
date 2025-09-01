@@ -1,7 +1,6 @@
 package dbop
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -96,82 +95,4 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	}
 
 	return nil
-}
-
-// marshall list of Events to JSON
-func MarshalEvents(events []Event) ([]byte, error) {
-	type Alias Event // Create an alias to avoid recursion
-	aliasEvents := make([]*struct {
-		Start       string `json:"start"`
-		End         string `json:"end,omitempty"`
-		ActualStart string `json:"actualStart,omitempty"`
-		ActualEnd   string `json:"actualEnd,omitempty"`
-		*Alias
-	}, len(events))
-
-	for i, e := range events {
-		aliasEvents[i] = &struct {
-			Start       string `json:"start"`
-			End         string `json:"end,omitempty"`
-			ActualStart string `json:"actualStart,omitempty"`
-			ActualEnd   string `json:"actualEnd,omitempty"`
-			*Alias
-		}{
-			Start:       e.Start,
-			End:         e.End,
-			ActualStart: e.ActualStart,
-			ActualEnd:   e.ActualEnd,
-			Alias:       (*Alias)(&e),
-		}
-	}
-
-	return json.Marshal(aliasEvents)
-}
-
-func UnmarshalEvents(data []byte) ([]Event, error) {
-	type Alias Event // Create an alias to avoid recursion
-	var aliasEvents []struct {
-		Start       string `json:"start"`
-		End         string `json:"end,omitempty"`
-		ActualStart string `json:"actualStart,omitempty"`
-		ActualEnd   string `json:"actualEnd,omitempty"`
-		*Alias
-	}
-
-	if err := json.Unmarshal(data, &aliasEvents); err != nil {
-		return nil, err
-	}
-
-	events := make([]Event, len(aliasEvents))
-	for i, ae := range aliasEvents {
-		e := Event(*ae.Alias)
-		e.Start = ae.Start
-		e.End = ae.End
-		e.ActualStart = ae.ActualStart
-		e.ActualEnd = ae.ActualEnd
-		events[i] = e
-	}
-
-	return events, nil
-}
-
-func ConnectDB(username string, password string, dbhost, dbname string) (*sql.DB, error) {
-	if username == "" || dbname == "" || password == "" {
-		return nil, fmt.Errorf("username, password, dbname must be provided")
-	}
-	if dbhost == "" {
-		dbhost = "localhost" // Default to localhost if no host is provided
-	}
-
-	connStr := fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=disable", username, password, dbhost, dbname)
-	db, err := sql.Open("postgres", connStr)
-	if err != nil {
-		return nil, err
-	}
-	// Check if the connection is established
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
 }

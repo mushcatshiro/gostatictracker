@@ -178,7 +178,7 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int 
 	return overflowUnits
 }
 
-func getGanttRows(events []dbop.Event, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
+func getGanttRows(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
 	rSlice := []eventGanttRow{}
@@ -364,7 +364,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
+func getGanttEventBase(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
 	e := eventGanttBase{
 		HeaderRectWidth:  g.baseHeaderRectWidth,
@@ -389,7 +389,7 @@ func getGanttEventBase(events []dbop.Event, g ganttRenderMetadata, debug bool) (
 	return e, nil
 }
 
-func renderGanttHTML(events []dbop.Event, file *os.File, g ganttRenderMetadata, debug bool) error {
+func renderGanttHTML(events []dbop.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
 	var t *template.Template
 	var err error
 

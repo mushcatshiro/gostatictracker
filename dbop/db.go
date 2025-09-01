@@ -11,19 +11,37 @@ import (
 
 const TimeLayout = "01-02-2006 15:04" // MM-DD-YYYY hh:mm
 
+const (
+	STARTED = iota
+	INPROGRESS
+	COMPLETED
+)
+
+const (
+	DONOW = iota
+	DOLATER
+	DELEGATE
+	ELIMINATE
+)
+
 // struct event
 
 type Event struct {
 	ID          int64  `json:"id"`
 	Start       string `json:"start"`
-	End         string `json:"end,omitempty"`
-	ActualStart string `json:"actualStart,omitempty"`
-	ActualEnd   string `json:"actualEnd,omitempty"`
+	End         string `json:"end"`
+	ActualStart string `json:"actualStart"`
+	ActualEnd   string `json:"actualEnd"`
+	InsertTime  string `json:"insertTime"`
 	Group       string `json:"group"`
 	AllDay      bool   `json:"allDay"`
 	Title       string `json:"title"`
-	URL         string `json:"url,omitempty"`
-	Description string `json:"description,omitempty"`
+	URL         string `json:"url"`
+	Description string `json:"description"`
+	PID         int64  `json:"pid"`
+	Priority    int8   `json:"priority"`
+	Metadata    string `json:"metadata"`
+	Status      int8   `json:"status"`
 }
 
 // marhsall Event to JSON

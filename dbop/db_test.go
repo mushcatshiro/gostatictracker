@@ -64,3 +64,54 @@ func TestUnmarshalEventJSONInvalidStart(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid start format")
 }
+func TestUnmarshallEvents(t *testing.T) {
+	jsonData := `[
+		{
+			"id": 1,
+			"start": "01-02-2023 10:00",
+			"end": "01-02-2023 11:00",
+			"actualEnd": "01-02-2023 11:00",
+			"group": "Group A",
+			"allDay": false,
+			"title": "Event A",
+			"url": "http://example.com/a",
+			"description": "Description A"
+		},
+		{
+			"id": 2,
+			"start": "01-02-2023 12:00",
+			"title": "Event B"
+		}
+	]`
+
+	var events []Event
+	events, err := UnmarshalEvents([]byte(jsonData))
+	assert.NoError(t, err)
+	assert.Len(t, events, 2)
+}
+
+func TestMarshallEvents(t *testing.T) {
+	events := []Event{
+		{
+			ID:          1,
+			Start:       "01-02-2023 10:00",
+			End:         "01-02-2023 11:00",
+			ActualEnd:   "01-02-2023 11:00",
+			Group:       "Group A",
+			AllDay:      false,
+			Title:       "Event A",
+			URL:         "http://example.com/a",
+			Description: "Description A",
+		},
+		{
+			ID:    2,
+			Start: "01-02-2023 12:00",
+			Title: "Event B",
+		},
+	}
+
+	data, err := MarshalEvents(events)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), `"id":1`)
+	assert.Contains(t, string(data), `"id":2`)
+}

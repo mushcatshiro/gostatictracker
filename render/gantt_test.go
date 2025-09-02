@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func mockGetGanttRenderMetadata(mockData []dbop.Event, isDayView bool) ganttRenderMetadata {
+func mockGetGanttRenderMetadata(mockData []dbop.GanttEvent, isDayView bool) ganttRenderMetadata {
 	groupStartTime, _ := time.Parse(TimeLayout, mockData[0].Start)
 	groupEndTime, _ := time.Parse(TimeLayout, mockData[len(mockData)-1].End)
 	var divisor int

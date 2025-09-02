@@ -55,9 +55,10 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	type Alias Event // Create an alias to avoid recursion
 	aux := &struct {
 		Start       string `json:"start"`
-		End         string `json:"end,omitempty"`
-		ActualStart string `json:"actualStart,omitempty"`
-		ActualEnd   string `json:"actualEnd,omitempty"`
+		End         string `json:"end"`
+		ActualStart string `json:"actualStart"`
+		ActualEnd   string `json:"actualEnd"`
+		InsertTime  string `json:"insertTime"`
 		*Alias
 	}{
 		Alias: (*Alias)(e),
@@ -94,6 +95,8 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		}
 		e.ActualEnd = aux.ActualEnd
 	}
+
+	e.InsertTime = time.Now().Format(TimeLayout)
 
 	return nil
 }

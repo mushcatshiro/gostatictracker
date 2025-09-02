@@ -2,7 +2,7 @@ package mock
 
 import "github.com/mushcatshiro/gostatictracker/dbop"
 
-var DayViewMockData = [...]dbop.Event{
+var DayViewMockData = [...]dbop.GanttEvent{
 	{
 		Start:       "12-27-2024",
 		End:         "01-01-2025",
@@ -68,7 +68,7 @@ var DayViewMockData = [...]dbop.Event{
 	},
 }
 
-var DayViewOverflowMockData = [...]dbop.Event{
+var DayViewOverflowMockData = [...]dbop.GanttEvent{
 	{
 		Start:       "01-04-2025",
 		End:         "01-05-2025",
@@ -80,7 +80,7 @@ var DayViewOverflowMockData = [...]dbop.Event{
 	},
 }
 
-var WeekViewMockData = [...]dbop.Event{
+var WeekViewMockData = [...]dbop.GanttEvent{
 	{
 		Start:       "12-22-2024",
 		End:         "01-03-2025",

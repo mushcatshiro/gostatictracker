@@ -3,7 +3,6 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
-	"log"
 )
 
 func InitDB(db *sql.DB) error {
@@ -23,7 +22,7 @@ func InitDB(db *sql.DB) error {
 		pid INT,
 		priority INT,
 		metadata TEXT,
-		status TEXT
+		status INT
 	);`
 	_, err := db.Exec(createTableQuery)
 	if err != nil {
@@ -34,15 +33,17 @@ func InitDB(db *sql.DB) error {
 
 func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	insertQuery := `
-	INSERT INTO events (start, "end", "group", allDay, title, url, description)
+	INSERT INTO events (
+		start, "end", actualStart, actualEnd, insertTime, "group", allDay, title,
+		url, description, pid, priority, metadata, status
+	)
 	VALUES (
 	  TO_TIMESTAMP($1, 'MM-DD-YYYY HH24:MI'),
 		TO_TIMESTAMP($2, 'MM-DD-YYYY HH24:MI'),
-		$3,
-		$4,
-		$5,
-		$6,
-		$7
+		TO_TIMESTAMP($3, 'MM-DD-YYYY HH24:MI'),
+		TO_TIMESTAMP($4, 'MM-DD-YYYY HH24:MI'),
+		TO_TIMESTAMP($5, 'MM-DD-YYYY HH24:MI'),
+		$6, $7, $8, $9, $10, $11, $12, $13, $14
 	)
 	RETURNING id;`
 
@@ -50,11 +51,19 @@ func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	err := db.QueryRow(insertQuery,
 		event.Start,
 		event.End,
+		event.ActualStart,
+		event.ActualEnd,
+		event.InsertTime,
 		event.Group,
 		event.AllDay,
 		event.Title,
 		event.URL,
-		event.Description).Scan(&id)
+		event.Description,
+		event.PID,
+		event.Priority,
+		event.Metadata,
+		event.Status,
+	).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -65,18 +74,41 @@ func InsertEvent(db *sql.DB, event Event) (int64, error) {
 func UpdateEvent(db *sql.DB, event Event) error {
 	updateQuery := `
 	UPDATE events
-	SET start = $1, "end" = $2, "group" = $3, allDay = $4, title = $5, url = $6, description = $7
-	WHERE id = $8;`
+	SET (
+		start = TO_TIMESTAMP($1, 'MM-DD-YYYY HH24:MI'),
+		"end" = TO_TIMESTAMP($2, 'MM-DD-YYYY HH24:MI'),
+		actualStart = TO_TIMESTAMP($3, 'MM-DD-YYYY HH24:MI'),
+		actualEnd = TO_TIMESTAMP($4, 'MM-DD-YYYY HH24:MI'),
+		insertTime = TO_TIMESTAMP($5, 'MM-DD-YYYY HH24:MI'),
+		"group" = $6,
+		allDay = $7,
+		title = $8,
+		url = $9,
+		description = $10
+		pid = $11,
+		priority = $12,
+		metadata = $13,
+		status = $14
+	)
+	WHERE id = $15;`
 
 	result, err := db.Exec(updateQuery,
 		event.Start,
 		event.End,
+		event.ActualStart,
+		event.ActualEnd,
+		event.InsertTime,
 		event.Group,
 		event.AllDay,
 		event.Title,
 		event.URL,
 		event.Description,
-		event.ID)
+		event.PID,
+		event.Priority,
+		event.Metadata,
+		event.Status,
+		event.ID,
+	)
 
 	if err != nil {
 		return fmt.Errorf("failed to update event: %w", err)
@@ -92,67 +124,4 @@ func UpdateEvent(db *sql.DB, event Event) error {
 	}
 
 	return nil
-}
-
-func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]Event, error) {
-	// TODO consider adding ordering by "end" DESC
-	var events []Event
-	var datetimeFormat string
-	if dateOnly {
-		datetimeFormat = "MM-DD-YYYY"
-	} else {
-		datetimeFormat = "MM-DD-YYYY HH24:MI"
-	}
-	query := fmt.Sprintf(`SELECT
-	  "id",
-		TO_CHAR(start, '%s'),
-		TO_CHAR("end", '%s'),
-		"group",
-		allDay,
-		title,
-		url,
-		description
-	FROM events
-	WHERE "group" = $1
-	ORDER BY "id";`, datetimeFormat, datetimeFormat)
-	rows, err := db.Query(query, groupName)
-	if err != nil {
-		return events, fmt.Errorf("failed to get events: %v", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var e Event
-		if err := rows.Scan(&e.ID, &e.Start, &e.End, &e.Group, &e.AllDay, &e.Title, &e.URL, &e.Description); err != nil {
-			return events, fmt.Errorf("failed to scan event: %v", err)
-		}
-		events = append(events, e)
-	}
-	if err := rows.Err(); err != nil {
-		return events, fmt.Errorf("error reading events: %v", err)
-	}
-	return events, nil
-}
-
-func GetUniqueGroups(db *sql.DB) ([]string, error) {
-	var groups []string
-	query := `SELECT DISTINCT "group" FROM events;`
-	rows, err := db.Query(query)
-	if err != nil {
-		// log.Fatalf("Failed to get unique groups: %v", err)
-		return groups, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var group string
-		if err := rows.Scan(&group); err != nil {
-			// log.Fatalf("Failed to scan group: %v", err)
-			return groups, err
-		}
-		groups = append(groups, group)
-	}
-	if err := rows.Err(); err != nil {
-		log.Fatalf("Error reading groups: %v", err)
-	}
-	return groups, nil
 }

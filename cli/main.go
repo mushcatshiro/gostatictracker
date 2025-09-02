@@ -20,7 +20,8 @@ func main() {
 	var host = flag.String("dbhost", "localhost", "The postgresql host IP")
 	var dbname = flag.String("dbname", "pgsql", "The posgresql database name")
 	var insertMock = flag.Bool("insertMock", false, "flag to insert mock data to postgresql")
-	var renderGantt = flag.Bool("renderGantt", true, "flag to render gantt html(s)")
+	var renderGantt = flag.Bool("renderGantt", false, "flag to render gantt html(s)")
+	var renderList = flag.Bool("renderList", false, "flag to render gantt html(s)")
 	var debug = flag.Bool("debug", false, "flag to enter debug mode")
 	flag.Parse()
 
@@ -61,5 +62,9 @@ func main() {
 
 	if *renderGantt {
 		render.RenderGantt(*outputDir, conn, *debug)
+	}
+
+	if *renderList {
+		render.RenderList(*outputDir, conn)
 	}
 }

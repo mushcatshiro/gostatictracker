@@ -44,6 +44,19 @@ type Event struct {
 	Status      int8   `json:"status"`
 }
 
+func (e *Event) ToGanttEvent() GanttEvent {
+	return GanttEvent{
+		ID:          e.ID,
+		Start:       e.Start,
+		End:         e.End,
+		Group:       e.Group,
+		AllDay:      e.AllDay,
+		Title:       e.Title,
+		URL:         e.URL,
+		Description: e.Description,
+	}
+}
+
 // marhsall Event to JSON
 func (e *Event) MarshalJSON() ([]byte, error) {
 	type Alias Event // Create an alias to avoid recursion

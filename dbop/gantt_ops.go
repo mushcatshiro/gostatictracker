@@ -17,6 +17,19 @@ type GanttEvent struct {
 	Description string `json:"description"`
 }
 
+func (ge *GanttEvent) ToEvent() Event {
+	return Event{
+		ID:          ge.ID,
+		Start:       ge.Start,
+		End:         ge.End,
+		Group:       ge.Group,
+		AllDay:      ge.AllDay,
+		Title:       ge.Title,
+		URL:         ge.URL,
+		Description: ge.Description,
+	}
+}
+
 func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]GanttEvent, error) {
 	// TODO consider adding ordering by "end" DESC
 	var events []GanttEvent

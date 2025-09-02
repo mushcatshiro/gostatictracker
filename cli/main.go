@@ -51,7 +51,7 @@ func main() {
 
 	if *insertMock {
 		for _, event := range mockData {
-			_, err := dbop.InsertEvent(conn, event)
+			_, err := dbop.InsertEvent(conn, event.ToEvent())
 			if err != nil {
 				log.Fatalf("Failed to insert mock event: %v", err)
 			}

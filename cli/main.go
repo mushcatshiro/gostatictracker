@@ -32,6 +32,7 @@ func init() {
 	createCmd.Flags().Int8VarP(&status, "status", "s", 0, "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
 
 	rootCmd.AddCommand(createCmd)
+	rootCmd.AddCommand(insertMockCmd)
 
 	setupConfig()
 

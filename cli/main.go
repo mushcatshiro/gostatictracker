@@ -1,70 +1,66 @@
 package main
 
 import (
-	"errors"
-	"flag"
+	"database/sql"
 	"fmt"
 	"log"
 	"os"
-	"slices"
+	"path/filepath"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
-	"github.com/mushcatshiro/gostatictracker/mock"
-	"github.com/mushcatshiro/gostatictracker/render"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
+var conn *sql.DB
+
+var rootCmd = &cobra.Command{
+	Use:   "st",
+	Short: "Static Tracker",
+	Long: `Static Tracker is an all-in-one productivity suite designed for ` +
+		`those who live in the terminal. Effortlessly manage daily todos, plan ` +
+		`and visualize complex projects with Gantt chart support, track ` +
+		`important events on calendar, and set personal reminders to stay on ` +
+		`top of your goals. It's THE tool for streamlining workflow and ` +
+		`centralizing logistics in keyboard-driven interface.`,
+}
+
+func init() {
+	createCmd.Flags().StringVarP(&description, "description", "d", "", "Extra descriptive information")
+	createCmd.Flags().StringVarP(&url, "url", "u", "", "Reference url")
+	createCmd.Flags().Int8VarP(&priority, "priority", "p", 2, "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
+	createCmd.Flags().Int8VarP(&status, "status", "s", 0, "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
+
+	rootCmd.AddCommand(createCmd)
+
+	setupConfig()
+
+	var err error
+	conn, err = dbop.ConnectDB(
+		viper.GetString("username"),
+		viper.GetString("password"),
+		viper.GetString("dbhost"),
+		viper.GetString("dbname"),
+	)
+	if err != nil {
+		log.Fatalf("Failed to establish connection: %v", err)
+	}
+}
+
+func setupConfig() {
+	viper.SetConfigName("gst")
+	viper.SetConfigType("yaml")
+	userProfile, _ := os.UserHomeDir()
+	viper.AddConfigPath(filepath.Join(userProfile, ".config", "gostatictracker"))
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Faield to read config %v", err)
+	}
+}
+
 func main() {
-	var outputDir = flag.String("outputDir", ".", "The targeted output directory of the gantt html(s)")
-	var username = flag.String("dbuser", "pgsql", "The postgresql username")
-	var password = flag.String("dbpass", "pgsql", "The postgresql password")
-	var host = flag.String("dbhost", "localhost", "The postgresql host IP")
-	var dbname = flag.String("dbname", "pgsql", "The posgresql database name")
-	var insertMock = flag.Bool("insertMock", false, "flag to insert mock data to postgresql")
-	var renderGantt = flag.Bool("renderGantt", false, "flag to render gantt html(s)")
-	var renderList = flag.Bool("renderList", false, "flag to render gantt html(s)")
-	var debug = flag.Bool("debug", false, "flag to enter debug mode")
-	flag.Parse()
-
-	info, err := os.Stat(*outputDir)
-	if errors.Is(err, os.ErrNotExist) {
-		log.Fatalf("path does not exist: %s", *outputDir)
-		return
-	}
-	if err != nil {
-		log.Fatalf("error checking path: %v", err)
-		return
-	}
-	if !info.IsDir() {
-		log.Fatalf("path given is not a valid file path: %s", *outputDir)
-		return
-	}
-
-	conn, err := dbop.ConnectDB(*username, *password, *host, *dbname)
-	if err != nil {
-		fmt.Println("Error connecting to database:", err)
-		return
-	}
-	defer conn.Close()
-
-	dbop.InitDB(conn)
-
-	mockData := slices.Concat(mock.DayViewMockData[:], mock.DayViewOverflowMockData[:], mock.WeekViewMockData[:])
-
-	if *insertMock {
-		for _, event := range mockData {
-			_, err := dbop.InsertEvent(conn, event.ToEvent())
-			if err != nil {
-				log.Fatalf("Failed to insert mock event: %v", err)
-			}
-		}
-		log.Printf("inserted %d entries to table `events`\n", len(mockData))
-	}
-
-	if *renderGantt {
-		render.RenderGantt(*outputDir, conn, *debug)
-	}
-
-	if *renderList {
-		render.RenderList(*outputDir, conn)
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

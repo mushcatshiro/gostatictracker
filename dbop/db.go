@@ -12,9 +12,10 @@ import (
 const TimeLayout = "01-02-2006 15:04" // MM-DD-YYYY hh:mm
 
 const (
-	STARTED = iota
+	NOTSTARTED = iota
 	INPROGRESS
 	COMPLETED
+	CANCELLED
 )
 
 const (

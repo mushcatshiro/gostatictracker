@@ -31,6 +31,16 @@ func InitDB(db *sql.DB) error {
 	return nil
 }
 
+func readEventById(db *sql.DB, id int64) (Event, error) {
+	var e Event
+	readQuery := `SELECT * FROM events WHERE id = $1`
+	err := db.QueryRow(readQuery, id).Scan(&e)
+	if err != nil {
+		return Event{}, err
+	}
+	return e, nil
+}
+
 func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	insertQuery := `
 	INSERT INTO events (

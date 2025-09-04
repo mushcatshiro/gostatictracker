@@ -3,6 +3,7 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type ListEntry struct {
@@ -43,4 +44,21 @@ func GetListGroupEntries(db *sql.DB, groupName string) ([]ListEntry, error) {
 		return events, fmt.Errorf("error reading events: %v", err)
 	}
 	return events, nil
+}
+
+func UpdateStatus(db *sql.DB, id int64, status int8) error {
+
+	e, err := readEventById(db, id)
+	if err != nil {
+		return err
+	}
+	e.Status = status
+	if status == COMPLETED {
+		e.ActualEnd = time.Now().Format(TimeLayout)
+	}
+	id, err = InsertEvent(db, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }

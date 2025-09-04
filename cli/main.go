@@ -15,7 +15,7 @@ import (
 var conn *sql.DB
 
 var rootCmd = &cobra.Command{
-	Use:   "st",
+	Use:   "gst",
 	Short: "Static Tracker",
 	Long: `Static Tracker is an all-in-one productivity suite designed for ` +
 		`those who live in the terminal. Effortlessly manage daily todos, plan ` +

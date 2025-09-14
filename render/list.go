@@ -62,7 +62,7 @@ func RenderList(renderTargetPath string, conn *sql.DB) {
 			log.Printf("Failed to get entries for list group %s with %v", group, err)
 			continue
 		}
-		fileName := strings.Replace(group, " ", "-", -1) + "-list.html"
+		fileName := strings.ReplaceAll(group, " ", "-") + "-list.html"
 		file, err := os.Create(renderTargetPath + "/" + fileName) // truncates if exists
 		if err != nil {
 			log.Printf("Failed to create file %s: %v", fileName, err)

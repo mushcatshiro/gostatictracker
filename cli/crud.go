@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	description string
+	cDescription string
 	url         string
-	priority    int8
-	status      int8
+	cpriority    int8
+	cStatus      int8
 )
 
 var createCmd = &cobra.Command{
@@ -26,11 +26,11 @@ func cliCreate(cmd *cobra.Command, args []string) {
 	title := strings.Join(args, " ")
 	e := dbop.Event{
 		Title:       title,
-		Description: description,
+		Description: cDescription,
 		InsertTime:  time.Now().Format(dbop.TimeLayout),
 		URL:         url,
-		Priority:    priority,
-		Status:      status,
+		Priority:    cpriority,
+		Status:      cStatus,
 	}
 	id, err := dbop.InsertEvent(conn, e)
 	if err != nil {

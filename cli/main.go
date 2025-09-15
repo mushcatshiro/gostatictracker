@@ -26,13 +26,18 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	createCmd.Flags().StringVarP(&description, "description", "d", "", "Extra descriptive information")
-	createCmd.Flags().StringVarP(&url, "url", "u", "", "Reference url")
-	createCmd.Flags().Int8VarP(&priority, "priority", "p", 2, "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
-	createCmd.Flags().Int8VarP(&status, "status", "s", 0, "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
+	createCmd.Flags().StringVarP(&cDescription, "description", "d", "", "Extra descriptive information")
+	createCmd.Flags().StringVarP(&cUrl, "url", "u", "", "Reference url")
+	createCmd.Flags().Int8VarP(&cPriority, "priority", "p", 2, "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
+	createCmd.Flags().Int8VarP(&cStatus, "status", "s", 0, "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
+
+	renderCalendarCmd.Flags().IntVarP(&rcMonth, "month", "m", 0, "Target month to render")
+	renderCalendarCmd.Flags().IntVarP(&rcYear, "year", "y", 0, "Target year to render")
+	renderCalendarCmd.Flags().StringVarP(&rcDir, "output directory", "d", ".", "Target directory to store rendered html file(s)")
 
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(insertMockCmd)
+	rootCmd.AddCommand(renderCalendarCmd)
 
 	setupConfig()
 

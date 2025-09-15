@@ -23,26 +23,39 @@ func getOneMonth(db *sql.DB, d time.Time) (MonthGroup, error) {
 	query := `
 	WITH month_range AS (
 		SELECT tsrange(
-			make_timestamp(:$1, :$2, 1, 0, 0, 0),
-			make_timestamp(:$1, :$2, 1, 0, 0, 0) + interval '1 month',
+			make_timestamp($1, $2, 1, 0, 0, 0),
+			make_timestamp($1, $2, 1, 0, 0, 0) + interval '1 month',
 			'[)'
 		) AS period
 	)
-	SELECT * FROM events, month_range
+	SELECT
+		title,
+		"group",
+		CASE
+			WHEN "actualstart" IS NOT NULL AND "actualend" IS NOT NULL THEN "actualstart"
+			WHEN "start" IS NOT NULL OR "end" IS NOT NULL THEN "start"
+			ELSE "inserttime"
+		END as s,
+		CASE
+			WHEN "actualstart" IS NOT NULL AND "actualend" IS NOT NULL THEN "actualend"
+			WHEN "start" IS NOT NULL OR "end" IS NOT NULL THEN "end"
+			ELSE "inserttime"
+		END as e
+	FROM events, month_range
 	WHERE
 		(CASE
-			WHEN "actualStart" IS NOT NULL AND "actualEnd" IS NOT NULL THEN
-				tsrange("actualStart", "actualEnd", '[]') && month_range.period
-			WHEN "start" IS NOT NULL OR "END" IS NOT NULL THEN
+			WHEN "actualstart" IS NOT NULL AND "actualend" IS NOT NULL THEN
+				tsrange("actualstart", "actualend", '[]') && month_range.period
+			WHEN "start" IS NOT NULL OR "end" IS NOT NULL THEN
 				tsrange("start", "end", '[]') && month_range.period
 			ELSE
-				"insertTime" >= LOWER(month_range.period) AND "insertTime" < upper(month_range.period)
+				"inserttime" >= LOWER(month_range.period) AND "inserttime" < upper(month_range.period)
 		END)
 		AND
 			(CASE
-				WHEN "actualStart" IS NOT NULL AND "actualEnd" IS NOT NULL THEN
-					("actualEnd" - "actualStart") <= interval '7 days'
-				WHEN ("actualStart" IS NULL OR "actualEND" IS NULL) AND ("start" IS NOT NULL AND "end" IS NOT NULL) THEN
+				WHEN "actualstart" IS NOT NULL AND "actualend" IS NOT NULL THEN
+					("actualend" - "actualstart") <= interval '7 days'
+				WHEN ("actualstart" IS NULL OR "actualend" IS NULL) AND ("start" IS NOT NULL AND "end" IS NOT NULL) THEN
 					("end" - "start") <= interval '7 days'
 				ELSE
 					TRUE
@@ -52,6 +65,18 @@ func getOneMonth(db *sql.DB, d time.Time) (MonthGroup, error) {
 		return mg, err
 	}
 	defer rows.Close()
+	var ctr int
+	for rows.Next() {
+		var e CalendarEvent
+		if err := rows.Scan(&e.Title, &e.Group, &e.Start, &e.End); err != nil {
+			return mg, err
+		}
+		ctr += 1
+		mg.Events = append(mg.Events, e)
+	}
+	if ctr < 1 {
+		return mg, fmt.Errorf("No rows is returned")
+	}
 	return mg, nil
 }
 
@@ -90,6 +115,7 @@ func getCalendarRenderRange(month, year int) ([]time.Time, error) {
 
 func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]MonthGroup, error) {
 	var monthGroups []MonthGroup
+	fmt.Printf("input %v, %v", month, year)
 
 	renderRange, err := getCalendarRenderRange(month, year)
 	if err != nil {
@@ -97,6 +123,7 @@ func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]MonthGroup, error)
 	}
 
 	for _, d := range renderRange {
+		fmt.Printf("processing %s, %v", d.Month(), d.Year())
 		mg, err := getOneMonth(conn, d)
 		if err != nil {
 			return monthGroups, err

@@ -11,8 +11,8 @@ import (
 
 var (
 	cDescription string
-	url         string
-	cpriority    int8
+	cUrl         string
+	cPriority    int8
 	cStatus      int8
 )
 
@@ -28,8 +28,8 @@ func cliCreate(cmd *cobra.Command, args []string) {
 		Title:       title,
 		Description: cDescription,
 		InsertTime:  time.Now().Format(dbop.TimeLayout),
-		URL:         url,
-		Priority:    cpriority,
+		URL:         cUrl,
+		Priority:    cPriority,
 		Status:      cStatus,
 	}
 	id, err := dbop.InsertEvent(conn, e)

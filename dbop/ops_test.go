@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/mushcatshiro/gostatictracker/common"
+	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,11 +15,11 @@ func TestUpdateEvent(t *testing.T) {
 	defer db.Close()
 
 	// Define the event to update
-	event := Event{
+	event := models.Event{
 		ID:          1,
-		Start:       "2023-10-01 10:00:00",
-		End:         "2023-10-01 11:00:00",
-		ActualEnd:   "2023-10-01 11:00:00",
+		Start:       common.ParseStringDate("2023-10-01 10:00"),
+		End:         common.ParseStringDate("2023-10-01 11:00"),
+		ActualEnd:   common.ParseStringDate("2023-10-01 11:00"),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",
@@ -42,11 +44,11 @@ func TestUpdateEventDoesNotExist(t *testing.T) {
 	defer db.Close()
 
 	// Define the event to update
-	event := Event{
+	event := models.Event{
 		ID:          999, // Non-existent ID
-		Start:       "2023-10-01 10:00:00",
-		End:         "2023-10-01 11:00:00",
-		ActualEnd:   "2023-10-01 11:00:00",
+		Start:       common.ParseStringDate("2023-10-01 10:00"),
+		End:         common.ParseStringDate("2023-10-01 11:00"),
+		ActualEnd:   common.ParseStringDate("2023-10-01 11:00"),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",

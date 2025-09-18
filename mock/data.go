@@ -1,11 +1,14 @@
 package mock
 
-import "github.com/mushcatshiro/gostatictracker/dbop"
+import (
+	"github.com/mushcatshiro/gostatictracker/common"
+	"github.com/mushcatshiro/gostatictracker/models"
+)
 
-var DayViewMockData = [...]dbop.GanttEvent{
+var DayViewMockData = [...]models.GanttEvent{
 	{
-		Start:       "12-27-2024",
-		End:         "01-01-2025",
+		Start:       common.ParseStringDate("12-27-2024 00:00"),
+		End:         common.ParseStringDate("01-01-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 1",
@@ -13,8 +16,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-29-2024",
-		End:         "01-02-2025",
+		Start:       common.ParseStringDate("12-29-2024 00:00"),
+		End:         common.ParseStringDate("01-02-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 2",
@@ -22,8 +25,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-31-2024",
-		End:         "01-04-2025",
+		Start:       common.ParseStringDate("12-31-2024 00:00"),
+		End:         common.ParseStringDate("01-04-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 3",
@@ -31,8 +34,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-31-2024",
-		End:         "01-05-2025",
+		Start:       common.ParseStringDate("12-31-2024 00:00"),
+		End:         common.ParseStringDate("01-05-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 4",
@@ -40,8 +43,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-31-2024",
-		End:         "01-04-2025",
+		Start:       common.ParseStringDate("12-31-2024 00:00"),
+		End:         common.ParseStringDate("01-04-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 5",
@@ -49,8 +52,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-30-2024",
-		End:         "01-05-2025",
+		Start:       common.ParseStringDate("12-30-2024 00:00"),
+		End:         common.ParseStringDate("01-05-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 6",
@@ -58,8 +61,8 @@ var DayViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-28-2024",
-		End:         "01-05-2025",
+		Start:       common.ParseStringDate("12-28-2024 00:00"),
+		End:         common.ParseStringDate("01-05-2025 00:00"),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 7",
@@ -68,10 +71,10 @@ var DayViewMockData = [...]dbop.GanttEvent{
 	},
 }
 
-var DayViewOverflowMockData = [...]dbop.GanttEvent{
+var DayViewOverflowMockData = [...]models.GanttEvent{
 	{
-		Start:       "01-04-2025",
-		End:         "01-05-2025",
+		Start:       common.ParseStringDate("01-04-2025 00:00"),
+		End:         common.ParseStringDate("01-05-2025 00:00"),
 		Group:       "day view overflow example",
 		AllDay:      false,
 		Title:       "Mock task 1",
@@ -80,10 +83,10 @@ var DayViewOverflowMockData = [...]dbop.GanttEvent{
 	},
 }
 
-var WeekViewMockData = [...]dbop.GanttEvent{
+var WeekViewMockData = [...]models.GanttEvent{
 	{
-		Start:       "12-22-2024",
-		End:         "01-03-2025",
+		Start:       common.ParseStringDate("12-22-2024 00:00"),
+		End:         common.ParseStringDate("01-03-2025 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 1",
@@ -91,8 +94,8 @@ var WeekViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-23-2024",
-		End:         "01-02-2025",
+		Start:       common.ParseStringDate("12-23-2024 00:00"),
+		End:         common.ParseStringDate("01-02-2025 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 2",
@@ -100,8 +103,8 @@ var WeekViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-23-2024",
-		End:         "01-06-2025",
+		Start:       common.ParseStringDate("12-23-2024 00:00"),
+		End:         common.ParseStringDate("01-06-2025 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 3",
@@ -109,8 +112,8 @@ var WeekViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "12-23-2024",
-		End:         "12-30-2024",
+		Start:       common.ParseStringDate("12-23-2024 00:00"),
+		End:         common.ParseStringDate("12-30-2024 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 4",
@@ -118,8 +121,8 @@ var WeekViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "01-13-2025",
-		End:         "01-24-2025",
+		Start:       common.ParseStringDate("01-13-2025 00:00"),
+		End:         common.ParseStringDate("01-24-2025 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 5",
@@ -127,8 +130,8 @@ var WeekViewMockData = [...]dbop.GanttEvent{
 		Description: "This is a mock event for testing purposes.",
 	},
 	{
-		Start:       "01-30-2025",
-		End:         "02-05-2025",
+		Start:       common.ParseStringDate("01-30-2025 00:00"),
+		End:         common.ParseStringDate("02-05-2025 00:00"),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 6",

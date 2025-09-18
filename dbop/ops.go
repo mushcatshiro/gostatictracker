@@ -3,6 +3,8 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
+
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
 func InitDB(db *sql.DB) error {
@@ -31,17 +33,17 @@ func InitDB(db *sql.DB) error {
 	return nil
 }
 
-func readEventById(db *sql.DB, id int64) (Event, error) {
-	var e Event
+func readEventById(db *sql.DB, id int64) (models.Event, error) {
+	var e models.Event
 	readQuery := `SELECT * FROM events WHERE id = $1`
 	err := db.QueryRow(readQuery, id).Scan(&e)
 	if err != nil {
-		return Event{}, err
+		return models.Event{}, err
 	}
 	return e, nil
 }
 
-func InsertEvent(db *sql.DB, event Event) (int64, error) {
+func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
 	insertQuery := `
 	INSERT INTO events (
 		start, "end", actualStart, actualEnd, insertTime, "group", allDay, title,
@@ -81,7 +83,7 @@ func InsertEvent(db *sql.DB, event Event) (int64, error) {
 	return id, nil
 }
 
-func UpdateEvent(db *sql.DB, event Event) error {
+func UpdateEvent(db *sql.DB, event models.Event) error {
 	updateQuery := `
 	UPDATE events
 	SET (

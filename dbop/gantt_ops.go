@@ -4,45 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-type GanttEvent struct {
-	ID          int64  `json:"id"`
-	Start       string `json:"start"`
-	End         string `json:"end"`
-	Group       string `json:"group"`
-	AllDay      bool   `json:"allDay"`
-	Title       string `json:"title"`
-	URL         string `json:"url"`
-	Description string `json:"description"`
-}
-
-func (ge *GanttEvent) ToEvent() Event {
-	return Event{
-		ID:          ge.ID,
-		Start:       ge.Start,
-		End:         ge.End,
-		Group:       ge.Group,
-		AllDay:      ge.AllDay,
-		Title:       ge.Title,
-		URL:         ge.URL,
-		Description: ge.Description,
-	}
-}
-
-func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]GanttEvent, error) {
+func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]models.GanttEvent, error) {
 	// TODO consider adding ordering by "end" DESC
-	var events []GanttEvent
-	var datetimeFormat string
-	if dateOnly {
-		datetimeFormat = "MM-DD-YYYY"
-	} else {
-		datetimeFormat = "MM-DD-YYYY HH24:MI"
-	}
-	query := fmt.Sprintf(`SELECT
+	var events []models.GanttEvent
+	query := `SELECT
 	  "id",
-		TO_CHAR(start, '%s'),
-		TO_CHAR("end", '%s'),
+		start,
+		"end",
 		"group",
 		allDay,
 		title,
@@ -50,14 +22,14 @@ func GetGanttGroupEvents(db *sql.DB, groupName string, dateOnly bool) ([]GanttEv
 		description
 	FROM events
 	WHERE "group" = $1
-	ORDER BY "id";`, datetimeFormat, datetimeFormat)
+	ORDER BY "id";`
 	rows, err := db.Query(query, groupName)
 	if err != nil {
 		return events, fmt.Errorf("failed to get events: %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var e GanttEvent
+		var e models.GanttEvent
 		if err := rows.Scan(&e.ID, &e.Start, &e.End, &e.Group, &e.AllDay, &e.Title, &e.URL, &e.Description); err != nil {
 			return events, fmt.Errorf("failed to scan event: %v", err)
 		}

@@ -4,22 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-type CalendarEvent struct {
-	Title string
-	Group string
-	Start string
-	End   string
-}
-
-type MonthGroup struct {
-	FirstDayOfMonth time.Time
-	Events   []CalendarEvent
-}
-
-func getOneMonth(db *sql.DB, d time.Time) (MonthGroup, error) {
-	var mg MonthGroup
+func getOneMonth(db *sql.DB, d time.Time) (models.MonthGroup, error) {
+	var mg models.MonthGroup
 	query := `
 	WITH month_range AS (
 		SELECT tsrange(
@@ -67,7 +57,7 @@ func getOneMonth(db *sql.DB, d time.Time) (MonthGroup, error) {
 	defer rows.Close()
 	var ctr int
 	for rows.Next() {
-		var e CalendarEvent
+		var e models.CalendarEvent
 		if err := rows.Scan(&e.Title, &e.Group, &e.Start, &e.End); err != nil {
 			return mg, err
 		}
@@ -113,8 +103,8 @@ func getCalendarRenderRange(month, year int) ([]time.Time, error) {
 	return ret, nil
 }
 
-func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]MonthGroup, error) {
-	var monthGroups []MonthGroup
+func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]models.MonthGroup, error) {
+	var monthGroups []models.MonthGroup
 	fmt.Printf("input %v, %v", month, year)
 
 	renderRange, err := getCalendarRenderRange(month, year)
@@ -123,7 +113,7 @@ func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]MonthGroup, error)
 	}
 
 	for _, d := range renderRange {
-		fmt.Printf("processing %s, %v", d.Month(), d.Year())
+		fmt.Printf("processing %v, %v", d.Month(), d.Year())
 		mg, err := getOneMonth(conn, d)
 		if err != nil {
 			return monthGroups, err

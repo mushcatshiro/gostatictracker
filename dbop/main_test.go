@@ -37,4 +37,7 @@ func TestMain(m *testing.M) {
 			log.Fatalf("Failed to insert mock event: %v", err)
 		}
 	}
+	exitCode := m.Run()
+	conn.Close()
+	os.Exit(exitCode)
 }

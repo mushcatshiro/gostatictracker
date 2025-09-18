@@ -134,6 +134,5 @@ func UpdateEvent(db *sql.DB, event models.Event) error {
 	if rowsAffected == 0 {
 		return fmt.Errorf("no event found with ID %d", event.ID)
 	}
-
 	return nil
 }

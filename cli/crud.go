@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +25,11 @@ var createCmd = &cobra.Command{
 
 func cliCreate(cmd *cobra.Command, args []string) {
 	title := strings.Join(args, " ")
-	e := dbop.Event{
+	it := time.Now()
+	e := models.Event{
 		Title:       title,
 		Description: cDescription,
-		InsertTime:  time.Now().Format(dbop.TimeLayout),
+		InsertTime:  &it,
 		URL:         cUrl,
 		Priority:    cPriority,
 		Status:      cStatus,

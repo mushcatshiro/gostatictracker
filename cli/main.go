@@ -42,12 +42,16 @@ func init() {
 	setupConfig()
 
 	var err error
-	conn, err = dbop.ConnectDB(
+	connStr, err := dbop.GenerateConnStr(
 		viper.GetString("username"),
 		viper.GetString("password"),
 		viper.GetString("dbhost"),
 		viper.GetString("dbname"),
 	)
+	if err != nil {
+		log.Fatalf("Failed to generate connection string: %v", err)
+	}
+	conn, err = dbop.ConnectDB(connStr)
 	if err != nil {
 		log.Fatalf("Failed to establish connection: %v", err)
 	}

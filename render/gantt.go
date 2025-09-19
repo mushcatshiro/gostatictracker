@@ -11,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/snabb/isoweek"
 )
 
@@ -55,8 +57,8 @@ type eventGanttBase struct {
 
 type ganttRenderMetadata struct {
 	isDayView            bool
-	groupStartTime       time.Time
-	groupEndTime         time.Time
+	groupStartTime       *time.Time
+	groupEndTime         *time.Time
 	groupName            string
 	rowTextInRectPadding int     // LR padding for text to be place in rect
 	rectToTextMargin     int     // spacing between rect and text
@@ -96,25 +98,13 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 		SELECT "end" d FROM events WHERE "group" = $1
 	)`
 	row := db.QueryRow(query, groupName)
-	var groupStartTime, groupEndTime string
-	if err := row.Scan(&groupStartTime, &groupEndTime); err != nil {
+	if err := row.Scan(&g.groupStartTime, &g.groupEndTime); err != nil {
 		return ganttRenderMetadata{}, fmt.Errorf("\nfailed to scan start/end time and full duration:\n%w", err)
 	}
-	var tGroupStartTime, tGroupEndTime time.Time
-	tGroupStartTime, err := time.Parse(TimeLayout, groupStartTime)
-	if err != nil {
-		return g, fmt.Errorf("\nfailed to parse start time: %w", err)
-	}
-	tGroupEndTime, err = time.Parse(TimeLayout, groupEndTime)
-	if err != nil {
-		return g, fmt.Errorf("\nfailed to parse end time: %w", err)
-	}
-	g.groupStartTime = tGroupStartTime
-	g.groupEndTime = tGroupEndTime
 
 	query = `SELECT MIN(("end"::date - start::date)+1) AS minTaskDuration FROM events WHERE "group" = $1`
 	var minTaskDuration sql.NullInt64
-	err = db.QueryRow(query, groupName).Scan(&minTaskDuration)
+	err := db.QueryRow(query, groupName).Scan(&minTaskDuration)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return ganttRenderMetadata{}, fmt.Errorf("\nno events found for group %s:\n%w", groupName, err)
@@ -136,19 +126,12 @@ func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpac
 	return daysSpan * headerWidthWithSpacing
 }
 
-func parseEventTimes(s, e string, isDayView bool) (time.Time, time.Time, error) {
-	iStartTime, err := time.Parse(TimeLayout, s)
-	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse start time: %w", err)
-	}
-	iEndTime, err := time.Parse(TimeLayout, e)
-	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("not able to parse end time: %w", err)
-	}
+func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time, error) {
+	var iStartTime, iEndTime time.Time
 	if !isDayView {
-		sy, sw := iStartTime.ISOWeek()
+		sy, sw := s.ISOWeek()
 		iStartTime = isoweek.StartTime(sy, sw, time.UTC)
-		ey, ew := iEndTime.ISOWeek()
+		ey, ew := e.ISOWeek()
 		iEndTime = isoweek.StartTime(ey, ew, time.UTC) // is `time.UTC` the correct time location?
 	}
 	return iStartTime, iEndTime, nil
@@ -178,7 +161,7 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int 
 	return overflowUnits
 }
 
-func getGanttRows(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
+func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
 	rSlice := []eventGanttRow{}
@@ -189,14 +172,14 @@ func getGanttRows(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) (
 	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, iEndTime, err := parseEventTimes(event.Start, event.End, g.isDayView)
+		iStartTime, iEndTime, err := formatEventTimes(event.Start, event.End, g.isDayView)
 		if err != nil {
 			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
 		}
 		if !g.isDayView && idx == 0 {
-			g.groupStartTime = iStartTime
+			g.groupStartTime = &iStartTime
 		}
-		duration := iStartTime.Sub(g.groupStartTime)
+		duration := iStartTime.Sub(*g.groupStartTime)
 		daysSpacing := int(duration.Hours() / float64(g.divisor))
 
 		titleWidth := getTextEstimateWidth(event.Title)
@@ -221,7 +204,9 @@ func getGanttRows(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) (
 
 		var description string
 		if debug {
-			description = event.Description + "\n" + event.Start + "\n" + event.End
+			description = event.Description + "\n" +
+				event.Start.Format(common.TimeLayout) + "\n" +
+				event.End.Format(common.TimeLayout)
 		} else {
 			description = event.Description
 		}
@@ -246,8 +231,8 @@ func getGanttRows(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) (
 }
 
 func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
-	startTime := g.groupStartTime
-	endTime := g.groupEndTime
+	startTime := *g.groupStartTime
+	endTime := *g.groupEndTime
 
 	var overflowDays int
 	if g.isDayView {
@@ -364,7 +349,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []dbop.GanttEvent, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
+func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
 	e := eventGanttBase{
 		HeaderRectWidth:  g.baseHeaderRectWidth,
@@ -389,7 +374,7 @@ func getGanttEventBase(events []dbop.GanttEvent, g ganttRenderMetadata, debug bo
 	return e, nil
 }
 
-func renderGanttHTML(events []dbop.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
+func renderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
 	var t *template.Template
 	var err error
 

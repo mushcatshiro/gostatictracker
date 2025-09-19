@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func buildElmTree(listEntries []dbop.ListEntry, groupName string) elm {
+func buildElmTree(listEntries []models.ListEntry, groupName string) elm {
 	unorderedListElm := elm{
 		tag:   "ul",
 		attrs: attrsStruct{id: "myList"},
@@ -32,7 +33,7 @@ func buildElmTree(listEntries []dbop.ListEntry, groupName string) elm {
 	return listHtmlElmTree
 }
 
-func renderListHTML(listEntries []dbop.ListEntry, groupName string, file *os.File) error {
+func renderListHTML(listEntries []models.ListEntry, groupName string, file *os.File) error {
 	listHtmlElmTree := buildElmTree(listEntries, groupName)
 	htmlString := h(listHtmlElmTree)
 	_, err := file.Write([]byte(htmlString))

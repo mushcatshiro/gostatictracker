@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/mock"
+	"github.com/mushcatshiro/gostatictracker/models"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func mockGetGanttRenderMetadata(mockData []dbop.GanttEvent, isDayView bool) ganttRenderMetadata {
-	groupStartTime, _ := time.Parse(TimeLayout, mockData[0].Start)
-	groupEndTime, _ := time.Parse(TimeLayout, mockData[len(mockData)-1].End)
+func mockGetGanttRenderMetadata(mockData []models.GanttEvent, isDayView bool) ganttRenderMetadata {
+	groupStartTime := mockData[0].Start
+	groupEndTime := mockData[len(mockData)-1].End
 	var divisor int
 	if isDayView {
 		divisor = 24

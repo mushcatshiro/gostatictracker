@@ -42,6 +42,16 @@ func (e *Event) ToGanttEvent() GanttEvent {
 	return ge
 }
 
+func (e *Event) ToBookmarklet() Bookmarklet {
+	return Bookmarklet{
+		Title:       e.Title,
+		Description: e.Description,
+		URL:         e.URL,
+		InsertTime:  e.InsertTime,
+		Group:       e.Group,
+	}
+}
+
 // marhsall Event to JSON
 func (e *Event) MarshalJSON() ([]byte, error) {
 	type Alias Event // Create an alias to avoid recursion

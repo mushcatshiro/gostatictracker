@@ -9,13 +9,15 @@ type attrsStruct struct {
 	class string
 	id    string
 	style string
+	href  string
 }
 
 type elm struct {
-	tag       string
-	attrs     attrsStruct
-	innerText string
-	childs    []elm
+	tag        string
+	attrs      attrsStruct
+	innerText  string
+	childs     []elm
+	selfClosed bool
 }
 
 func (a *attrsStruct) toString() string {
@@ -29,18 +31,29 @@ func (a *attrsStruct) toString() string {
 	if a.style != "" {
 		attrParts = append(attrParts, fmt.Sprintf(`style="%s"`, a.style))
 	}
+	if a.href != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`href="%s"`, a.style))
+	}
 	return strings.Join(attrParts, " ")
 }
 
 func h(e elm) string {
 	if len(e.childs) == 0 {
-		return fmt.Sprintf(`<%s %s>%s</%s>`, e.tag, e.attrs.toString(), e.innerText, e.tag)
+		if e.selfClosed {
+			return fmt.Sprintf(`<%s %s/>`, e.tag, e.attrs.toString())
+		} else {
+			return fmt.Sprintf(`<%s %s>%s</%s>`, e.tag, e.attrs.toString(), e.innerText, e.tag)
+		}
 	}
 	var childString string
 	for _, cElm := range e.childs {
 		childString += h(cElm)
 	}
-	return fmt.Sprintf(
-		`<%s %s>%s %s</%s>`, e.tag, e.attrs.toString(), e.innerText, childString, e.tag,
-	)
+	if e.selfClosed {
+		return fmt.Sprintf(`<%s %s/>`, e.tag, e.attrs.toString())
+	} else {
+		return fmt.Sprintf(
+			`<%s %s>%s %s</%s>`, e.tag, e.attrs.toString(), e.innerText, childString, e.tag,
+		)
+	}
 }

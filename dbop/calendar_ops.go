@@ -55,6 +55,7 @@ func getOneMonth(db *sql.DB, d time.Time) (models.MonthGroup, error) {
 		return mg, err
 	}
 	defer rows.Close()
+	mg.FirstDayOfMonth = time.Date(d.Year(), d.Month(), 1, 0, 0, 0, 0, time.UTC)
 	var ctr int
 	for rows.Next() {
 		var e models.CalendarEvent
@@ -97,7 +98,7 @@ func getCalendarRenderRange(month, year int) ([]time.Time, error) {
 		s = tdy.AddDate(0, -6, 0)
 		e = tdy.AddDate(0, 6, 0)
 	}
-	for d := s; !d.After(e); d = d.AddDate(0, 1, 0) {
+	for d := s; !d.Equal(e); d = d.AddDate(0, 1, 0) {
 		ret = append(ret, d)
 	}
 	return ret, nil
@@ -105,7 +106,6 @@ func getCalendarRenderRange(month, year int) ([]time.Time, error) {
 
 func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]models.MonthGroup, error) {
 	var monthGroups []models.MonthGroup
-	fmt.Printf("input %v, %v", month, year)
 
 	renderRange, err := getCalendarRenderRange(month, year)
 	if err != nil {
@@ -113,7 +113,6 @@ func GetCalendarMonthGroups(conn *sql.DB, month, year int) ([]models.MonthGroup,
 	}
 
 	for _, d := range renderRange {
-		fmt.Printf("processing %v, %v", d.Month(), d.Year())
 		mg, err := getOneMonth(conn, d)
 		if err != nil {
 			return monthGroups, err

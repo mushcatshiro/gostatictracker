@@ -21,15 +21,14 @@ type elm struct {
 func (a *attrsStruct) toString() string {
 	var attrParts []string
 	if a.class != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`class=%s`, a.class))
+		attrParts = append(attrParts, fmt.Sprintf(`class="%s"`, a.class))
 	}
 	if a.id != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`id=%s`, a.id))
+		attrParts = append(attrParts, fmt.Sprintf(`id="%s"`, a.id))
 	}
 	if a.style != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`style=%s`, a.style))
+		attrParts = append(attrParts, fmt.Sprintf(`style="%s"`, a.style))
 	}
-
 	return strings.Join(attrParts, " ")
 }
 

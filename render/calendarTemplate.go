@@ -8,6 +8,7 @@ var calendarHeader elm = elm{
 			.calendar-container {
 				display: grid;
 				grid-template-columns: repeat(7, 1fr);
+				position: relative;
 			}
 			.day-cell {
 				border: 1px solid #ccc;
@@ -17,15 +18,15 @@ var calendarHeader elm = elm{
 				box-shadow: 0px 0px 3px #CBD5C2;
 			}
 			.event-div {
-				grid-column-start: var(--start-col);
+				position: absolute;
+				grid-column: var(--start-col) / span var(--span);
 				grid-row-start: var(--start-row);
-				grid-column-end: span var(--span);
 				background-color: #4A90E2;
 				color: white;
 				margin-top: 25px;
-				padding: 2px, 5px;
+				padding: 2px 5px;
 				overflow: hidden;
-				z-index: 1;
+				z-index: 2;
 			}
 			.weekdays {
 				padding: 0.5rem;

@@ -148,6 +148,9 @@ func RenderCalendar(month, year int, renderTargetPath string, conn *sql.DB) {
 			continue
 		}
 		err = renderCalendarHTML(mg, file)
+		if err != nil {
+			log.Fatalf("Failed to render for %d-%d", mg.FirstDayOfMonth.Month(), mg.FirstDayOfMonth.Year())
+		}
 	}
 
 }

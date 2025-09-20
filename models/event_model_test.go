@@ -3,16 +3,16 @@ package models
 import (
 	"testing"
 
-	"github.com/mushcatshiro/gostatictracker/mock"
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMarshalEventJSON(t *testing.T) {
 	e := Event{
 		ID:          1,
-		Start:       mock.ParseStringDate("01-02-2023 10:00"),
-		End:         mock.ParseStringDate("01-02-2023 11:00"),
-		ActualEnd:   mock.ParseStringDate("01-02-2023 11:00"),
+		Start:       common.ParseStringDate("01-02-2023 10:00"),
+		End:         common.ParseStringDate("01-02-2023 11:00"),
+		ActualEnd:   common.ParseStringDate("01-02-2023 11:00"),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Event A",

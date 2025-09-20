@@ -2,12 +2,14 @@ package render
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
 func buildCalendarElmTree(fdom time.Time) []elm {
@@ -30,9 +32,9 @@ func buildCalendarElmTree(fdom time.Time) []elm {
 	return ce
 }
 
-func buildEventElmTree(mg dbop.MonthGroup) elm {
+func buildEventElmTree(mg models.MonthGroup) elm {
 	/*
-			handle
+		handle
 			- start before month (css broken start)
 			- continue after month (css broken end)
 			- cross week (break into two divs)
@@ -43,7 +45,7 @@ func buildEventElmTree(mg dbop.MonthGroup) elm {
 	return e
 }
 
-func renderCalendarHTML(mg dbop.MonthGroup, file *os.File) error {
+func renderCalendarHTML(mg models.MonthGroup, file *os.File) error {
 	calendarElmTree := buildCalendarElmTree(mg.FirstDayOfMonth)
 	// eventElmTree := buildEventElmTree(mg)
 	cc := calendarContainer
@@ -68,15 +70,18 @@ func RenderCalendar(month, year int, renderTargetPath string, conn *sql.DB) {
 		log.Fatalf("Not able to query any group(s): %v", err)
 	}
 	for _, mg := range monthGroups {
-		fileName := strconv.Itoa(int(mg.FirstDayOfMonth.Month())) +
-			"-" + strconv.Itoa(mg.FirstDayOfMonth.Year()) +
-			"-calendar.html"
-		file, err := os.Create(renderTargetPath + "/" + fileName) // truncates if exists
-		if err != nil {
-			log.Printf("Failed to create file %s: %v", fileName, err)
-			continue
-		}
-		err = renderCalendarHTML(mg, file)
+		fmt.Printf("%v\n", mg)
+		/*
+			fileName := strconv.Itoa(int(mg.FirstDayOfMonth.Month())) +
+				"-" + strconv.Itoa(mg.FirstDayOfMonth.Year()) +
+				"-calendar.html"
+			file, err := os.Create(renderTargetPath + "/" + fileName) // truncates if exists
+			if err != nil {
+				log.Printf("Failed to create file %s: %v", fileName, err)
+				continue
+			}
+			err = renderCalendarHTML(mg, file)
+		*/
 	}
 
 }

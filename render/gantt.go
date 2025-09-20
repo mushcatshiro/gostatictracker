@@ -90,8 +90,8 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 		divisor:              24,
 	}
 	query := `SELECT
-		TO_CHAR(MIN(d), 'MM-DD-YYYY') AS startDate,
-		TO_CHAR(MAX(d), 'MM-DD-YYYY') AS endDate
+		MIN(d) AS startDate,
+		MAX(d) AS endDate
 	FROM (
 		SELECT "start" d FROM events WHERE "group" = $1
 		UNION ALL
@@ -133,6 +133,9 @@ func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time, er
 		iStartTime = isoweek.StartTime(sy, sw, time.UTC)
 		ey, ew := e.ISOWeek()
 		iEndTime = isoweek.StartTime(ey, ew, time.UTC) // is `time.UTC` the correct time location?
+	} else {
+		iStartTime = *s
+		iEndTime = *e
 	}
 	return iStartTime, iEndTime, nil
 }

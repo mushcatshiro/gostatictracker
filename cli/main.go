@@ -33,11 +33,18 @@ func init() {
 
 	renderCalendarCmd.Flags().IntVarP(&rcMonth, "month", "m", 0, "Target month to render")
 	renderCalendarCmd.Flags().IntVarP(&rcYear, "year", "y", 0, "Target year to render")
-	renderCalendarCmd.Flags().StringVarP(&rcDir, "output directory", "d", ".", "Target directory to store rendered html file(s)")
+	renderCalendarCmd.Flags().StringVarP(&rDir, "output directory", "d", ".", "Target directory to store rendered html file(s)")
+
+	renderGanttCmd.Flags().StringVarP(&rDir, "output directory", "d", ".", "Target directory to store rendered html file(s)")
+	renderGanttCmd.Flags().BoolVarP(&rDebug, "debug mode", "v", false, "Run in debug mode")
+
+	renderListCmd.Flags().StringVarP(&rDir, "output directory", "d", ".", "Target directory to store rendered html file(s)")
 
 	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(insertMockCmd)
 	rootCmd.AddCommand(renderCalendarCmd)
+	rootCmd.AddCommand(renderGanttCmd)
+	rootCmd.AddCommand(renderListCmd)
 
 	setupConfig()
 

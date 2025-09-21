@@ -1,5 +1,7 @@
-package main
 
+package cli
+
+/*
 import (
 	"errors"
 	"fmt"
@@ -69,3 +71,4 @@ func cliRenderList(cmd *cobra.Command, args []string) {
 	}
 	render.RenderList(rDir, conn)
 }
+*/

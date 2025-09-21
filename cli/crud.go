@@ -1,6 +1,7 @@
-package main
+package cli
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -10,33 +11,40 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	cDescription string
-	cUrl         string
-	cPriority    int8
-	cStatus      int8
-)
+func createEntryCmd(app *App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "c",
+		Short: "Create an entry",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			title := strings.Join(args, " ")
+			description, _ := cmd.Flags().GetString("description")
+			priority, _ := cmd.Flags().GetInt8("priority")
+			status, _ := cmd.Flags().GetInt8("status")
+			url, _ := cmd.Flags().GetString("url")
+			it := time.Now()
 
-var createCmd = &cobra.Command{
-	Use:   "c",
-	Short: "Create an entry",
-	Run:   cliCreate,
-}
+			e := models.Event{
+				Title:       title,
+				Description: description,
+				InsertTime:  &it,
+				URL:         url,
+				Priority:    priority,
+				Status:      status,
+			}
+			id, err := dbop.InsertEvent(app.DB, e)
+			if err != nil {
+				return fmt.Errorf("Error occured during event creation: %v", err)
+			}
+			log.Printf("Event %d created", id)
+			return nil
+		},
+	}
 
-func cliCreate(cmd *cobra.Command, args []string) {
-	title := strings.Join(args, " ")
-	it := time.Now()
-	e := models.Event{
-		Title:       title,
-		Description: cDescription,
-		InsertTime:  &it,
-		URL:         cUrl,
-		Priority:    cPriority,
-		Status:      cStatus,
-	}
-	id, err := dbop.InsertEvent(conn, e)
-	if err != nil {
-		log.Fatalf("Error occured during event creation: %v", err)
-	}
-	log.Printf("Event %d created", id)
+	cmd.Flags().StringP("description", "d", "", "Extra descriptive information")
+	cmd.Flags().StringP("url", "u", "", "Reference url")
+	cmd.Flags().Int8P("priority", "p", 2, "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
+	cmd.Flags().Int8P("status", "s", 0, "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
+
+	return cmd
 }

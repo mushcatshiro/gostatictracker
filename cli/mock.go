@@ -1,7 +1,7 @@
-package main
+package cli
 
 import (
-	"log"
+	"fmt"
 	"slices"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
@@ -9,25 +9,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var insertMockCmd = &cobra.Command{
-	Use:   "cm",
-	Short: "Create mock entries for testing purposes",
-	Run:   insertMock,
-}
+func insertMockCmd(app *App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "cm",
+		Short: "Create mock entries for testing purposes",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			mockData := slices.Concat(
+				mock.DayViewMockData[:],
+				mock.DayViewOverflowMockData[:],
+				mock.WeekViewMockData[:],
+			)
+			if err := dbop.InitDB(app.DB); err != nil {
+				return fmt.Errorf("Failed to initiate database: %v", err)
+			}
+			for _, event := range mockData {
+				_, err := dbop.InsertEvent(app.DB, event.ToEvent())
+				if err != nil {
+					return fmt.Errorf("Failed to insert mock event: %v", err)
+				}
+			}
+			return nil
+		},
+	}
 
-func insertMock(cmd *cobra.Command, args []string) {
-	mockData := slices.Concat(
-		mock.DayViewMockData[:],
-		mock.DayViewOverflowMockData[:],
-		mock.WeekViewMockData[:],
-	)
-	if err := dbop.InitDB(conn); err != nil {
-		log.Fatalf("Failed to initiate database: %v", err)
-	}
-	for _, event := range mockData {
-		_, err := dbop.InsertEvent(conn, event.ToEvent())
-		if err != nil {
-			log.Fatalf("Failed to insert mock event: %v", err)
-		}
-	}
+	return cmd
 }

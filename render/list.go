@@ -43,7 +43,7 @@ func renderListHTML(listEntries []models.ListEntry, groupName string, file *os.F
 	return nil
 }
 
-func RenderList(renderTargetPath string, conn *sql.DB) {
+func RenderList(conn *sql.DB, renderTargetPath string) {
 	/*
 		right now only support flat list, two main option to support nested list
 		handle at application level (create a map through for loop perhaps), using

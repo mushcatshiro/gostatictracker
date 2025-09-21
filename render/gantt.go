@@ -395,7 +395,7 @@ func renderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMet
 	return err
 }
 
-func RenderGantt(renderTargetPath string, conn *sql.DB, debug bool) {
+func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 	groups, err := dbop.GetUniqueGroups(conn)
 	if err != nil {
 		log.Fatalf("Not able to query any group(s): %v", err)
@@ -407,7 +407,7 @@ func RenderGantt(renderTargetPath string, conn *sql.DB, debug bool) {
 			log.Printf("Failed to get gantt group events: %v", err)
 			continue
 		}
-		fileName := strings.Replace(group, " ", "-", -1) + "-gantt.html"
+		fileName := strings.ReplaceAll(group, " ", "-") + "-gantt.html"
 		file, err := os.Create(renderTargetPath + "/" + fileName) // truncates if exists
 		if err != nil {
 			log.Printf("Failed to create file %s: %v", fileName, err)

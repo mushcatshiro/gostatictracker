@@ -15,10 +15,11 @@ const (
 )
 
 const (
-	DONOW = iota
-	DOLATER
-	DELEGATE
+	NOPRIORITY = iota
 	ELIMINATE
+	DELEGATE
+	DOLATER
+	DONOW
 )
 
 func GenerateConnStr(username, password , dbhost, dbname string) (string, error) {

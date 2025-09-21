@@ -21,7 +21,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalf("Connection to DB failed: %v", err)
 	}
-	err = InitDB(conn)
+	err = InitDB(conn, true)
 	if err != nil {
 		log.Fatalf("Failed to initialize test database: %s", err)
 	}

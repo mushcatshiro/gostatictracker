@@ -7,7 +7,6 @@ import (
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
-	"github.com/mushcatshiro/gostatictracker/render"
 )
 
 type bookmarkletPayload struct {
@@ -25,26 +24,18 @@ func (bp *bookmarkletPayload) ToBookmarklet() models.Bookmarklet {
 	}
 }
 
-func authenticate(token string) (bool, error) {
-	// TODO
-	return true, nil
-}
+func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
+		}
+		var bp bookmarkletPayload
+		if err := json.NewDecoder(r.Body).Decode(&bp); err != nil {
+			http.Error(w, "incorrect payload format", http.StatusBadRequest)
+		}
 
-func handleInsertBookmarklet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
-	}
-	var bp bookmarkletPayload
-	if err := json.NewDecoder(r.Body).Decode(&bp); err != nil {
-		http.Error(w, "incorrect payload format", http.StatusBadRequest)
-	}
-	ok, err := authenticate(bp.Token)
-	if err != nil {
-		http.Error(w, "failed to autheticate", http.StatusUnauthorized)
-	}
-	if ok {
 		b := bp.ToBookmarklet()
-		eid, err := dbop.InsertEvent(conn, b.ToEvent())
+		eid, err := dbop.InsertEvent(s.db, b.ToEvent())
 		if err != nil {
 			errMsg := fmt.Sprintf("failed to insert with error: %", err)
 			http.Error(w, errMsg, http.StatusBadRequest)
@@ -55,6 +46,7 @@ func handleInsertBookmarklet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
 func renderBookmarklet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
@@ -68,3 +60,4 @@ func renderBookmarklet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, page)
 }
+*/

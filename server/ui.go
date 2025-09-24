@@ -1,5 +1,6 @@
 package server
 
+/*
 import (
 	"database/sql"
 	"embed"
@@ -195,3 +196,4 @@ func Run() {
 	addr := *serverHost + ":" + *serverPort
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
+*/

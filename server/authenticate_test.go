@@ -4,7 +4,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,7 +17,7 @@ func TestHandleRequestToken(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			tname:          "Incorrect request method",
+			tname:          "Failure-Incorrect-Request-Method",
 			expectedStatus: 405,
 		},
 	}
@@ -45,6 +47,15 @@ func TestAuthMiddleWare(t *testing.T) {
 		w.Write([]byte(`{"eid: 0"`))
 	})
 
+	validToken, err := createJWT(0, "2234")
+	if err != nil {
+		t.Fatalf("Failed to create valid JWT: %v", err)
+	}
+	expiredToken, err := createExpiredJWT(s)
+	if err != nil {
+		t.Fatalf("Failed to create expired JWT: %v", err)
+	}
+
 	testCases := []struct {
 		tname          string
 		authHeader     string
@@ -52,10 +63,15 @@ func TestAuthMiddleWare(t *testing.T) {
 		expectedResp   string
 	}{
 		{
-			tname: "Success - Valid Token",
-			authHeader: "Bearer " + validToken,
+			tname:          "Success-Valid-Token",
+			authHeader:     "Bearer " + validToken,
 			expectedStatus: http.StatusOK,
-			expectedResp: `{"eid": 0}`,
+			expectedResp:   `{"eid": 0}`,
+		},
+		{
+			tname:          "Failure-Expired-Token",
+			authHeader:     "Bearer " + expiredToken,
+			expectedStatus: http.StatusUnauthorized,
 		},
 	}
 
@@ -71,4 +87,15 @@ func TestAuthMiddleWare(t *testing.T) {
 			assert.Equal(t, tc.expectedStatus, rr.Code, "staus code mismatched")
 		})
 	}
+}
+
+func createExpiredJWT(s *Server) (string, error) {
+	claims := CustomClaims{
+		uid: 999,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour * 1)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.config.JKey))
 }

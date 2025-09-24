@@ -37,7 +37,7 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 		b := bp.ToBookmarklet()
 		eid, err := dbop.InsertEvent(s.db, b.ToEvent())
 		if err != nil {
-			errMsg := fmt.Sprintf("failed to insert with error: %", err)
+			errMsg := fmt.Sprintf("failed to insert with error: %v", err)
 			http.Error(w, errMsg, http.StatusBadRequest)
 		} else {
 			w.WriteHeader(http.StatusCreated)

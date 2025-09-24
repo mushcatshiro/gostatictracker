@@ -26,7 +26,7 @@ type CustomClaims struct {
 
 func createJWT(uid int, jkey string) (string, error) {
 	cc := CustomClaims{
-		uid: 0,
+		uid: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(5))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -34,7 +34,7 @@ func createJWT(uid int, jkey string) (string, error) {
 		},
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
-	return tok.SignedString(jkey)
+	return tok.SignedString([]byte(jkey))
 }
 
 func (s *Server) handleRequestToken() http.HandlerFunc {

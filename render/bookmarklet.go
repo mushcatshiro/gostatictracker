@@ -18,8 +18,8 @@ func buildBookmarkletElmTree(bs []models.Bookmarklet) elm {
 			tag: "li",
 			childs: []elm{
 				{tag: "a", innerText: b.Title, attrs: attrsStruct{href: b.URL}},
-				{tag: "span", innerText: b.Description, attrs: attrsStruct{style: "font-style: italic; color: darkgray;"}},
-				{tag: "span", innerText: b.InsertTime.Format(common.TimeLayout)},
+				{tag: "span", innerText: " " + b.Description, attrs: attrsStruct{style: "font-style: italic; color: darkgray;"}},
+				{tag: "span", innerText: " " + b.InsertTime.Format(common.TimeLayout)},
 			},
 		}
 		unorderedListElm.childs = append(unorderedListElm.childs, bElm)

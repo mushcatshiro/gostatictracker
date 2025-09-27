@@ -12,7 +12,6 @@ import (
 )
 
 type bookmarkletPayload struct {
-	Token       string `json:"token"`
 	Title       string `json:"title"`
 	Description string `json:"desc"`
 	URL         string `json:"url"`

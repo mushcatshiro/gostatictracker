@@ -3,10 +3,12 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
+	"github.com/mushcatshiro/gostatictracker/render"
 )
 
 type bookmarkletPayload struct {
@@ -46,18 +48,17 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 	}
 }
 
-/*
-func renderBookmarklet(w http.ResponseWriter, r *http.Request) {
+func (s *Server) renderBookmarkletView(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
 	}
-	page, err := render.RenderBookmarklet(conn)
+	page, err := render.RenderBookmarklet(s.db)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		log.Printf("Failed to render bookmarklet page: %v\n", err)
 		fmt.Fprintf(w, "error")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, page)
 }
-*/

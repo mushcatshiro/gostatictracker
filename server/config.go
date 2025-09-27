@@ -2,15 +2,24 @@ package server
 
 import "github.com/spf13/viper"
 
+type ServerConfig struct {
+	Port string `mapstructure:"port"`
+}
+
+type DBConfig struct {
+	CnxStr string `mapstructure:"cnxStr"`
+}
+
+type AuthConfig struct {
+	Key         string `mapstructure:"key"`
+	JKey        string `mapstructure:"jKey"`
+	ExpDuration int    `mapstructure:"expDuration"`
+}
+
 type Config struct {
-	Server struct {
-		Port string `mapstructure:"port"`
-	} `mapstructure:"server"`
-	DB struct {
-		CnxStr string `mapstructure:"cnxStr"`
-	} `mapstructure:"db"`
-	Key  string
-	JKey string
+	Server ServerConfig `mapstructure:"server"`
+	DB     DBConfig     `mapstructure:"db"`
+	Auth   AuthConfig   `mapstructure:"auth"`
 }
 
 func LoadConfig() (Config, error) {

@@ -12,29 +12,31 @@ import (
 )
 
 type TokenRequest struct {
-	key string `json:"key"`
+	Key string `json:"key"`
 }
 
 type TokenResponse struct {
-	token string `json:"token"`
+	Token string `json:"token"`
 }
 
 type CustomClaims struct {
-	uid int `json:"uid"`
+	Uid int `json:"uid"`
 	jwt.RegisteredClaims
 }
 
-func createJWT(uid int, jkey string) (string, error) {
+func (s *Server) createJWT(uid int) (string, error) {
 	cc := CustomClaims{
-		uid: uid,
+		Uid: uid,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(5))),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "server",
+			ExpiresAt: jwt.NewNumericDate(
+				time.Now().Add(time.Minute * time.Duration(s.config.Auth.ExpDuration)),
+			),
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			Issuer:   "server",
 		},
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
-	return tok.SignedString([]byte(jkey))
+	return tok.SignedString([]byte(s.config.Auth.JKey))
 }
 
 func (s *Server) handleRequestToken() http.HandlerFunc {
@@ -48,16 +50,16 @@ func (s *Server) handleRequestToken() http.HandlerFunc {
 			http.Error(w, "Invalid request body", http.StatusBadRequest)
 			return
 		}
-		if req.key != s.config.Key {
+		if req.Key != s.config.Auth.Key {
 			http.Error(w, "Failed to authenticate", http.StatusForbidden)
 			return
 		}
-		tok, err := createJWT(0, s.config.JKey)
+		tok, err := s.createJWT(0)
 		if err != nil {
 			http.Error(w, "Failed to create token", http.StatusInternalServerError)
 		}
 		w.Header().Set("Content-type", "application/json")
-		json.NewEncoder(w).Encode(TokenResponse{token: tok})
+		json.NewEncoder(w).Encode(TokenResponse{Token: tok})
 	}
 }
 
@@ -74,11 +76,11 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 		}
 		tokStr := headerParts[1]
 		claims := &CustomClaims{}
-		token, err := jwt.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte(s.config.JKey), nil
+			return []byte(s.config.Auth.JKey), nil
 		})
 		if err != nil {
 			if errors.Is(err, jwt.ErrTokenExpired) {

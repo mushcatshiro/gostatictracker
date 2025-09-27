@@ -37,8 +37,11 @@ func TestHandleRequestToken(t *testing.T) {
 func TestAuthMiddleWare(t *testing.T) {
 	s := &Server{
 		config: Config{
-			Key:  "1234",
-			JKey: "2234",
+			Auth: AuthConfig{
+				Key:  "1234",
+				JKey: "2234",
+				ExpDuration: 100,
+			},
 		},
 	}
 
@@ -47,7 +50,7 @@ func TestAuthMiddleWare(t *testing.T) {
 		w.Write([]byte(`{"eid: 0"`))
 	})
 
-	validToken, err := createJWT(0, "2234")
+	validToken, err := s.createJWT(0)
 	if err != nil {
 		t.Fatalf("Failed to create valid JWT: %v", err)
 	}
@@ -77,7 +80,7 @@ func TestAuthMiddleWare(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.tname, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/api/proctedted", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/protected", nil)
 			if tc.authHeader != "" {
 				req.Header.Set("Authorization", tc.authHeader)
 			}
@@ -91,11 +94,11 @@ func TestAuthMiddleWare(t *testing.T) {
 
 func createExpiredJWT(s *Server) (string, error) {
 	claims := CustomClaims{
-		uid: 999,
+		Uid: 999,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour * 1)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.config.JKey))
+	return token.SignedString([]byte(s.config.Auth.JKey))
 }

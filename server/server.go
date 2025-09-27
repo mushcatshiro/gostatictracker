@@ -19,6 +19,10 @@ func New(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = dbop.InitDB(conn, false)
+	if err != nil {
+		return nil , err
+	}
 	s := &Server{
 		config: config,
 		router: http.NewServeMux(), // instead of global

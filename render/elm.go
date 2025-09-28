@@ -6,10 +6,12 @@ import (
 )
 
 type attrsStruct struct {
-	class string
-	id    string
-	style string
-	href  string
+	class   string
+	id      string
+	style   string
+	href    string
+	charset string
+	data    string
 }
 
 type elm struct {
@@ -33,6 +35,12 @@ func (a *attrsStruct) toString() string {
 	}
 	if a.href != "" {
 		attrParts = append(attrParts, fmt.Sprintf(`href="%s"`, a.style))
+	}
+	if a.charset != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`charset="%s"`, a.charset))
+	}
+	if a.data != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`%s`, a.data))
 	}
 	return strings.Join(attrParts, " ")
 }

@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/common"
@@ -50,6 +51,32 @@ func (e *Event) ToBookmarklet() Bookmarklet {
 		InsertTime:  e.InsertTime,
 		Group:       e.Group,
 	}
+}
+
+func (e *Event) ToDataMap() map[string]string {
+	retMap := make(map[string]string)
+	retMap["id"] = strconv.FormatInt(e.ID, 10)
+	if e.Start != nil {
+		retMap["start"] = e.Start.Format(common.TimeLayout)
+	}
+	if e.End != nil {
+		retMap["end"] = e.End.Format(common.TimeLayout)
+	}
+	if e.ActualStart != nil {
+		retMap["actualstart"] = e.ActualStart.Format(common.TimeLayout)
+	}
+	if e.ActualEnd != nil {
+		retMap["actualend"] = e.ActualEnd.Format(common.TimeLayout)
+	}
+	retMap["end"] = e.InsertTime.Format(common.TimeLayout)
+	retMap["group"] = e.Group
+	retMap["title"] = e.Title
+	retMap["url"] = e.URL
+	retMap["description"] = e.Description
+	retMap["priority"] = strconv.FormatInt(int64(e.Priority), 10)
+	retMap["metadata"] = e.Metadata
+	retMap["status"] = strconv.FormatInt(int64(e.Status), 10)
+	return retMap
 }
 
 // marhsall Event to JSON

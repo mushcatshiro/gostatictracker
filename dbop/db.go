@@ -7,12 +7,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
+type Status int
+
 const (
-	NOTSTARTED = iota
+	NOTSTARTED Status = iota
 	INPROGRESS
 	COMPLETED
 	CANCELLED
 )
+
+var statusName = [...]string{
+	"NOTSTARTED",
+	"INPROGRESS",
+	"COMPLETED",
+	"CANCELLED",
+}
+
+func (s Status) String() string {
+	if s < 0 || int(s) > len(statusName) {
+		return "UNKNOWN"
+	}
+	return statusName[s]
+}
 
 const (
 	NOPRIORITY = iota

@@ -39,7 +39,7 @@ func GetListGroupEntries(db *sql.DB, groupName string) ([]models.ListEntry, erro
 	return events, nil
 }
 
-func UpdateStatus(db *sql.DB, id int64, status int8) error {
+func UpdateStatus(db *sql.DB, id int64, status common.Status) error {
 
 	e, err := readEventById(db, id)
 	if err != nil {

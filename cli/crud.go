@@ -5,6 +5,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/spf13/cobra"
@@ -19,8 +20,13 @@ func createEntryCmd(app *App) *cobra.Command {
 			title := strings.Join(args, " ")
 			description, _ := cmd.Flags().GetString("description")
 			priority, _ := cmd.Flags().GetInt8("priority")
-			status, _ := cmd.Flags().GetInt8("status")
+			iStatus, _ := cmd.Flags().GetString("status")
 			url, _ := cmd.Flags().GetString("url")
+
+			status, err := common.ParseStatus(iStatus)
+			if err != nil {
+				return err
+			}
 
 			e := models.Event{
 				Title:       title,

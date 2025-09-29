@@ -14,12 +14,10 @@ type GanttEvent struct {
 }
 
 func (ge *GanttEvent) ToEvent() Event {
-	it := time.Now()
 	return Event{
 		ID:          ge.ID,
 		Start:       ge.Start,
 		End:         ge.End,
-		InsertTime:  &it,
 		Group:       ge.Group,
 		AllDay:      ge.AllDay,
 		Title:       ge.Title,

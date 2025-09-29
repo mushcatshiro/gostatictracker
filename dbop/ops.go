@@ -7,7 +7,7 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func InitDB(db *sql.DB, truncate bool) error {
+func InitDB(db *sql.DB, truncate, drop bool) error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS events (
 		id SERIAL PRIMARY KEY,
@@ -15,7 +15,7 @@ func InitDB(db *sql.DB, truncate bool) error {
 		"end" TIMESTAMP,
 		actualStart TIMESTAMP,
 		actualEnd TIMESTAMP,
-		insertTime TIMESTAMP NOT NULL,
+		insertTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		"group" TEXT DEFAULT 'default' NOT NULL,
 		allDay BOOLEAN DEFAULT FALSE,
 		title TEXT NOT NULL,
@@ -27,7 +27,13 @@ func InitDB(db *sql.DB, truncate bool) error {
 		status INT
 	);`
 	if truncate {
-		_, err := db.Exec("TRUNCATE TABLE table_name RESTART IDENTITY CASCADE")
+		_, err := db.Exec("TRUNCATE TABLE events RESTART IDENTITY CASCADE")
+		if err != nil {
+			return err
+		}
+	}
+	if drop {
+		_, err := db.Exec("DROP TABLE IF EXISTS events CASCADE")
 		if err != nil {
 			return err
 		}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"time"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
@@ -22,12 +21,10 @@ func createEntryCmd(app *App) *cobra.Command {
 			priority, _ := cmd.Flags().GetInt8("priority")
 			status, _ := cmd.Flags().GetInt8("status")
 			url, _ := cmd.Flags().GetString("url")
-			it := time.Now()
 
 			e := models.Event{
 				Title:       title,
 				Description: description,
-				InsertTime:  &it,
 				URL:         url,
 				Priority:    priority,
 				Status:      status,

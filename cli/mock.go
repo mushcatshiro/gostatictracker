@@ -19,13 +19,13 @@ func insertMockCmd(app *App) *cobra.Command {
 				mock.DayViewOverflowMockData[:],
 				mock.WeekViewMockData[:],
 			)
-			if err := dbop.InitDB(app.DB, true); err != nil {
+			if err := dbop.InitDB(app.DB, false, true); err != nil {
 				return fmt.Errorf("Failed to initiate database: %v", err)
 			}
 			for _, event := range mockData {
 				_, err := dbop.InsertEvent(app.DB, event.ToEvent())
 				if err != nil {
-					return fmt.Errorf("Failed to insert mock event: %v", err)
+					return fmt.Errorf("Failed to insert mock event: %v+", err)
 				}
 			}
 			return nil

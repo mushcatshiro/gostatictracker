@@ -11,9 +11,7 @@ type Bookmarklet struct {
 }
 
 func (b *Bookmarklet) ToEvent() Event {
-	it := time.Now()
 	return Event{
-		InsertTime:  &it,
 		Title:       b.Title,
 		Description: b.Description,
 		Group:       "bookmarklet",

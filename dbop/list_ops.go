@@ -3,7 +3,6 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/models"
@@ -47,10 +46,12 @@ func UpdateStatus(db *sql.DB, id int64, status int8) error {
 		return err
 	}
 	e.Status = status
-	if status == COMPLETED {
-		ae := time.Now()
-		e.ActualEnd = &ae
-	}
+	/*
+		if status == COMPLETED {
+			ae := time.Now()
+			e.ActualEnd = &ae
+		}
+	*/
 	id, err = InsertEvent(db, e)
 	if err != nil {
 		return err

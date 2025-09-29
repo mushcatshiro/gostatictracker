@@ -58,10 +58,10 @@ func readEventById(db *sql.DB, id int64) (models.Event, error) {
 func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
 	insertQuery := `
 	INSERT INTO events (
-		start, "end", actualStart, actualEnd, insertTime, "group", allDay, title,
-		url, description, pid, priority, metadata, status
+		start, "end", actualStart, actualEnd, "group", allDay, title, url,
+		description, pid, priority, metadata, status
 	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 	RETURNING id;`
 
 	var id int64
@@ -70,7 +70,6 @@ func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
 		event.End,
 		event.ActualStart,
 		event.ActualEnd,
-		event.InsertTime,
 		event.Group,
 		event.AllDay,
 		event.Title,

@@ -10,7 +10,7 @@ import (
 func InitDB(db *sql.DB, truncate, drop bool) error {
 	createTableQuery := `
 	CREATE TABLE IF NOT EXISTS events (
-		id SERIAL PRIMARY KEY,
+		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		start TIMESTAMP,
 		"end" TIMESTAMP,
 		actualStart TIMESTAMP,
@@ -21,7 +21,7 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 		title TEXT NOT NULL,
 		url TEXT,
 		description TEXT,
-		pid INT,
+		pid BIGINT,
 		priority INT,
 		metadata TEXT,
 		status INT

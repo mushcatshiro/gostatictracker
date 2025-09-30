@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		mock.WeekViewMockData[:],
 	)
 	for _, event := range mockData {
-		_, err := InsertEvent(conn, event.ToEvent())
+		_, err := InsertEvent(conn, event)
 		if err != nil {
 			log.Fatalf("Failed to insert mock event: %v", err)
 		}

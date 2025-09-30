@@ -23,7 +23,7 @@ func insertMockCmd(app *App) *cobra.Command {
 				return fmt.Errorf("Failed to initiate database: %v", err)
 			}
 			for _, event := range mockData {
-				_, err := dbop.InsertEvent(app.DB, event.ToEvent())
+				_, err := dbop.InsertEvent(app.DB, event)
 				if err != nil {
 					return fmt.Errorf("Failed to insert mock event: %v+", err)
 				}

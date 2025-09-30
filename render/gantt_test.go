@@ -61,9 +61,11 @@ func TestGetRowRectWidth(t *testing.T) {
 
 func TestGetGanttRows(t *testing.T) {
 	// hardcoded `ganttRenderMetadata`
-	g0 := mockGetGanttRenderMetadata(mock.DayViewMockData[:], true)
+	d0 := mock.GetDayViewMockDataAs(func(e models.Event) models.GanttEvent {
+		return e.ToGanttEvent()
+	})
+	g0 := mockGetGanttRenderMetadata(d0, true)
 
-	// trick for converting a defined size array into a slice
 	r0 := eventGanttRow{
 		RectX:       0,
 		RectY:       78,
@@ -157,7 +159,7 @@ func TestGetGanttRows(t *testing.T) {
 	}
 
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttRows(mock.DayViewMockData[:], g0, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttRows(d0, g0, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 0, resultOverflowDay)
 		assert.Equal(t, 7, len(resultGanttEventRow))
@@ -170,7 +172,10 @@ func TestGetGanttRows(t *testing.T) {
 		assert.Equal(t, r6, resultGanttEventRow[6])
 	})
 
-	g1 := mockGetGanttRenderMetadata(mock.DayViewOverflowMockData[:], true)
+	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Event) models.GanttEvent {
+		return e.ToGanttEvent()
+	})
+	g1 := mockGetGanttRenderMetadata(d1, true)
 
 	r7 := eventGanttRow{
 		RectX:       0,
@@ -186,7 +191,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttRows(mock.DayViewOverflowMockData[:], g1, true)
+		resultGanttEventRow, resultOverflowDay, err := getGanttRows(d1, g1, true)
 		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))
@@ -196,7 +201,10 @@ func TestGetGanttRows(t *testing.T) {
 }
 
 func TestGetGanttHeaders(t *testing.T) {
-	g0 := mockGetGanttRenderMetadata(mock.DayViewMockData[:], true)
+	d0 := mock.GetDayViewMockDataAs(func(e models.Event) models.GanttEvent {
+		return e.ToGanttEvent()
+	})
+	g0 := mockGetGanttRenderMetadata(d0, true)
 	yh0 := eventGanttHeader{
 		RectX:     0,
 		RectWidth: 158,
@@ -230,7 +238,10 @@ func TestGetGanttHeaders(t *testing.T) {
 		assert.Equal(t, dh0, dh[0])
 	})
 
-	g1 := mockGetGanttRenderMetadata(mock.DayViewOverflowMockData[:], true)
+	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Event) models.GanttEvent {
+		return e.ToGanttEvent()
+	})
+	g1 := mockGetGanttRenderMetadata(d1, true)
 	yh0 = eventGanttHeader{
 		RectX:     0,
 		RectWidth: 158,
@@ -264,7 +275,10 @@ func TestGetGanttHeaders(t *testing.T) {
 		assert.Equal(t, dh0, dh[0])
 	})
 
-	g2 := mockGetGanttRenderMetadata(mock.WeekViewMockData[:], false)
+	d2 := mock.GetWeekViewMockDataAs(func(e models.Event) models.GanttEvent {
+		return e.ToGanttEvent()
+	})
+	g2 := mockGetGanttRenderMetadata(d2, false)
 	yh0 = eventGanttHeader{
 		RectX:     0,
 		RectWidth: 94,

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
 )
 
@@ -11,7 +12,7 @@ func RenderKanban(db *sql.DB) (string, error) {
 	var htmlString string
 	var slElmList []elm
 
-	for idx := dbop.NOTSTARTED; idx <= dbop.CANCELLED; idx++ {
+	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
 		titleName := idx.String()
 		listOfEvent, err := dbop.GetKanbanGroup(db, int(idx))
 		if err != nil {

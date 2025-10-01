@@ -1,74 +1,46 @@
-
 package cli
 
-/*
 import (
-	"errors"
 	"fmt"
-	"log"
-	"os"
+	"strings"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/render"
 	"github.com/spf13/cobra"
 )
 
-var (
-	rcMonth int
-	rcYear  int
-	rDir    string
-	rDebug  bool
-)
+func renderKanbanCmd(app *App) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "rk",
+		Short: "Render a Kanban",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// current iteration kanban only cares about status
+			targetDirectory, _ := cmd.Flags().GetString("targetDir")
+			fname, _ := cmd.Flags().GetString("fname")
 
-var renderCalendarCmd = &cobra.Command{
-	Use:   "rc",
-	Short: "Render calendar",
-	Run:   cliRenderCalendar,
-}
+			if !strings.HasSuffix(fname, ".html") {
+				fname += ".html"
+			}
 
-var renderGanttCmd = &cobra.Command{
-	Use:   "rg",
-	Short: "Render gantt",
-	Run:   cliRenderGantt,
-}
+			if err := common.ValidateInputDirectory(targetDirectory); err != nil {
+				return fmt.Errorf("failed to validate input directory: %v", err)
+			}
 
-var renderListCmd = &cobra.Command{
-	Use:   "rl",
-	Short: "Render list",
-	Run:   cliRenderList,
-}
+			htmlString, err := render.RenderKanban(app.DB)
+			if err != nil {
+				return fmt.Errorf("failed to render kanban: %v", err)
+			}
 
-func renderDirectoryValidation(rDir string) error {
-	info, err := os.Stat(rDir)
-	if errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("Directory specified does not exists: %s", rDir)
+			if err := common.PersistToFileSystem(targetDirectory, fname, htmlString); err != nil {
+				return fmt.Errorf("Failed to save file to target directory: %v", err)
+			}
+
+			return nil
+		},
 	}
-	if err != nil {
-		return fmt.Errorf("Error during directory check %v", err)
-	}
-	if !info.IsDir() {
-		return fmt.Errorf("Expects a valid path instead got %s", rDir)
-	}
-	return nil
-}
 
-func cliRenderCalendar(cmd *cobra.Command, args []string) {
-	if err := renderDirectoryValidation(rDir); err != nil {
-		log.Fatalf("%v", err)
-	}
-	render.RenderCalendar(rcMonth, rcYear, rDir, conn)
-}
+	cmd.Flags().StringP("targetDir", "d", ".", "Target directory to write generated html file")
+	cmd.Flags().StringP("fname", "f", "kanban.html", "File name of generated html file")
 
-func cliRenderGantt(cmd *cobra.Command, args []string) {
-	if err := renderDirectoryValidation(rDir); err != nil {
-		log.Fatalf("%v", err)
-	}
-	render.RenderGantt(rDir, conn, rDebug)
+	return cmd
 }
-
-func cliRenderList(cmd *cobra.Command, args []string) {
-	if err := renderDirectoryValidation(rDir); err != nil {
-		log.Fatalf("%v", err)
-	}
-	render.RenderList(rDir, conn)
-}
-*/

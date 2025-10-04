@@ -15,6 +15,12 @@ var formGroupElm elm = elm{
 	attrs: attrsStruct{class: "form-group"},
 }
 
+var submitButtonElm elm = elm{
+	tag: "button",
+	attrs: attrsStruct{atype: "submit"},
+	innerText: "Submit",
+}
+
 var priorityOptions, statusOptions, priorityElm, statusElm []elm
 
 func init() {

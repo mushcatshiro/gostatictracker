@@ -60,12 +60,14 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 		}
 		fieldset.childs = append(fieldset.childs, f)
 	}
+	sb := submitButtonElm
 	form := elm{
 		tag:   "form",
 		attrs: attrsStruct{action: endpoint, method: "post"},
 		childs: []elm{
 			{tag: "h2", innerText: "Form"},
 			fieldset,
+			sb,
 		},
 	}
 	return form

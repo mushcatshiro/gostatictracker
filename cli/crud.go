@@ -19,11 +19,15 @@ func createEntryCmd(app *App) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			title := strings.Join(args, " ")
 			description, _ := cmd.Flags().GetString("description")
-			priority, _ := cmd.Flags().GetInt8("priority")
+			iPriority, _ := cmd.Flags().GetString("priority")
 			iStatus, _ := cmd.Flags().GetString("status")
 			url, _ := cmd.Flags().GetString("url")
 
 			status, err := common.ParseStatus(iStatus)
+			if err != nil {
+				return err
+			}
+			priority, err := common.ParsePriority(iPriority)
 			if err != nil {
 				return err
 			}

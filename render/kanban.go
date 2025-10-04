@@ -34,13 +34,7 @@ func RenderKanban(db *sql.DB) (string, error) {
 	bd.childs = append(bd.childs, tm)
 	bd.childs = append(bd.childs, sls)
 
-	style := styleElm
-	style.innerText = swimlaneStyleString
-
-	htmlBase := htmlElm
-	htmlBase.childs = append(htmlBase.childs, style)
-	htmlBase.childs = append(htmlBase.childs, bd)
-
+	htmlBase := buildBaseHtml(swimlaneStyleString, bd)
 	htmlString = h(htmlBase)
 
 	return htmlString, nil

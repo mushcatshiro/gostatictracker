@@ -28,6 +28,7 @@ func NewCliApp() *App {
 				viper.GetString("password"),
 				viper.GetString("dbhost"),
 				viper.GetString("dbname"),
+				viper.GetString("sslmode"),
 			)
 			if err != nil {
 				log.Fatalf("Failed to generate connection string: %v", err)

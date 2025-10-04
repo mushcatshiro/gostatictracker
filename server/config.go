@@ -7,7 +7,12 @@ type ServerConfig struct {
 }
 
 type DBConfig struct {
-	CnxStr string `mapstructure:"cnxStr"`
+	User     string `mapstructure:"user"`
+	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"host"`
+	DbName   string `mapstructure:"dbname"`
+	SslMode  string `mapstructure:"sslmode"`
+	DbType   string `mapstructure:"dbtype"`
 }
 
 type AuthConfig struct {

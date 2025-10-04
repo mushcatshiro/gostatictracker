@@ -3,50 +3,36 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
+	"strings"
 
 	_ "github.com/lib/pq"
+	"github.com/mushcatshiro/gostatictracker/common"
 )
 
-type Status int
-
-const (
-	NOTSTARTED Status = iota
-	INPROGRESS
-	COMPLETED
-	CANCELLED
-)
-
-var statusName = [...]string{
-	"NOTSTARTED",
-	"INPROGRESS",
-	"COMPLETED",
-	"CANCELLED",
-}
-
-func (s Status) String() string {
-	if s < 0 || int(s) > len(statusName) {
-		return "UNKNOWN"
+func GenerateConnStr(dbType, username, password, dbhost, dbname, sslmode string) (string, error) {
+	var connStr string
+	switch dbType {
+	case "sqlite":
+		if err := common.ValidateInputDirectory(dbhost); err != nil {
+			return connStr, err
+		}
+		if !strings.HasSuffix(dbname, ".db") {
+			dbname += ".db"
+		}
+		connStr = filepath.Join(dbhost, dbname)
+	case "postgres":
+		if username == "" || dbname == "" || password == "" {
+			return "", fmt.Errorf("username, password, dbname must be provided for postgres database")
+		}
+		if dbhost == "" {
+			fmt.Printf("`dbhost` is not provided using localhost...")
+			dbhost = "localhost" // Default to localhost if no host is provided
+		}
+		connStr = fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=%s", username, password, dbhost, dbname, sslmode)
+	default:
+		return connStr, fmt.Errorf("unexpected database type %s", dbType)
 	}
-	return statusName[s]
-}
-
-const (
-	NOPRIORITY = iota
-	ELIMINATE
-	DELEGATE
-	DOLATER
-	DONOW
-)
-
-func GenerateConnStr(username, password , dbhost, dbname string) (string, error) {
-	if username == "" || dbname == "" || password == "" {
-		return "", fmt.Errorf("username, password, dbname must be provided")
-	}
-	if dbhost == "" {
-		fmt.Printf("`dbhost` is not provided using localhost...")
-		dbhost = "localhost" // Default to localhost if no host is provided
-	}
-	connStr := fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=disable", username, password, dbhost, dbname)
 	return connStr, nil
 }
 

@@ -15,13 +15,24 @@ type Server struct {
 }
 
 func New(config Config) (*Server, error) {
-	conn, err := dbop.ConnectDB(config.DB.CnxStr)
+	connStr, err := dbop.GenerateConnStr(
+		config.DB.DbType,
+		config.DB.User,
+		config.DB.Password,
+		config.DB.Host,
+		config.DB.DbName,
+		config.DB.SslMode,
+	)
+	if err != nil {
+		return nil, err
+	}
+	conn, err := dbop.ConnectDB(connStr)
 	if err != nil {
 		return nil, err
 	}
 	err = dbop.InitDB(conn, false, false)
 	if err != nil {
-		return nil , err
+		return nil, err
 	}
 	s := &Server{
 		config: config,

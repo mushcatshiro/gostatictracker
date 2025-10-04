@@ -66,7 +66,7 @@ form {
 	border-radius: 8px;
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 	width: 100%;
-	max-width: 500px; /* Max width for larger screens */
+	max-width: 500px;
 	box-sizing: border-box;
 }
 

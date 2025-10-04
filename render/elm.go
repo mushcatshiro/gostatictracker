@@ -6,19 +6,21 @@ import (
 )
 
 type attrsStruct struct {
-	class    string
-	id       string
-	style    string
-	href     string
-	charset  string
-	data     string
-	action   string
-	method   string
-	atype    string
-	value    string
-	name     string
-	required bool
-	disabled bool
+	class       string
+	id          string
+	style       string
+	href        string
+	charset     string
+	data        string
+	action      string
+	method      string
+	atype       string
+	value       string
+	name        string
+	afor        string
+	placeholder string
+	required    bool
+	disabled    bool
 }
 
 type elm struct {
@@ -32,16 +34,17 @@ type elm struct {
 func (a *attrsStruct) toString() string {
 	var attrParts []string
 	attrs := map[string]string{
-		"class":   a.class,
-		"id":      a.id,
-		"style":   a.style,
-		"href":    a.href,
-		"charset": a.charset,
-		"action":  a.action,
-		"method":  a.method,
-		"type":    a.atype,
-		"value":   a.value,
-		"name":    a.name,
+		"class":       a.class,
+		"id":          a.id,
+		"style":       a.style,
+		"href":        a.href,
+		"charset":     a.charset,
+		"action":      a.action,
+		"method":      a.method,
+		"type":        a.atype,
+		"value":       a.value,
+		"name":        a.name,
+		"for":         a.afor,
 	}
 	for key, val := range attrs {
 		if val != "" {

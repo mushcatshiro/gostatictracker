@@ -45,10 +45,28 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 	return nil
 }
 
-func readEventById(db *sql.DB, id int64) (models.Event, error) {
+func ReadEventById(db *sql.DB, id int64) (models.Event, error) {
 	var e models.Event
-	readQuery := `SELECT * FROM events WHERE id = $1`
-	err := db.QueryRow(readQuery, id).Scan(&e)
+	readQuery := `SELECT id, start, "end", actualStart, actualEnd, insertTime,
+		"group", allDay, title, url, description, pid, priority, metadata, status
+	FROM events WHERE id = $1`
+	err := db.QueryRow(readQuery, id).Scan(
+		&e.ID,
+		&e.Start,
+		&e.End,
+		&e.ActualStart,
+		&e.ActualEnd,
+		&e.InsertTime,
+		&e.Group,
+		&e.AllDay,
+		&e.Title,
+		&e.URL,
+		&e.Description,
+		&e.PID,
+		&e.Priority,
+		&e.Metadata,
+		&e.Status,
+	)
 	if err != nil {
 		return models.Event{}, err
 	}

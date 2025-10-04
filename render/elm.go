@@ -6,12 +6,19 @@ import (
 )
 
 type attrsStruct struct {
-	class   string
-	id      string
-	style   string
-	href    string
-	charset string
-	data    string
+	class    string
+	id       string
+	style    string
+	href     string
+	charset  string
+	data     string
+	action   string
+	method   string
+	atype    string
+	value    string
+	name     string
+	required bool
+	disabled bool
 }
 
 type elm struct {
@@ -34,13 +41,34 @@ func (a *attrsStruct) toString() string {
 		attrParts = append(attrParts, fmt.Sprintf(`style="%s"`, a.style))
 	}
 	if a.href != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`href="%s"`, a.style))
+		attrParts = append(attrParts, fmt.Sprintf(`href="%s"`, a.href))
 	}
 	if a.charset != "" {
 		attrParts = append(attrParts, fmt.Sprintf(`charset="%s"`, a.charset))
 	}
 	if a.data != "" {
 		attrParts = append(attrParts, fmt.Sprintf(`%s`, a.data))
+	}
+	if a.action != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`action="%s"`, a.action))
+	}
+	if a.method != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`method="%s"`, a.method))
+	}
+	if a.atype != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`type="%s"`, a.atype))
+	}
+	if a.value != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`value="%s"`, a.value))
+	}
+	if a.name != "" {
+		attrParts = append(attrParts, fmt.Sprintf(`name="%s"`, a.name))
+	}
+	if a.required {
+		attrParts = append(attrParts, fmt.Sprintf(`required`))
+	}
+	if a.disabled {
+		attrParts = append(attrParts, fmt.Sprintf(`disabled`))
 	}
 	return strings.Join(attrParts, " ")
 }

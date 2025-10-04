@@ -7,11 +7,17 @@ import (
 
 const TimeLayout = "01-02-2006 15:04" // MM-DD-YYYY hh:mm
 
-func ParseStringDate(value string) *time.Time {
+func ParseStringDate(value string, html5 bool) *time.Time {
 	if value == "" {
 		return nil
 	}
-	parsed, err := time.Parse(TimeLayout, value)
+	var parsed time.Time
+	var err error
+	if html5 {
+		parsed, err = time.Parse("2006-01-02T15:04", value)
+	} else {
+		parsed, err = time.Parse(TimeLayout, value)
+	}
 	if err != nil {
 		log.Fatalf("unexpected format %s results in %v", value, err)
 		return nil

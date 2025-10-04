@@ -24,10 +24,10 @@ func handlePostForm(r *http.Request) (models.Event, error) {
 		return e, errors.New("Bad Request")
 	}
 	e = models.Event{
-		Start:       common.ParseStringDate(r.PostFormValue("start")),
-		End:         common.ParseStringDate(r.PostFormValue("end")),
-		ActualStart: common.ParseStringDate(r.PostFormValue("actualStart")),
-		ActualEnd:   common.ParseStringDate(r.PostFormValue("actualEnd")),
+		Start:       common.ParseStringDate(r.PostFormValue("start"), true),
+		End:         common.ParseStringDate(r.PostFormValue("end"), true),
+		ActualStart: common.ParseStringDate(r.PostFormValue("actualStart"), true),
+		ActualEnd:   common.ParseStringDate(r.PostFormValue("actualEnd"), true),
 		Group:       r.PostFormValue("group"),
 		Title:       r.PostFormValue("title"),
 		URL:         r.PostFormValue("url"),
@@ -47,7 +47,6 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 		}
 		switch m {
 		case http.MethodPost:
-			//
 			if err := r.ParseForm(); err != nil {
 				http.Error(w, "Bad Request: Failed to parse form", http.StatusBadRequest)
 				return

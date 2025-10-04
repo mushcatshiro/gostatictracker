@@ -17,9 +17,9 @@ func TestUpdateEvent(t *testing.T) {
 	// Define the event to update
 	event := models.Event{
 		ID:          1,
-		Start:       common.ParseStringDate("2023-10-01 10:00"),
-		End:         common.ParseStringDate("2023-10-01 11:00"),
-		ActualEnd:   common.ParseStringDate("2023-10-01 11:00"),
+		Start:       common.ParseStringDate("2023-10-01 10:00", false),
+		End:         common.ParseStringDate("2023-10-01 11:00", false),
+		ActualEnd:   common.ParseStringDate("2023-10-01 11:00", false),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",
@@ -46,9 +46,9 @@ func TestUpdateEventDoesNotExist(t *testing.T) {
 	// Define the event to update
 	event := models.Event{
 		ID:          999, // Non-existent ID
-		Start:       common.ParseStringDate("2023-10-01 10:00"),
-		End:         common.ParseStringDate("2023-10-01 11:00"),
-		ActualEnd:   common.ParseStringDate("2023-10-01 11:00"),
+		Start:       common.ParseStringDate("2023-10-01 10:00", false),
+		End:         common.ParseStringDate("2023-10-01 11:00", false),
+		ActualEnd:   common.ParseStringDate("2023-10-01 11:00", false),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",

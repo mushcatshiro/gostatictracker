@@ -31,44 +31,31 @@ type elm struct {
 
 func (a *attrsStruct) toString() string {
 	var attrParts []string
-	if a.class != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`class="%s"`, a.class))
+	attrs := map[string]string{
+		"class":   a.class,
+		"id":      a.id,
+		"style":   a.style,
+		"href":    a.href,
+		"charset": a.charset,
+		"action":  a.action,
+		"method":  a.method,
+		"type":    a.atype,
+		"value":   a.value,
+		"name":    a.name,
 	}
-	if a.id != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`id="%s"`, a.id))
-	}
-	if a.style != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`style="%s"`, a.style))
-	}
-	if a.href != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`href="%s"`, a.href))
-	}
-	if a.charset != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`charset="%s"`, a.charset))
+	for key, val := range attrs {
+		if val != "" {
+			attrParts = append(attrParts, fmt.Sprintf(`%s="%s"`, key, val))
+		}
 	}
 	if a.data != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`%s`, a.data))
-	}
-	if a.action != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`action="%s"`, a.action))
-	}
-	if a.method != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`method="%s"`, a.method))
-	}
-	if a.atype != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`type="%s"`, a.atype))
-	}
-	if a.value != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`value="%s"`, a.value))
-	}
-	if a.name != "" {
-		attrParts = append(attrParts, fmt.Sprintf(`name="%s"`, a.name))
+		attrParts = append(attrParts, a.data)
 	}
 	if a.required {
-		attrParts = append(attrParts, fmt.Sprintf(`required`))
+		attrParts = append(attrParts, "required")
 	}
 	if a.disabled {
-		attrParts = append(attrParts, fmt.Sprintf(`disabled`))
+		attrParts = append(attrParts, "disabled")
 	}
 	return strings.Join(attrParts, " ")
 }

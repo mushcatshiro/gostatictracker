@@ -13,18 +13,20 @@ type formField struct {
 	Type     string
 	Value    string
 	Required bool
+	FieldTag string
 }
 
 func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 	fields := []formField{
-		{Name: "group", Label: "Group", Type: "text", Value: m.Group, Required: true},
-		{Name: "title", Label: "Title", Type: "text", Value: m.Title, Required: true},
-		{Name: "url", Label: "URL", Type: "text", Value: m.URL, Required: true},
-		{Name: "start", Label: "Planned Start Time", Type: "datetime-local", Value: common.ParseTimeToString(m.Start, true), Required: true},
-		{Name: "end", Label: "Planned End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.End, true), Required: true},
-		{Name: "actualStart", Label: "Actual Start Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualStart, true)},
-		{Name: "actualEnd", Label: "Actual End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualEnd, true)},
-		{Name: "insertTime", Label: "Insert Time", Type: "datetime-local", Value: common.ParseTimeToString(m.InsertTime, true)},
+		{Name: "group", Label: "Group", Type: "text", Value: m.Group, FieldTag: "input", Required: true},
+		{Name: "title", Label: "Title", Type: "text", Value: m.Title, FieldTag: "input", Required: true},
+		{Name: "url", Label: "URL", Type: "text", Value: m.URL, FieldTag: "input"},
+		{Name: "description", Label: "Description", Type: "", Value: m.Description, FieldTag: "textarea"},
+		{Name: "start", Label: "Planned Start Time", Type: "datetime-local", Value: common.ParseTimeToString(m.Start, true), FieldTag: "input", Required: true},
+		{Name: "end", Label: "Planned End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.End, true), FieldTag: "input", Required: true},
+		{Name: "actualStart", Label: "Actual Start Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualStart, true), FieldTag: "input"},
+		{Name: "actualEnd", Label: "Actual End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualEnd, true), FieldTag: "input"},
+		{Name: "insertTime", Label: "Insert Time", Type: "datetime-local", Value: common.ParseTimeToString(m.InsertTime, true), FieldTag: "input"},
 	}
 
 	fieldset := elm{tag: "fieldset"}
@@ -39,7 +41,7 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 		formGroup := formGroupElm
 		formGroup.childs = []elm{
 			{tag: "label", attrs: attrsStruct{afor: f.Name}, innerText: f.Label},
-			{tag: "input", attrs: attrsStruct{
+			{tag: f.FieldTag, attrs: attrsStruct{
 				atype:    f.Type,
 				id:       f.Name,
 				name:     f.Name,

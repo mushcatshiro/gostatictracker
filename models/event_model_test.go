@@ -10,9 +10,9 @@ import (
 func TestMarshalEventJSON(t *testing.T) {
 	e := Event{
 		ID:          1,
-		Start:       common.ParseStringDate("01-02-2023 10:00"),
-		End:         common.ParseStringDate("01-02-2023 11:00"),
-		ActualEnd:   common.ParseStringDate("01-02-2023 11:00"),
+		Start:       common.ParseStringDate("01-02-2023 10:00", false),
+		End:         common.ParseStringDate("01-02-2023 11:00", false),
+		ActualEnd:   common.ParseStringDate("01-02-2023 11:00", false),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Event A",

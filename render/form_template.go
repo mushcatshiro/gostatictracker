@@ -42,7 +42,7 @@ func init() {
 	}
 	statusElm = []elm{
 		{tag: "label", attrs: attrsStruct{afor: "status"}, innerText: "Status"},
-		{tag: "select", attrs: attrsStruct{id: "status", name: "status"}, childs: priorityOptions},
+		{tag: "select", attrs: attrsStruct{id: "status", name: "status"}, childs: statusOptions},
 	}
 }
 
@@ -95,7 +95,7 @@ select {
 	padding: 0.75rem;
 	border: 1px solid #ccc;
 	border-radius: 4px;
-	box-sizing: border-box; /* Ensures padding doesn't affect width */
+	box-sizing: border-box;
 	font-size: 1rem;
 }
 
@@ -130,4 +130,19 @@ fieldset {
 	border: none;
 	padding: 0;
 	margin: 0;
+}
+
+textarea {
+	width: 100%;
+	padding: 0.75rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-size: 1rem;
+	font-family: inherit;
+}
+
+textarea {
+	height: 120px;
+	resize: vertical;
 }`

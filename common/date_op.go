@@ -18,3 +18,13 @@ func ParseStringDate(value string) *time.Time {
 	}
 	return &parsed
 }
+
+func ParseTimeToString(value *time.Time, html5 bool) string {
+	if value != nil {
+		if html5 {
+			return value.Format("2006-01-02T15:04")
+		}
+		return value.Format(TimeLayout)
+	}
+	return ""
+}

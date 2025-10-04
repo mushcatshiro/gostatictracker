@@ -31,16 +31,16 @@ func (p Priority) String() string {
 	return priorityName[p]
 }
 
-var priorityMap = make(map[string]Priority)
+var PriorityMap = make(map[string]Priority)
 
 func init() {
 	for i, name := range priorityName {
-		priorityMap[name] = Priority(i)
+		PriorityMap[name] = Priority(i)
 	}
 }
 
 func ParsePriority(input string) (Priority, error) {
-	for k, v := range priorityMap {
+	for k, v := range PriorityMap {
 		if strings.EqualFold(input, k) {
 			return v, nil
 		}

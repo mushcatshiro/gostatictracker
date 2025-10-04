@@ -29,16 +29,16 @@ func (s Status) String() string {
 	return statusName[s]
 }
 
-var statusMap = make(map[string]Status)
+var StatusMap = make(map[string]Status)
 
 func init() {
 	for i, name := range statusName {
-		statusMap[name] = Status(i)
+		StatusMap[name] = Status(i)
 	}
 }
 
 func ParseStatus(input string) (Status, error) {
-	for k, v := range statusMap {
+	for k, v := range StatusMap {
 		if strings.EqualFold(input, k) {
 			return v, nil
 		}

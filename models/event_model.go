@@ -12,21 +12,21 @@ import (
 // struct event
 
 type Event struct {
-	ID          int64         `json:"id"`
-	Start       *time.Time    `json:"start"`
-	End         *time.Time    `json:"end"`
-	ActualStart *time.Time    `json:"actualStart"`
-	ActualEnd   *time.Time    `json:"actualEnd"`
-	InsertTime  *time.Time    `json:"insertTime"`
-	Group       string        `json:"group"`
-	AllDay      bool          `json:"allDay"`
-	Title       string        `json:"title"`
-	URL         string        `json:"url"`
-	Description string        `json:"description"`
-	PID         int64         `json:"pid"`
-	Priority    int8          `json:"priority"`
-	Metadata    string        `json:"metadata"`
-	Status      common.Status `json:"status"`
+	ID          int64           `json:"id"`
+	Start       *time.Time      `json:"start"`
+	End         *time.Time      `json:"end"`
+	ActualStart *time.Time      `json:"actualStart"`
+	ActualEnd   *time.Time      `json:"actualEnd"`
+	InsertTime  *time.Time      `json:"insertTime"`
+	Group       string          `json:"group"`
+	AllDay      bool            `json:"allDay"`
+	Title       string          `json:"title"`
+	URL         string          `json:"url"`
+	Description string          `json:"description"`
+	PID         int64           `json:"pid"`
+	Priority    common.Priority `json:"priority"`
+	Metadata    string          `json:"metadata"`
+	Status      common.Status   `json:"status"`
 }
 
 func (e *Event) ToGanttEvent() GanttEvent {

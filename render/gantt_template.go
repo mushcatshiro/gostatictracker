@@ -20,6 +20,11 @@ var textElm elm = elm{
 	tag: "text",
 }
 
+var svgElm elm = elm{
+	tag: "svg",
+	attrs: attrsStruct{class: "gantt", height: "", width: "", style: ""},
+}
+
 var todayIndicatorScript elm = elm{
 	tag: "script",
 	innerText: `document.addEventListener("DOMContentLoaded", function () {
@@ -50,18 +55,19 @@ var todayIndicatorScript elm = elm{
 	}});`,
 }
 
-func buildHeader(rectX, rectWidth, textX, textY int, textVal string) elm {
+func buildHeaderGroup(rectX, rectWidth, textX, textY int, textVal, classVal string) elm {
 	rectE := rectElm
 	rectE.attrs = attrsStruct{x: strconv.Itoa(rectX), width: strconv.Itoa(rectWidth)}
 	textE := textElm
 	textE.attrs = attrsStruct{x: strconv.Itoa(textX), y: strconv.Itoa(textY)}
 	textE.innerText = textVal
 	groupElm := gElm
+	groupElm.attrs = attrsStruct{class: classVal}
 	groupElm.childs = append(groupElm.childs, rectE, textE)
 	return groupElm
 }
 
-func buildRow(rectX, rectY, rectWidth, lineX1, lineX2, lineY1, lineY2, textX int, textY float32, textVal string) elm {
+func buildRowGroup(rectX, rectY, rectWidth, lineX1, lineX2, lineY1, lineY2, textX int, textY float32, textVal, classVal string) elm {
 	rectE := rectElm
 	rectE.attrs = attrsStruct{x: strconv.Itoa(rectX), y: strconv.Itoa(rectY), width: strconv.Itoa(rectWidth)}
 	lineE := lineElm
@@ -72,6 +78,7 @@ func buildRow(rectX, rectY, rectWidth, lineX1, lineX2, lineY1, lineY2, textX int
 	textE.attrs = attrsStruct{x: strconv.Itoa(textX), y: strconv.FormatFloat(float64(textY), 'f', 2, 32)}
 	textE.innerText = textVal
 	groupElm := gElm
+	groupElm.attrs = attrsStruct{class: classVal}
 	groupElm.childs = append(groupElm.childs, rectE, lineE, textE)
 	return groupElm
 }

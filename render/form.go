@@ -75,7 +75,7 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 	return form
 }
 
-func RenderForm(m models.Event, viewOnly bool, endpoint string) (string, error) {
+func RenderFormHtml(m models.Event, viewOnly bool, endpoint string) (string, error) {
 	formElm := buildFormSection(m, viewOnly, endpoint)
 	bd := bodyElm
 	bd.childs = append(bd.childs, formElm)

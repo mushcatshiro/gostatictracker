@@ -377,7 +377,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 	return e, nil
 }
 
-func renderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
+func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
 	var t *template.Template
 	var err error
 
@@ -424,7 +424,7 @@ func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 		if err != nil {
 			log.Fatalf("Failed to get gantt render metadata for group %s: %v", group, err)
 		}
-		err = renderGanttHTML(events, file, g, debug)
+		err = RenderGanttHTML(events, file, g, debug)
 		if err != nil {
 			log.Printf("Failed to process %s:\n\t%v", fileName, err)
 		}

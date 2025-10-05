@@ -21,6 +21,13 @@ type attrsStruct struct {
 	placeholder string
 	required    bool
 	disabled    bool
+	x           string
+	y           string
+	width       string
+	x1          string
+	x2          string
+	y1          string
+	y2          string
 }
 
 type elm struct {
@@ -34,17 +41,24 @@ type elm struct {
 func (a *attrsStruct) toString() string {
 	var attrParts []string
 	attrs := map[string]string{
-		"class":       a.class,
-		"id":          a.id,
-		"style":       a.style,
-		"href":        a.href,
-		"charset":     a.charset,
-		"action":      a.action,
-		"method":      a.method,
-		"type":        a.atype,
-		"value":       a.value,
-		"name":        a.name,
-		"for":         a.afor,
+		"class":   a.class,
+		"id":      a.id,
+		"style":   a.style,
+		"href":    a.href,
+		"charset": a.charset,
+		"action":  a.action,
+		"method":  a.method,
+		"type":    a.atype,
+		"value":   a.value,
+		"name":    a.name,
+		"for":     a.afor,
+		"x":       a.x,
+		"y":       a.y,
+		"width":   a.width,
+		"x1":      a.x1,
+		"x2":      a.x2,
+		"y1":      a.y1,
+		"y2":      a.y2,
 	}
 	for key, val := range attrs {
 		if val != "" {

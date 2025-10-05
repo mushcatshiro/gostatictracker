@@ -33,7 +33,7 @@ func buildBookmarkletElmTree(bs []models.Bookmarklet) elm {
 	return listHtmlElmTree
 }
 
-func renderBookmarkletHTML(bs []models.Bookmarklet) string {
+func RenderBookmarkletHTML(bs []models.Bookmarklet) string {
 	elm := buildBookmarkletElmTree(bs)
 	return h(elm)
 }
@@ -44,5 +44,5 @@ func RenderBookmarklet(conn *sql.DB) (string, error) {
 	if err != nil {
 		return htmlStr, err
 	}
-	return renderBookmarkletHTML(bs), nil
+	return RenderBookmarkletHTML(bs), nil
 }

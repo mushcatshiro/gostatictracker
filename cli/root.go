@@ -24,6 +24,7 @@ func NewCliApp() *App {
 			`centralizing logistics in keyboard-driven interface.`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			connStr, err := dbop.GenerateConnStr(
+				viper.GetString("dbtype"),
 				viper.GetString("username"),
 				viper.GetString("password"),
 				viper.GetString("dbhost"),
@@ -58,7 +59,7 @@ func setupConfig() {
 	viper.AddConfigPath(filepath.Join(userProfile, ".config", "gostatictracker"))
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("Faield to read config %v", err)
+		log.Fatalf("Failed to read config %v", err)
 	}
 }
 

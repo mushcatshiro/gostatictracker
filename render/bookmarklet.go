@@ -24,18 +24,16 @@ func buildBookmarkletElmTree(bs []models.Bookmarklet) elm {
 		}
 		unorderedListElm.childs = append(unorderedListElm.childs, bElm)
 	}
-	htmlBody := listBody
+	htmlBody := bodyElm
 	htmlBody.childs = append(htmlBody.childs, elm{tag: "h2", innerText: "Bookmarklet List"})
 	htmlBody.childs = append(htmlBody.childs, unorderedListElm)
-	listHtmlElmTree := listHeader
-	listHtmlElmTree.childs = append(listHtmlElmTree.childs, htmlBody)
-	listHtmlElmTree.childs = append(listHtmlElmTree.childs, listScript)
-	return listHtmlElmTree
+
+    return buildBaseHtml(listStyleString, htmlBody, listScript)
 }
 
-func RenderBookmarkletHtml(bs []models.Bookmarklet) (string, error) {
+func renderBookmarkletHtml(bs []models.Bookmarklet) string {
 	elm := buildBookmarkletElmTree(bs)
-	return h(elm), nil
+	return h(elm)
 }
 
 func RenderBookmarklet(conn *sql.DB) (string, error) {
@@ -44,5 +42,5 @@ func RenderBookmarklet(conn *sql.DB) (string, error) {
 	if err != nil {
 		return htmlStr, err
 	}
-	return RenderBookmarkletHtml(bs)
+	return renderBookmarkletHtml(bs), nil
 }

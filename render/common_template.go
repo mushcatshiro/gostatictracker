@@ -12,10 +12,6 @@ var htmlElm elm = elm{
 	},
 }
 
-var styleElm elm = elm{
-	tag: "style",
-}
-
 var bodyElm elm = elm{
 	tag: "body",
 }

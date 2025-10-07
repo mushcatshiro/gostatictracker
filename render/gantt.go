@@ -126,7 +126,7 @@ func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpac
 	return daysSpan * headerWidthWithSpacing
 }
 
-func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time, error) {
+func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time) {
 	var iStartTime, iEndTime time.Time
 	if !isDayView {
 		sy, sw := s.ISOWeek()
@@ -137,7 +137,7 @@ func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time, er
 		iStartTime = *s
 		iEndTime = *e
 	}
-	return iStartTime, iEndTime, nil
+	return iStartTime, iEndTime
 }
 
 func processRectAndLine(spacing, rowIdx, rowRectWidth int, g ganttRenderMetadata) (int, int, int, int) {
@@ -164,7 +164,7 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int 
 	return overflowUnits
 }
 
-func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int, error) {
+func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
 	rSlice := []eventGanttRow{}
@@ -175,10 +175,7 @@ func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool)
 	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, iEndTime, err := formatEventTimes(event.Start, event.End, g.isDayView)
-		if err != nil {
-			return rSlice, -1, fmt.Errorf("processing event[%d]:\n%w", idx, err)
-		}
+		iStartTime, iEndTime := formatEventTimes(event.Start, event.End, g.isDayView)
 		if !g.isDayView && idx == 0 {
 			g.groupStartTime = &iStartTime
 		}
@@ -230,7 +227,7 @@ func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool)
 	}
 
 	overFlowUnits := processOverFlowUnits(maxWidth, rowEndWidth, g)
-	return rSlice, overFlowUnits, nil
+	return rSlice, overFlowUnits
 }
 
 func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
@@ -352,7 +349,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug bool) (eventGanttBase, error) {
+func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug bool) eventGanttBase {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
 	e := eventGanttBase{
 		HeaderRectWidth:  g.baseHeaderRectWidth,
@@ -362,10 +359,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 	}
 	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
 
-	rSlice, overflowUnits, err := getGanttRows(events, g, debug)
-	if err != nil {
-		return eventGanttBase{}, err
-	}
+	rSlice, overflowUnits := getGanttRows(events, g, debug)
 	e.Rows = rSlice
 
 	y, m, d := getGanttHeaders(g, overflowUnits)
@@ -374,7 +368,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 	e.Years = y
 	e.Months = m
 	e.Days = d
-	return e, nil
+	return e
 }
 
 func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
@@ -386,11 +380,7 @@ func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMet
 	if err != nil {
 		return fmt.Errorf("failed to create template:\n\t%w", err)
 	}
-	data, err := getGanttEventBase(events, g, debug)
-	if err != nil {
-		return err
-	}
-	// fmt.Printf("%+v\n", data)
+	data := getGanttEventBase(events, g, debug)
 	err = t.Execute(file, data)
 	return err
 }

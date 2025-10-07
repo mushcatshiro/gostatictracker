@@ -1,6 +1,9 @@
 package render
 
-import "strconv"
+import (
+	"fmt"
+	"strconv"
+)
 
 var gElm elm = elm{
 	tag: "g",
@@ -21,7 +24,7 @@ var textElm elm = elm{
 }
 
 var svgElm elm = elm{
-	tag: "svg",
+	tag:   "svg",
 	attrs: attrsStruct{class: "gantt", height: "", width: "", style: ""},
 }
 
@@ -55,6 +58,71 @@ var todayIndicatorScript elm = elm{
 	}});`,
 }
 
+const ganttStyleStringP1 = `:root {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+svg text{
+    alignment-baseline: middle;
+    dominant-baseline: middle;
+    text-anchor: middle;
+    font-size: 18px;
+    fill: #666;
+}
+svg .header rect{
+    width: %dpx;
+    height: %dpx;
+    fill: #FFF;
+}
+svg .year rect{
+    y: 0;
+}
+svg .month rect{
+    y: 26;
+}
+.gantt .rows rect {
+    cursor: pointer;
+    transition: fill 0.2s ease;
+    fill: #CCC;
+    height: %dpx;
+    rx: 2;
+    opacity: 0.8;
+}`
+
+const ganttStyleStringP2 = `.gantt .rows rect:hover {
+    fill: #555;
+}
+.tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    width: 250px;
+    max-height: 100px; /* fixed max height, content will scroll if longer */
+    overflow-y: auto; /* Enable vertical scrolling */
+    white-space: normal; /* Allow text to wrap within the fixed width */
+    pointer-events: none; /* Allows interaction with elements behind it */
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translate(-50%, -10px); /* Initial offset for smooth appearance */
+    z-index: 1000; /* Ensure tooltip is on top */
+}
+.tooltip.active {
+    opacity: 1;
+    transform: translate(-50%, 0); /* Move to final position */
+}
+.date rect {
+    y: 52;
+}
+.rows line {
+    stroke: #AAA;
+}
+.rows text {
+    font-size: 12px;
+}`
+
 func buildHeaderGroup(rectX, rectWidth, textX, textY int, textVal, classVal string) elm {
 	rectE := rectElm
 	rectE.attrs = attrsStruct{x: strconv.Itoa(rectX), width: strconv.Itoa(rectWidth)}
@@ -81,4 +149,11 @@ func buildRowGroup(rectX, rectY, rectWidth, lineX1, lineX2, lineY1, lineY2, text
 	groupElm.attrs = attrsStruct{class: classVal}
 	groupElm.childs = append(groupElm.childs, rectE, lineE, textE)
 	return groupElm
+}
+
+func buildFullStyleString(headerRectWidth, headerRectHeight, rowRectHeight int) string {
+	ss1t := ganttStyleStringP1
+	ss1 := fmt.Sprintf(ss1t, headerRectWidth, headerRectHeight, rowRectHeight)
+	ss2 := ganttStyleStringP2
+	return ss1 + "\n" + ss2
 }

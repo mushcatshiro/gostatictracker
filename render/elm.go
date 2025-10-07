@@ -24,6 +24,7 @@ type attrsStruct struct {
 	x           string
 	y           string
 	width       string
+	height      string
 	x1          string
 	x2          string
 	y1          string

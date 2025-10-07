@@ -80,6 +80,6 @@ func RenderFormHtml(m models.Event, viewOnly bool, endpoint string) (string, err
 	bd := bodyElm
 	bd.childs = append(bd.childs, formElm)
 
-	htmlBase := buildBaseHtml(formStyleString, bd)
+	htmlBase := buildBaseHtml(formStyleString, bd, elm{})
 	return h(htmlBase), nil
 }

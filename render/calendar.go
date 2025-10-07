@@ -63,14 +63,6 @@ func generateRowDiv(fdom, fdor time.Time, duration int, title string) elm {
 }
 
 func buildEventElmTree(fdom time.Time, ce []models.CalendarEvent) []elm {
-	/*
-		handle
-			- start before month (css broken start)
-			- continue after month (css broken end)
-			- cross week (break into two divs)
-		calculate start "grid-column-start"/"-end"
-		calculate start row "grid-row-start: 2" (2nd week)
-	*/
 	var el []elm
 	for _, e := range ce {
 		// check if e spans into next row
@@ -80,21 +72,21 @@ func buildEventElmTree(fdom time.Time, ce []models.CalendarEvent) []elm {
 		eventDuration := int(e.End.Sub(e.Start).Hours()/24) + 1
 		if eventDuration > rdiw {
 			// start segment
-			el = append(el, generateRowDiv(fdom, e.Start, rdiw, e.Title + " " + e.Group))
+			el = append(el, generateRowDiv(fdom, e.Start, rdiw, e.Title+" "+e.Group))
 			// middle segment
 			eventDuration -= rdiw
 			fdor := e.Start.AddDate(0, 0, rdiw)
 			for eventDuration >= 7 {
-				el = append(el, generateRowDiv(fdom, fdor, 7, e.Title + " " + e.Group))
+				el = append(el, generateRowDiv(fdom, fdor, 7, e.Title+" "+e.Group))
 				eventDuration -= 7
 				fdor = fdor.AddDate(0, 0, 7)
 			}
 			// end segment
 			if eventDuration > 0 {
-				el = append(el, generateRowDiv(fdom, fdor, eventDuration, e.Title + " " + e.Group))
+				el = append(el, generateRowDiv(fdom, fdor, eventDuration, e.Title+" "+e.Group))
 			}
 		} else {
-			el = append(el, generateRowDiv(fdom, e.Start, eventDuration, e.Title + " " + e.Group))
+			el = append(el, generateRowDiv(fdom, e.Start, eventDuration, e.Title+" "+e.Group))
 		}
 	}
 	return el
@@ -127,7 +119,7 @@ func renderCalendarHTML(mg models.MonthGroup, file *os.File) error {
 	return nil
 }
 
-func RenderCalendar(month, year int, renderTargetPath string, conn *sql.DB) {
+func RenderCalendar(conn *sql.DB, month, year int, renderTargetPath string) {
 	/*
 		query by month of interest - then generate - color code by group;
 		paradigm shift, to render by month(s) instead of group centric

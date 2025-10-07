@@ -67,7 +67,7 @@ func renderFormCmd(app *App) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("id %d is not found with error: %v", id, err)
 			}
-			htmlString, err := render.RenderForm(m, false, "/eventForm")
+			htmlString, err := render.RenderFormHtml(m, false, "/eventForm")
 			if err != nil {
 				return fmt.Errorf("failed to render form: %v", err)
 			}

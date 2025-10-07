@@ -385,6 +385,34 @@ func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMet
 	return err
 }
 
+func buildGanttElmTree(events []models.GanttEvent, g ganttRenderMetadata) elm {
+	// should only take in GanttEventBase
+	geb := getGanttEventBase(events, g, false)
+	gss := buildGanttStyleString(geb.HeaderRectWidth, geb.HeaderRectHeight, geb.RowRectHeight)
+    svgE := svgElm
+    svgE.attrs.height = strconv.Itoa(geb.SvgHeight)
+    svgE.attrs.width = strconv.Itoa(geb.SvgWidth)
+	for _, egh := range geb.Years {
+		e := buildHeaderGroup(egh.RectX, egh.RectWidth, egh.TextX, egh.TextY, egh.TextVal, "header year")
+		svgE.childs = append(svgE.childs, e)
+	}
+	for _, egh := range geb.Months {
+		e := buildHeaderGroup(egh.RectX, egh.RectWidth, egh.TextX, egh.TextY, egh.TextVal, "header month")
+		svgE.childs = append(svgE.childs, e)
+	}
+	for _, egh := range geb.Days {
+		e := buildHeaderGroup(egh.RectX, egh.RectWidth, egh.TextX, egh.TextY, egh.TextVal, "header date")
+		svgE.childs = append(svgE.childs, e)
+	}
+	for _, egr := range geb.Rows {
+		e := buildRowGroup(egr.RectX, egr.RectY, egr.RectWidth, egr.LineX1, egr.LineX2, egr.LineY1, egr.LineY2, egr.TextX, egr.TextY, egr.TextVal, "rows")
+		svgE.childs = append(svgE.childs, e)
+	}
+	htmlBody := bodyElm
+	htmlBody.childs = append(htmlBody.childs, svgE)
+	return buildBaseHtml(gss, htmlBody, todayIndicatorScript)
+}
+
 func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 	groups, err := dbop.GetUniqueGroups(conn)
 	if err != nil {
@@ -419,4 +447,21 @@ func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 			log.Printf("Failed to process %s:\n\t%v", fileName, err)
 		}
 	}
+}
+
+func RenderGanttHtml(events []models.GanttEvent, g ganttRenderMetadata) string {
+	return h(buildGanttElmTree(events, g))
+}
+
+func RenderGanttV2(conn *sql.DB, groupName string) (string, error) {
+	events, err := dbop.GetGanttGroupEvents(conn, groupName, true)
+	if err != nil {
+		return "", err
+	}
+	g, err := getGanttRenderMetadata(conn, groupName)
+	if err != nil {
+		return "", fmt.Errorf("Failed to get gantt render metadata for group %s: %v", groupName, err)
+	}
+    htmlString := RenderGanttHtml(events, g)
+    return htmlString, nil
 }

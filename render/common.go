@@ -1,6 +1,7 @@
 package render
 
 func buildBaseHtml(styleString string, bodyElm, scriptElm elm) elm {
+    // support slice of scriptElm and styleElm instead of current mode
 	htmlBase := htmlElm
 
     styleElm := elm{tag: "style", innerText: styleString}

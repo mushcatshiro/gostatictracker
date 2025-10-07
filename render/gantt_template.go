@@ -25,7 +25,11 @@ var textElm elm = elm{
 
 var svgElm elm = elm{
 	tag:   "svg",
-	attrs: attrsStruct{class: "gantt", height: "", width: "", style: ""},
+	attrs: attrsStruct{
+        class: "gantt",
+        id: "gantt-svg",
+        style: "padding: 0.5rem;outline-width: 0.5px; outline-style: solid; outline-color: rgb(200, 200, 200); border-radius: 0.5rem;",
+    },
 }
 
 var todayIndicatorScript elm = elm{
@@ -151,7 +155,7 @@ func buildRowGroup(rectX, rectY, rectWidth, lineX1, lineX2, lineY1, lineY2, text
 	return groupElm
 }
 
-func buildFullStyleString(headerRectWidth, headerRectHeight, rowRectHeight int) string {
+func buildGanttStyleString(headerRectWidth, headerRectHeight, rowRectHeight int) string {
 	ss1t := ganttStyleStringP1
 	ss1 := fmt.Sprintf(ss1t, headerRectWidth, headerRectHeight, rowRectHeight)
 	ss2 := ganttStyleStringP2

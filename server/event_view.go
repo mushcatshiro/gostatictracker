@@ -76,7 +76,7 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 					return
 				}
 			}
-			htmlString, err := render.RenderForm(e, false, "/eventForm")
+			htmlString, err := render.RenderFormHtml(e, false, "/eventForm")
 			if err != nil {
 				http.Error(w, "Bad Request: failed to render view", http.StatusBadRequest)
 			}

@@ -1,6 +1,9 @@
 package render
 
 import (
+	"database/sql"
+
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
@@ -28,4 +31,13 @@ func RenderListHTML(listEntries []models.ListEntry, groupName string) string {
 	listHtmlElmTree := buildElmTree(listEntries, groupName)
 	htmlString := h(listHtmlElmTree)
 	return htmlString
+}
+
+func RenderList(conn *sql.DB, groupName string) (string, error) {
+	events, err := dbop.GetListGroupEntries(conn, groupName)
+	if err != nil {
+		return "", err
+	}
+    htmlString := RenderListHTML(events, groupName)
+	return htmlString, nil
 }

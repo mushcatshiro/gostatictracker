@@ -11,16 +11,16 @@ import (
 func GetListGroupEntries(db *sql.DB, groupName string) ([]models.ListEntry, error) {
 	// TODO consider adding ordering by "end" DESC
 	var events []models.ListEntry
-	query := fmt.Sprintf(`SELECT
-	  "id",
-		TO_CHAR(insertTime, '%s'),
-		"group",
-		title,
-		priority,
-		status
-	FROM events
-	WHERE "group" = $1
-	ORDER BY insertTime;`, common.TimeLayout)
+	query := `SELECT
+        "id",
+        TO_CHAR(insertTime, 'YYYY-MM-DD'),
+        "group",
+        title,
+        priority,
+        status
+    FROM events
+    WHERE "group" = $1
+    ORDER BY insertTime;`
 	rows, err := db.Query(query, groupName)
 	if err != nil {
 		return events, fmt.Errorf("failed to get events: %v", err)

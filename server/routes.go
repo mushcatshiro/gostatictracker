@@ -8,4 +8,5 @@ func (s *Server) RegisterRoutes() {
 	s.router.HandleFunc("/eventForm", s.handleEventFormView())
 	s.router.HandleFunc("/bookmarklet", s.renderBookmarkletView)
     s.router.HandleFunc("/gantt", s.renderGanttView)
+    s.router.HandleFunc("/list", s.renderListView)
 }

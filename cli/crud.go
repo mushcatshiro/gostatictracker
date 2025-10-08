@@ -50,7 +50,7 @@ func createEntryCmd(app *App) *cobra.Command {
 
 	cmd.Flags().StringP("description", "d", "", "Extra descriptive information")
 	cmd.Flags().StringP("url", "u", "", "Reference url")
-	cmd.Flags().Int8P("priority", "p", 2, "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
+	cmd.Flags().StringP("priority", "p", "2", "Do now (0), Do later (1), Delegate (2), Eliminate (3)")
 	cmd.Flags().StringP("status", "s", "0", "Not started (0), In Progress (1), Completed (2), Cancelled (3)")
 
 	return cmd

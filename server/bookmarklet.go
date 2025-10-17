@@ -58,5 +58,5 @@ func (s *Server) renderBookmarkletView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, page)
+	fmt.Fprint(w, page)
 }

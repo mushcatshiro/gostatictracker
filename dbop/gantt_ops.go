@@ -3,7 +3,6 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/mushcatshiro/gostatictracker/models"
 )

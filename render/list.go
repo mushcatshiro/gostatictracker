@@ -7,7 +7,7 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func buildElmTree(listEntries []models.ListEntry, groupName string) elm {
+func buildListElmTree(listEntries []models.ListEntry, groupName string) elm {
 	unorderedListElm := elm{
 		tag:   "ul",
 		attrs: attrsStruct{id: "myList"},
@@ -28,7 +28,7 @@ func buildElmTree(listEntries []models.ListEntry, groupName string) elm {
 }
 
 func RenderListHTML(listEntries []models.ListEntry, groupName string) string {
-	listHtmlElmTree := buildElmTree(listEntries, groupName)
+	listHtmlElmTree := buildListElmTree(listEntries, groupName)
 	htmlString := h(listHtmlElmTree)
 	return htmlString
 }

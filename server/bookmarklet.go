@@ -1,8 +1,8 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
@@ -11,31 +11,23 @@ import (
 	"github.com/mushcatshiro/gostatictracker/render"
 )
 
-type bookmarkletPayload struct {
-	Title       string `json:"title"`
-	Description string `json:"desc"`
-	URL         string `json:"url"`
-}
-
-func (bp *bookmarkletPayload) ToBookmarklet() models.Bookmarklet {
-	return models.Bookmarklet{
-		Title:       bp.Title,
-		Description: bp.Description,
-		URL:         bp.URL,
-	}
-}
-
 func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodGet {
 			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
+			return
 		}
-		var bp bookmarkletPayload
-		if err := json.NewDecoder(r.Body).Decode(&bp); err != nil {
-			http.Error(w, "incorrect payload format", http.StatusBadRequest)
-		}
+		userID := r.Context().Value("userID").(string)
+		log.Printf("uid: %d", userID)
 
-		b := bp.ToBookmarklet()
+		title := r.URL.Query().Get("title")
+		description := r.URL.Query().Get("desc")
+		url := r.URL.Query().Get("url")
+		b := models.Bookmarklet{
+			Title:       title,
+			Description: description,
+			URL:         url,
+		}
 		_, err := dbop.InsertEvent(s.db, b.ToEvent())
 		if err != nil {
 			errMsg := fmt.Sprintf("failed to insert with error: %v", err)
@@ -60,3 +52,34 @@ func (s *Server) renderBookmarkletView(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, page)
 }
+
+func (s *Server) renderBookmarkletSetup() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		c := bkmkCode
+		bookmarkletCode := fmt.Sprintf(c, "localhost"+":8080")
+		h := bkmkSetupHtml
+		fmt.Fprintf(w, h, template.HTMLEscapeString(bookmarkletCode))
+	}
+}
+
+const bkmkSetupHtml = `<h1>Your Bookmarklet</h1>
+<p>Drag this link to your bookmarks bar:</p>
+<a style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;"></a>
+%s
+<p>When you click it on any page, it will save the URL to your collection.</p>`
+
+const bkmkCode = `javascript:void((function(){
+	function getMetaValue(propName){
+		const metas=document.getElementsByTagName("meta");
+		for(let i=0;i<metas.length;i++){
+			const metaName=metas[i].getAttribute("name")||metas[i].getAttribute("property");
+			if(metaName===propName){
+				return metas[i].getAttribute("content");
+			}
+		}
+		return"";
+	}
+	const metaDescription=getMetaValue("og:description")||getMetaValue("description")||"";
+	window.open("http://%s/api/bookmarklet?url="+encodeURIComponent(window.location.href)+"&title="+encodeURIComponent(document.title)+"&desc="+encodeURIComponent(metaDescription),"save-bookmark","width=500,height=300");
+	window.close()
+})());`

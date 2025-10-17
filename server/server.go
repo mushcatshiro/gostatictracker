@@ -6,12 +6,15 @@ import (
 	"net/http"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 type Server struct {
-	config Config
-	router *http.ServeMux
-	db     *sql.DB
+	config            Config
+	router            *http.ServeMux
+	db                *sql.DB
+	googleOauthConfig *oauth2.Config
 }
 
 func New(config Config) (*Server, error) {
@@ -34,10 +37,18 @@ func New(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	oauthConfig := &oauth2.Config{
+		RedirectURL:  config.GoogleOauthConfig.RedirectURL,
+		ClientID:     config.GoogleOauthConfig.ClientID,
+		ClientSecret: config.GoogleOauthConfig.ClientSecret,
+		Scopes:       config.Auth.Scopes,
+		Endpoint:     google.Endpoint,
+	}
 	s := &Server{
-		config: config,
-		router: http.NewServeMux(), // instead of global
-		db:     conn,
+		config:            config,
+		router:            http.NewServeMux(), // instead of global
+		db:                conn,
+		googleOauthConfig: oauthConfig,
 	}
 	s.RegisterRoutes()
 	return s, nil

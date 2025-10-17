@@ -16,15 +16,27 @@ type DBConfig struct {
 }
 
 type AuthConfig struct {
-	Key         string `mapstructure:"key"`
-	JKey        string `mapstructure:"jKey"`
-	ExpDuration int    `mapstructure:"expDuration"`
+	RedirectURL  string   `mapstructure:"redirectUrl"`
+	ClientID     string   `mapstructure:"clientID"`
+	ClientSecret string   `mapstructure:"clientSecret"`
+	Scopes       []string `mapstructure:"scopes"`
+	Endpoint     string   `mapstructure:"endpoint"`
+	Key          string   `mapstructure:"key"`
+	JKey         string   `mapstructure:"jKey"`
+	ExpDuration  int      `mapstructure:"expDuration"`
+}
+
+type GoogleOauthConfig struct {
+	ClientID     string `mapstructure:"clientID"`
+	ClientSecret string `mapstructure:"clientSecret"`
+	RedirectURL  string `mapstructure:"redirectUrl"`
 }
 
 type Config struct {
-	Server ServerConfig `mapstructure:"server"`
-	DB     DBConfig     `mapstructure:"db"`
-	Auth   AuthConfig   `mapstructure:"auth"`
+	Server            ServerConfig      `mapstructure:"server"`
+	DB                DBConfig          `mapstructure:"db"`
+	Auth              AuthConfig        `mapstructure:"auth"`
+	GoogleOauthConfig GoogleOauthConfig `mapstructure:"googleOauth"`
 }
 
 func LoadConfig() (Config, error) {

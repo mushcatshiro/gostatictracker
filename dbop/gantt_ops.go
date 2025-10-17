@@ -60,7 +60,8 @@ func GetUniqueGroups(db *sql.DB) ([]string, error) {
 		groups = append(groups, group)
 	}
 	if err := rows.Err(); err != nil {
-		log.Fatalf("Error reading groups: %v", err)
+		// log.Fatalf("Error reading groups: %v", err)
+		return groups, err
 	}
 	return groups, nil
 }

@@ -19,7 +19,7 @@ func ParseStringDate(value string, html5 bool) *time.Time {
 		parsed, err = time.Parse(TimeLayout, value)
 	}
 	if err != nil {
-		log.Fatalf("unexpected format %s results in %v", value, err)
+		log.Printf("unexpected format %s results in %v", value, err)
 		return nil
 	}
 	return &parsed

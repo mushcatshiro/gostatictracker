@@ -56,7 +56,8 @@ func (s *Server) renderBookmarkletView(w http.ResponseWriter, r *http.Request) {
 func (s *Server) renderBookmarkletSetup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c := bkmkCode
-		bookmarkletCode := fmt.Sprintf(c, "localhost"+":8080")
+
+		bookmarkletCode := fmt.Sprintf(c, s.config.Server.Domain)
 		h := bkmkSetupHtml
 		fmt.Fprintf(w, h, template.HTMLEscapeString(bookmarkletCode))
 	}
@@ -79,5 +80,5 @@ const bkmkCode = `javascript:void((function(){
 		return'';
 	}
 	const metaDescription=getMetaValue('og:description')||getMetaValue('description')||'';
-	window.open('http://%s/api/bookmarklet?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent(document.title)+'&desc='+encodeURIComponent(metaDescription),'save-bookmark','width=500,height=300');
+	window.open('%s/api/bookmarklet?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent(document.title)+'&desc='+encodeURIComponent(metaDescription),'save-bookmark','width=500,height=300');
 })());`

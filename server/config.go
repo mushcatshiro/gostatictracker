@@ -3,7 +3,8 @@ package server
 import "github.com/spf13/viper"
 
 type ServerConfig struct {
-	Port string `mapstructure:"port"`
+	Domain string `mapstructure:"domain"`
+	Port   string `mapstructure:"port"`
 }
 
 type DBConfig struct {
@@ -16,15 +17,15 @@ type DBConfig struct {
 }
 
 type AuthConfig struct {
-	Key          string   `mapstructure:"key"`
-	JKey         string   `mapstructure:"jKey"`
-	ExpDuration  int      `mapstructure:"expDuration"`
+	Key         string `mapstructure:"key"`
+	JKey        string `mapstructure:"jKey"`
+	ExpDuration int    `mapstructure:"expDuration"`
 }
 
 type GoogleOauthConfig struct {
-	ClientID     string `mapstructure:"clientID"`
-	ClientSecret string `mapstructure:"clientSecret"`
-	RedirectURL  string `mapstructure:"redirectUrl"`
+	ClientID     string   `mapstructure:"clientID"`
+	ClientSecret string   `mapstructure:"clientSecret"`
+	RedirectURL  string   `mapstructure:"redirectUrl"`
 	Scopes       []string `mapstructure:"scopes"`
 }
 

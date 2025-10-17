@@ -62,69 +62,72 @@ var todayIndicatorScript elm = elm{
 	}});`,
 }
 
-const ganttStyleStringP1 = `:root {
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
+const ganttStyleStringP1 = `svg {
+	font-family: var(--font-family-display);
 }
 svg text{
-    alignment-baseline: middle;
-    dominant-baseline: middle;
-    text-anchor: middle;
-    font-size: 18px;
-    fill: #666;
+	alignment-baseline: middle;
+	dominant-baseline: middle;
+	text-anchor: middle;
+	font-size: 18px;
+	fill: var(--color-text-secondary);
 }
 svg .header rect{
-    width: %dpx;
-    height: %dpx;
-    fill: #FFF;
+	width: %dpx;
+	height: %dpx;
+	fill: var(--color-background-card);
 }
 svg .year rect{
-    y: 0;
+	y: 0;
 }
 svg .month rect{
-    y: 26;
+	y: 26;
 }
 .gantt .rows rect {
-    cursor: pointer;
-    transition: fill 0.2s ease;
-    fill: #CCC;
-    height: %dpx;
-    rx: 2;
-    opacity: 0.8;
+	cursor: pointer;
+	transition: fill var(--transition-duration) var(--transition-timing-function);
+	fill: var(--color-border);
+	height: %dpx;
+	rx: var(--radius-sm);
+	opacity: 0.8;
 }`
 
 const ganttStyleStringP2 = `.gantt .rows rect:hover {
-    fill: #555;
+	fill: var(--color-text-secondary);
 }
 .tooltip {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 8px 12px;
-    border-radius: 4px;
-    font-size: 14px;
-    white-space: nowrap;
-    width: 250px;
-    max-height: 100px; /* fixed max height, content will scroll if longer */
-    overflow-y: auto; /* Enable vertical scrolling */
-    white-space: normal; /* Allow text to wrap within the fixed width */
-    pointer-events: none; /* Allows interaction with elements behind it */
-    opacity: 0;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-    transform: translate(-50%, -10px); /* Initial offset for smooth appearance */
-    z-index: 1000; /* Ensure tooltip is on top */
+	position: absolute;
+	background-color: var(--color-background-overlay);
+	color: var(--color-text-inverted);
+	padding: var(--spacing-2) var(--spacing-3);
+	border-radius: var(--radius-sm);
+	font-size: 14px;
+	font-family: var(--font-family-sans);
+	width: 250px;
+	max-height: 100px; /* fixed max height, content will scroll if longer */
+	overflow-y: auto; /* Enable vertical scrolling */
+	white-space: normal; /* Allow text to wrap within the fixed width */
+	pointer-events: none; /* Allows interaction with elements behind it */
+	opacity: 0;
+	transition: opacity var(--transition-duration) ease, transform var(--transition-duration) ease;
+	transform: translate(-50%, -10px); /* Initial offset for smooth appearance */
+	z-index: 1000; /* Ensure tooltip is on top */
+	box-shadow: var(--shadow-lg);
 }
 .tooltip.active {
-    opacity: 1;
-    transform: translate(-50%, 0); /* Move to final position */
+	opacity: 1;
+	transform: translate(-50%, 0); /* Move to final position */
 }
 .date rect {
-    y: 52;
+	y: 52;
 }
 .rows line {
-    stroke: #AAA;
+	stroke: #DDD;
 }
 .rows text {
-    font-size: 12px;
+	font-size: 12px;
+	text-anchor: start;
+	fill: var(--color-text-primary);
 }`
 
 func buildHeaderGroup(rectX, rectWidth, textX, textY int, textVal, classVal string) elm {

@@ -46,45 +46,31 @@ func init() {
 	}
 }
 
-const formStyleString = `body {
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-	align-items: center;
-	min-height: 100vh;
-	margin: 0;
-	background-color: #f0f2f5;
-	gap: 20px;
-	padding: 20px;
-	box-sizing: border-box;
-}
-
-form {
-	background: #ffffff;
-	padding: 2rem;
-	border-radius: 8px;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+const formStyleString = `form {
+	background: var(--color-background-card);
+	padding: var(--spacing-6);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-md);
 	width: 100%;
 	max-width: 500px;
-	box-sizing: border-box;
+	margin: 2rem auto; /* Center form if it's a standalone page */
 }
 
 form h2 {
 	margin-top: 0;
 	text-align: center;
-	color: #333;
+	color: var(--color-text-primary);
 }
 
 .form-group {
-	margin-bottom: 1rem;
+	margin-bottom: var(--spacing-4);
 }
 
 label {
 	display: block;
-	margin-bottom: 0.5rem;
+	margin-bottom: var(--spacing-2);
 	font-weight: 600;
-	color: #555;
+	color: var(--color-text-secondary);
 }
 
 input[type="text"],
@@ -92,38 +78,45 @@ input[type="datetime-local"],
 textarea,
 select {
 	width: 100%;
-	padding: 0.75rem;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	box-sizing: border-box;
+	padding: var(--spacing-3);
+	border: var(--border-width) solid var(--color-border);
+	border-radius: var(--radius-sm);
 	font-size: 1rem;
+	font-family: var(--font-family-sans);
+	background-color: var(--color-background-card);
+	color: var(--color-text-primary);
+	transition: var(--transition-default);
+}
+
+input[type="text"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
 textarea {
-	height: 120px;
+	min-height: 120px;
 	resize: vertical;
 }
 
 button[type="submit"] {
 	width: 100%;
-	padding: 0.75rem;
+	padding: var(--spacing-3);
 	border: none;
-	border-radius: 4px;
-	background-color: #007bff;
-	color: white;
+	border-radius: var(--radius-sm);
+	background-color: var(--color-primary);
+	color: var(--color-text-inverted);
 	font-size: 1rem;
 	font-weight: bold;
 	cursor: pointer;
-	transition: background-color 0.2s;
+	transition: var(--transition-default);
 }
 
 button[type="submit"]:hover {
-	background-color: #0056b3;
-}
-
-fieldset:disabled {
-	opacity: 0.6;
-	pointer-events: none;
+	background-color: var(--color-primary-hover);
 }
 
 fieldset {
@@ -132,17 +125,7 @@ fieldset {
 	margin: 0;
 }
 
-textarea {
-	width: 100%;
-	padding: 0.75rem;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	box-sizing: border-box;
-	font-size: 1rem;
-	font-family: inherit;
-}
-
-textarea {
-	height: 120px;
-	resize: vertical;
+fieldset:disabled {
+	opacity: 0.6;
+	pointer-events: none;
 }`

@@ -3,14 +3,13 @@ package render
 var listScript elm = elm{
 	tag: "script",
 	innerText: `document.addEventListener('DOMContentLoaded', () => {
-  const listItems = document.querySelectorAll('#myList li');
-  
-  listItems.forEach((item, index) => {
-    // Use setTimeout to apply the 'visible' class with a delay
-    setTimeout(() => {
-      item.classList.add('visible');
-    }, index * 100); // 100ms delay between each item
-  });
+	const listItems = document.querySelectorAll('#myList li');
+	listItems.forEach((item, index) => {
+		// Use setTimeout to apply the 'visible' class with a delay
+		setTimeout(() => {
+			item.classList.add('visible');
+		}, index * 100); // 100ms delay between each item
+	});
 });`,
 }
 

@@ -100,42 +100,19 @@ var swimlaneScript elm = elm{
 });`,
 }
 
-const swimlaneStyleString = `:root {
-	--slate-100: #f1f5f9;
-	--slate-200: #e2e8f0;
-	--slate-300: #cbd5e1;
-	--slate-500: #64748b;
-	--slate-600: #475569;
-	--slate-700: #334155;
-	--slate-800: #1e293b;
-	--slate-900: #0f172a;
-	--white: #ffffff;
-	--black-alpha-60: rgba(0, 0, 0, 0.6);
-	--shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-	--shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-	--shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-	--shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-body {
-	background-color: var(--slate-100);
-	font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-	margin: 0;
-	padding: 1rem;
-}
-.board-container {
+const swimlaneStyleString = `.board-container {
 	display: flex;
-	gap: 1rem;
-	height: calc(100vh - 2rem);
+	gap: var(--spacing-4);
+	height: calc(100vh - (var(--spacing-4) * 2));
 	overflow-x: auto;
-	padding-bottom: 1rem;
+	padding-bottom: var(--spacing-4);
 }
 
 .swimlane {
 	flex-shrink: 0;
 	width: 18rem;
-	background-color: var(--slate-200);
-	border-radius: 0.5rem;
+	background-color: var(--color-background-component);
+	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-md);
 	display: flex;
 	flex-direction: column;
@@ -144,43 +121,44 @@ body {
 .swimlane-title {
 	font-weight: 700;
 	font-size: 1.125rem;
-	padding: 1rem;
-	color: var(--slate-700);
-	border-bottom: 1px solid var(--slate-300);
+	padding: var(--spacing-4);
+	color: var(--color-text-secondary);
+	border-bottom: var(--border-width) solid var(--color-border);
 	margin: 0;
 }
 
 .tasks-container {
-	padding: 1rem;
+	padding: var(--spacing-4);
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: var(--spacing-4);
 	overflow-y: auto;
 	flex-grow: 1;
 }
 
+/* Custom Scrollbar for Kanban */
 .tasks-container::-webkit-scrollbar {
 	width: 8px;
 }
 .tasks-container::-webkit-scrollbar-thumb {
-	background-color: var(--slate-300);
+	background-color: var(--color-border);
 	border-radius: 4px;
 }
 .tasks-container::-webkit-scrollbar-track {
-	background-color: var(--slate-100);
+	background-color: var(--color-background-body);
 }
 
 .task-card {
-	background-color: var(--white);
-	padding: 0.75rem;
-	border-radius: 0.375rem;
+	background-color: var(--color-background-card);
+	padding: var(--spacing-3);
+	border-radius: var(--radius-sm);
 	box-shadow: var(--shadow);
 	cursor: pointer;
-	transition: all 0.2s ease-in-out;
+	transition: var(--transition-default);
 }
 
 .task-card:hover {
-	background-color: var(--slate-100);
+	background-color: var(--color-background-body);
 	transform: translateY(-2px);
 	box-shadow: var(--shadow-md);
 }
@@ -192,7 +170,7 @@ body {
 .task-card p {
 	margin: 0;
 	font-weight: 600;
-	color: var(--slate-800);
+	color: var(--color-text-primary);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -201,30 +179,37 @@ body {
 .modal {
 	position: fixed;
 	inset: 0;
-	background-color: var(--black-alpha-60);
+	background-color: var(--color-background-overlay);
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	z-index: 50;
-	padding: 1rem;
+	padding: var(--spacing-4);
 	opacity: 0;
 	transition: opacity 0.3s ease;
+	pointer-events: none;
 }
 
-.modal.hidden {
-	display: none;
+.modal.visible {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .modal-content {
-	background-color: var(--white);
-	border-radius: 0.5rem;
+	background-color: var(--color-background-card);
+	border-radius: var(--radius-md);
 	box-shadow: var(--shadow-xl);
 	width: 100%;
 	max-width: 42rem;
+	padding: var(--spacing-6);
 	transform: scale(0.95);
 	opacity: 0;
 	transition: all 0.3s ease;
-	padding: 1.5rem;
+}
+
+.modal.visible .modal-content {
+	transform: scale(1);
+	opacity: 1;
 }
 
 .modal-header {
@@ -236,7 +221,7 @@ body {
 #modalTitle {
 	font-size: 1.5rem;
 	font-weight: 700;
-	color: var(--slate-800);
+	color: var(--color-text-primary);
 	margin: 0;
 }
 
@@ -244,28 +229,28 @@ body {
 	font-size: 2rem;
 	font-weight: 200;
 	line-height: 1;
-	color: var(--slate-500);
+	color: var(--color-text-muted);
 	background: none;
 	border: none;
 	cursor: pointer;
-	transition: color 0.2s ease;
+	transition: color var(--transition-duration) ease;
 	padding: 0;
 }
 
 #closeModal:hover {
-	color: var(--slate-900);
+	color: var(--color-text-primary);
 }
 
 #modalDescription {
-	margin-top: 1rem;
-	color: var(--slate-600);
+	margin-top: var(--spacing-4);
+	color: var(--color-text-secondary);
 	white-space: pre-wrap;
 	line-height: 1.6;
 }
 
 @media (min-width: 640px) {
-	body { padding: 1.5rem; }
-	.board-container { height: calc(100vh - 3rem); }
+	body { padding: var(--spacing-6); }
+	.board-container { height: calc(100vh - (var(--spacing-6) * 2)); }
 	.swimlane { width: 20rem; }
 }
 

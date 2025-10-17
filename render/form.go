@@ -26,7 +26,6 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 		{Name: "end", Label: "Planned End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.End, true), FieldTag: "input", Required: true},
 		{Name: "actualStart", Label: "Actual Start Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualStart, true), FieldTag: "input"},
 		{Name: "actualEnd", Label: "Actual End Time", Type: "datetime-local", Value: common.ParseTimeToString(m.ActualEnd, true), FieldTag: "input"},
-		{Name: "insertTime", Label: "Insert Time", Type: "datetime-local", Value: common.ParseTimeToString(m.InsertTime, true), FieldTag: "input"},
 	}
 
 	fieldset := elm{tag: "fieldset"}

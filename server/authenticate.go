@@ -42,7 +42,6 @@ func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		log.Println("in auth middleware")
 		jwtCookie, err := r.Cookie("app-jwt")
 		if err != nil {
 			b := make([]byte, 16)

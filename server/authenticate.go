@@ -1,32 +1,33 @@
 package server
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	googleOauth2 "google.golang.org/api/oauth2/v2"
 )
 
-type TokenRequest struct {
-	Key string `json:"key"`
-}
-
-type TokenResponse struct {
-	Token string `json:"token"`
-}
-
 type CustomClaims struct {
-	Uid int `json:"uid"`
+	UID string `json:"uid"`
 	jwt.RegisteredClaims
 }
 
-func (s *Server) createJWT(uid int) (string, error) {
+type OauthState struct {
+	Nonce     string `json:"nonce"`
+	ReturnURL string `json:"return_url"`
+}
+
+func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	cc := CustomClaims{
-		Uid: uid,
+		UID: userInfo.Id,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
 				time.Now().Add(time.Minute * time.Duration(s.config.Auth.ExpDuration)),
@@ -39,42 +40,34 @@ func (s *Server) createJWT(uid int) (string, error) {
 	return tok.SignedString([]byte(s.config.Auth.JKey))
 }
 
-func (s *Server) handleRequestToken() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
-			return
-		}
-		var req TokenRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
-			return
-		}
-		if req.Key != s.config.Auth.Key {
-			http.Error(w, "Failed to authenticate", http.StatusForbidden)
-			return
-		}
-		tok, err := s.createJWT(0)
-		if err != nil {
-			http.Error(w, "Failed to create token", http.StatusInternalServerError)
-		}
-		w.Header().Set("Content-type", "application/json")
-		json.NewEncoder(w).Encode(TokenResponse{Token: tok})
-	}
-}
-
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
+		log.Println("in auth middleware")
+		jwtCookie, err := r.Cookie("app-jwt")
+		if err != nil {
+			b := make([]byte, 16)
+			rand.Read(b)
+			nonce := base64.URLEncoding.EncodeToString(b)
+			state := OauthState{
+				Nonce:     nonce,
+				ReturnURL: r.URL.String(),
+			}
+			stateJson, _ := json.Marshal(state)
+			expiration := time.Now().Add(time.Duration(s.config.Auth.ExpDuration) * time.Minute)
+			http.SetCookie(w, &http.Cookie{
+				Name:     "oauthstate",
+				Value:    base64.URLEncoding.EncodeToString(stateJson),
+				Expires:  expiration,
+				HttpOnly: true,
+				Path:     "/",
+				SameSite: http.SameSiteLaxMode,
+			})
+			loginURL := s.googleOauthConfig.AuthCodeURL(nonce)
+			http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 			return
 		}
-		headerParts := strings.Split(authHeader, " ")
-		if len(headerParts) != 2 || strings.ToLower(headerParts[0]) != "bearer" {
-			http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
-		}
-		tokStr := headerParts[1]
+
+		tokStr := jwtCookie.Value
 		claims := &CustomClaims{}
 		token, err := jwt.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -94,6 +87,7 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "userID", claims.UID)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

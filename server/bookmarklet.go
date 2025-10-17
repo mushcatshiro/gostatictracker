@@ -64,8 +64,7 @@ func (s *Server) renderBookmarkletSetup() http.HandlerFunc {
 
 const bkmkSetupHtml = `<h1>Your Bookmarklet</h1>
 <p>Drag this link to your bookmarks bar:</p>
-<a style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;"></a>
-%s
+<a href=%s style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Bookmark It!</a>
 <p>When you click it on any page, it will save the URL to your collection.</p>`
 
 const bkmkCode = `javascript:void((function(){

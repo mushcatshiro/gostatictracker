@@ -18,7 +18,7 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 			return
 		}
 		userID := r.Context().Value("userID").(string)
-		log.Printf("uid: %d", userID)
+		log.Printf("uid: %s", userID)
 
 		title := r.URL.Query().Get("title")
 		description := r.URL.Query().Get("desc")
@@ -38,19 +38,21 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 	}
 }
 
-func (s *Server) renderBookmarkletView(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
+func (s *Server) renderBookmarkletView() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
+		}
+		page, err := render.RenderBookmarklet(s.db)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Printf("Failed to render bookmarklet page: %v\n", err)
+			fmt.Fprintf(w, "error")
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, page)
 	}
-	page, err := render.RenderBookmarklet(s.db)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		log.Printf("Failed to render bookmarklet page: %v\n", err)
-		fmt.Fprintf(w, "error")
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, page)
 }
 
 func (s *Server) renderBookmarkletSetup() http.HandlerFunc {

@@ -62,7 +62,11 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 			}
 			http.Redirect(w, r, nextURL, http.StatusSeeOther)
 		case http.MethodGet:
-			id := r.PathValue("id")
+			id := r.URL.Query().Get("id")
+			if id == "" {
+				http.Error(w, "no id value is given", http.StatusBadRequest)
+				return
+			}
 			var e models.Event
 			if id != "" {
 				iid, err := strconv.Atoi(id)

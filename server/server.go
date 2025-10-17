@@ -41,7 +41,7 @@ func New(config Config) (*Server, error) {
 		RedirectURL:  config.GoogleOauthConfig.RedirectURL,
 		ClientID:     config.GoogleOauthConfig.ClientID,
 		ClientSecret: config.GoogleOauthConfig.ClientSecret,
-		Scopes:       config.Auth.Scopes,
+		Scopes:       config.GoogleOauthConfig.Scopes,
 		Endpoint:     google.Endpoint,
 	}
 	s := &Server{

@@ -16,11 +16,6 @@ type DBConfig struct {
 }
 
 type AuthConfig struct {
-	RedirectURL  string   `mapstructure:"redirectUrl"`
-	ClientID     string   `mapstructure:"clientID"`
-	ClientSecret string   `mapstructure:"clientSecret"`
-	Scopes       []string `mapstructure:"scopes"`
-	Endpoint     string   `mapstructure:"endpoint"`
 	Key          string   `mapstructure:"key"`
 	JKey         string   `mapstructure:"jKey"`
 	ExpDuration  int      `mapstructure:"expDuration"`
@@ -30,6 +25,7 @@ type GoogleOauthConfig struct {
 	ClientID     string `mapstructure:"clientID"`
 	ClientSecret string `mapstructure:"clientSecret"`
 	RedirectURL  string `mapstructure:"redirectUrl"`
+	Scopes       []string `mapstructure:"scopes"`
 }
 
 type Config struct {

@@ -17,8 +17,6 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
 			return
 		}
-		userID := r.Context().Value("userID").(string)
-		log.Printf("uid: %s", userID)
 
 		title := r.URL.Query().Get("title")
 		description := r.URL.Query().Get("desc")

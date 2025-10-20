@@ -50,6 +50,7 @@ func NewCliApp() *App {
 	app.RootCmd.AddCommand(renderKanbanCmd(app))
 	app.RootCmd.AddCommand(renderFormCmd(app))
 	app.RootCmd.AddCommand(migrateCmd(app))
+	app.RootCmd.AddCommand(createUserCmd(app))
 	return app
 }
 

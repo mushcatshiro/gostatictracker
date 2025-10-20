@@ -29,7 +29,7 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		google_id TEXT NOT NULL UNIQUE,
 		email TEXT,
-		name TEXT,
+		ipaddress TEXT,
 		role TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`

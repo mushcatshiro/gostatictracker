@@ -9,15 +9,18 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	googleOauth2 "google.golang.org/api/oauth2/v2"
 )
 
 type CustomClaims struct {
-	UID string `json:"uid"`
+	UID   string `json:"uid"`
+	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -31,7 +34,8 @@ var ErrInsufPerm = errors.New("Forbidden: Insufficient permissions")
 
 func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	cc := CustomClaims{
-		UID: userInfo.Id,
+		UID:   userInfo.Id,
+		Email: userInfo.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
 				time.Now().Add(time.Minute * time.Duration(s.config.Auth.ExpDuration)),
@@ -44,16 +48,27 @@ func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	return tok.SignedString([]byte(s.config.Auth.JKey))
 }
 
-func (s *Server) checkUserAuth(ctx context.Context, uid string) error {
+func getIPAddress(r *http.Request) string {
+	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+		return forwarded
+	}
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
+}
+
+func (s *Server) checkUserAuth(ctx context.Context, claims *CustomClaims, ipaddr string) error {
 	var userRole string
 	query := "SELECT role FROM users WHERE google_id = $1"
-	err := s.db.QueryRowContext(ctx, query, uid).Scan(&userRole)
+	err := s.db.QueryRowContext(ctx, query, claims.UID).Scan(&userRole)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// record to db
+			dbop.InsertUser(s.db, claims.UID, claims.Email, ipaddr, "norole")
 			return ErrUnAuthori
 		} else {
-			log.Printf("Database error during authorization check for user %s: %v", uid, err)
+			log.Printf("Database error during authorization check for user %s: %v", claims.UID, err)
 			return err
 		}
 	}
@@ -110,7 +125,8 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		err = s.checkUserAuth(r.Context(), claims.UID)
+		ipaddr := getIPAddress(r)
+		err = s.checkUserAuth(r.Context(), claims, ipaddr)
 		if err != nil {
 			if errors.Is(err, ErrUnAuthori) {
 				http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)

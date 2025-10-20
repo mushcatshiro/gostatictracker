@@ -26,7 +26,7 @@ func GenerateConnStr(dbType, username, password, dbhost, dbname, sslmode string)
 			return "", fmt.Errorf("username, password, dbname must be provided for postgres database")
 		}
 		if dbhost == "" {
-			fmt.Printf("`dbhost` is not provided using localhost...")
+			fmt.Println("`dbhost` is not provided using localhost...")
 			dbhost = "localhost" // Default to localhost if no host is provided
 		}
 		connStr = fmt.Sprintf("user=%s password=%s host=%s dbname=%s sslmode=%s", username, password, dbhost, dbname, sslmode)

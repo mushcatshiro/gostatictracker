@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -24,6 +26,9 @@ type OauthState struct {
 	ReturnURL string `json:"return_url"`
 }
 
+var ErrUnAuthori = errors.New("Forbidden: User not authorized")
+var ErrInsufPerm = errors.New("Forbidden: Insufficient permissions")
+
 func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	cc := CustomClaims{
 		UID: userInfo.Id,
@@ -37,6 +42,25 @@ func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	}
 	tok := jwt.NewWithClaims(jwt.SigningMethodHS256, cc)
 	return tok.SignedString([]byte(s.config.Auth.JKey))
+}
+
+func (s *Server) checkUserAuth(ctx context.Context, uid string) error {
+	var userRole string
+	query := "SELECT role FROM users WHERE google_id = $1"
+	err := s.db.QueryRowContext(ctx, query, uid).Scan(&userRole)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			// record to db
+			return ErrUnAuthori
+		} else {
+			log.Printf("Database error during authorization check for user %s: %v", uid, err)
+			return err
+		}
+	}
+	if userRole != "admin" {
+		return ErrInsufPerm
+	}
+	return nil
 }
 
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
@@ -85,6 +109,19 @@ func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+
+		err = s.checkUserAuth(r.Context(), claims.UID)
+		if err != nil {
+			if errors.Is(err, ErrUnAuthori) {
+				http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)
+			} else if errors.Is(err, ErrInsufPerm) {
+				http.Error(w, "Forbidden: Insufficient permissions", http.StatusForbidden)
+			} else {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), "userID", claims.UID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}

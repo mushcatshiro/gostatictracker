@@ -49,6 +49,7 @@ func NewCliApp() *App {
 	app.RootCmd.AddCommand(insertMockCmd(app))
 	app.RootCmd.AddCommand(renderKanbanCmd(app))
 	app.RootCmd.AddCommand(renderFormCmd(app))
+	app.RootCmd.AddCommand(migrateCmd(app))
 	return app
 }
 

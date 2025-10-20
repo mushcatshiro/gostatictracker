@@ -32,3 +32,16 @@ func ValidateInputDirectory(targetDirectory string) error {
 	}
 	return nil
 }
+
+func ValidateInputFilePath(targetFilePath string) error {
+	info, err := os.Stat(targetFilePath)
+	if os.IsNotExist(err) {
+		return fmt.Errorf("File path specified does not exists: %s", targetFilePath)
+	} else if err != nil {
+		fmt.Printf("Error accessing file '%s': %v\n", targetFilePath, err)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("Expects a valid file path instead got %s", targetFilePath)
+	}
+	return nil
+}

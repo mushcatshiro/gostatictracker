@@ -8,8 +8,7 @@ import (
 )
 
 func InitDB(db *sql.DB, truncate, drop bool) error {
-	createTableQuery := `
-	CREATE TABLE IF NOT EXISTS events (
+	createEventTableQuery := `CREATE TABLE IF NOT EXISTS events (
 		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		start TIMESTAMP,
 		"end" TIMESTAMP,
@@ -26,8 +25,20 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 		metadata TEXT,
 		status INT
 	);`
+	createUserTableQuery := `CREATE TABLE IF NOT EXISTS users (
+		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		google_id TEXT NOT NULL UNIQUE,
+		email TEXT,
+		name TEXT,
+		role TEXT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	);`
 	if truncate {
 		_, err := db.Exec("TRUNCATE TABLE events RESTART IDENTITY CASCADE")
+		if err != nil {
+			return err
+		}
+		_, err = db.Exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
 		if err != nil {
 			return err
 		}
@@ -37,8 +48,16 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 		if err != nil {
 			return err
 		}
+		_, err = db.Exec("DROP TABLE IF EXISTS users CASCADE")
+		if err != nil {
+			return err
+		}
 	}
-	_, err := db.Exec(createTableQuery)
+	_, err := db.Exec(createEventTableQuery)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(createUserTableQuery)
 	if err != nil {
 		return err
 	}

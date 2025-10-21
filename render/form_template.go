@@ -6,6 +6,16 @@ import (
 	"github.com/mushcatshiro/gostatictracker/common"
 )
 
+var supportedRenderMode = []string{
+	"bookmarklet",
+	"calendar",
+	"form",
+	"gantt",
+	"kanban",
+	"list",
+	"searchForm",
+}
+
 var idInputElm elm = elm{
 	tag: "input", attrs: attrsStruct{atype: "hidden", id: "id", name: "id"},
 }
@@ -16,12 +26,12 @@ var formGroupElm elm = elm{
 }
 
 var submitButtonElm elm = elm{
-	tag: "button",
-	attrs: attrsStruct{atype: "submit"},
+	tag:       "button",
+	attrs:     attrsStruct{atype: "submit"},
 	innerText: "Submit",
 }
 
-var priorityOptions, statusOptions, priorityElm, statusElm []elm
+var priorityOptions, statusOptions, priorityElm, statusElm, renderOptions, renderOptionElm []elm
 
 func init() {
 	for k, v := range common.PriorityMap {
@@ -36,6 +46,12 @@ func init() {
 			elm{tag: "option", attrs: attrsStruct{value: strconv.Itoa(int(v))}, innerText: k},
 		)
 	}
+	for _, rm := range supportedRenderMode {
+		renderOptions = append(
+			renderOptions,
+			elm{tag: "option", attrs: attrsStruct{value: rm}, innerText: rm},
+		)
+	}
 	priorityElm = []elm{
 		{tag: "label", attrs: attrsStruct{afor: "priority"}, innerText: "Priority"},
 		{tag: "select", attrs: attrsStruct{id: "priority", name: "priority"}, childs: priorityOptions},
@@ -43,6 +59,10 @@ func init() {
 	statusElm = []elm{
 		{tag: "label", attrs: attrsStruct{afor: "status"}, innerText: "Status"},
 		{tag: "select", attrs: attrsStruct{id: "status", name: "status"}, childs: statusOptions},
+	}
+	renderOptionElm = []elm{
+		{tag: "label", attrs: attrsStruct{afor: "render"}, innerText: "Render Mode"},
+		{tag: "select", attrs: attrsStruct{id: "render", name: "render"}, childs: renderOptions},
 	}
 }
 

@@ -3,8 +3,9 @@ package server
 import "github.com/spf13/viper"
 
 type ServerConfig struct {
-	Domain string `mapstructure:"domain"`
-	Port   string `mapstructure:"port"`
+	Domain    string `mapstructure:"domain"`
+	Port      string `mapstructure:"port"`
+	Protected bool   `mapstructure:"protected"`
 }
 
 type DBConfig struct {

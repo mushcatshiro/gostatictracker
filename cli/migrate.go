@@ -26,6 +26,7 @@ func migrateCmd(app *App) *cobra.Command {
 		Short: "Migrate entries from JSON file",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fpath, _ := cmd.Flags().GetString("filepath")
+			syncMode, _ := cmd.Flags().GetBool("sync")
 			if err := common.ValidateInputFilePath(fpath); err != nil {
 				return err
 			}
@@ -68,14 +69,22 @@ func migrateCmd(app *App) *cobra.Command {
 			}
 
 			for _, b := range bookmarklets {
-				_, err = dbop.InsertEvent(app.DB, b.ToEvent())
-				if err != nil {
-					fmt.Printf("failed to insert %s", b.Title)
+				if syncMode {
+					_, err = dbop.UpdateInsertTime(app.DB, b.Title, b.InsertTime)
+					if err != nil {
+						fmt.Printf("failed to sync %s\n%v\n", b.Title, err)
+					}
+				} else {
+					_, err = dbop.InsertEvent(app.DB, b.ToEvent())
+					if err != nil {
+						fmt.Printf("failed to insert %s\n", b.Title)
+					}
 				}
 			}
 			return nil
 		},
 	}
 	cmd.Flags().StringP("filepath", "f", "", "json file path to migrate data")
+	cmd.Flags().BoolP("sync", "s", false, "sync timestamp")
 	return cmd
 }

@@ -125,6 +125,7 @@ func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
 }
 
 func UpdateEvent(db *sql.DB, event models.Event) error {
+	// FIXME
 	updateQuery := `
 	UPDATE events
 	SET (

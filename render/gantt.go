@@ -367,7 +367,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 	e.Rows = rSlice
 
 	y, m, d := getGanttHeaders(g, overflowUnits)
-	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 1 // buffer
+	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 17 // buffer
 
 	e.Years = y
 	e.Months = m
@@ -461,6 +461,9 @@ func RenderGanttV2(conn *sql.DB, groupName string) (string, error) {
 	events, err := dbop.GetGanttGroupEvents(conn, groupName, true)
 	if err != nil {
 		return "", err
+	}
+	if len(events) == 0 {
+		return "", fmt.Errorf("no rows found for group %s", groupName)
 	}
 	g, err := getGanttRenderMetadata(conn, groupName)
 	if err != nil {

@@ -2,11 +2,19 @@ package server
 
 func (s *Server) RegisterRoutes() {
 	s.router.HandleFunc("/", s.handleIndex())
-	s.router.HandleFunc("/eventForm", s.authMiddleware(s.handleEventFormView()))
-	s.router.HandleFunc("/api/bookmarklet", s.authMiddleware(s.handleInsertBookmarklet()))
 	s.router.HandleFunc("/bookmarklet", s.renderBookmarkletView())
 	s.router.HandleFunc("/gantt", s.renderGanttView)
 	s.router.HandleFunc("/list", s.renderListView())
 	s.router.HandleFunc("/auth/google/callback", s.handleGoogleCallback())
-	s.router.HandleFunc("/bookmarkletsetup", s.authMiddleware(s.renderBookmarkletSetup()))
+
+	if s.config.Server.Protected {
+		s.router.HandleFunc("/eventForm", s.authMiddleware(s.handleEventFormView()))
+		s.router.HandleFunc("/api/bookmarklet", s.authMiddleware(s.handleInsertBookmarklet()))
+		s.router.HandleFunc("/bookmarkletsetup", s.authMiddleware(s.renderBookmarkletSetup()))
+	} else {
+        s.router.HandleFunc("/eventForm", s.handleEventFormView())
+		s.router.HandleFunc("/api/bookmarklet", s.handleInsertBookmarklet())
+		s.router.HandleFunc("/bookmarkletsetup", s.renderBookmarkletSetup())
+	}
+
 }

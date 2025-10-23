@@ -32,6 +32,7 @@ func (s *Server) handleInsertBookmarklet() http.HandlerFunc {
 			http.Error(w, errMsg, http.StatusBadRequest)
 		} else {
 			w.WriteHeader(http.StatusCreated)
+			fmt.Fprint(w, "Insert is success...")
 		}
 	}
 }

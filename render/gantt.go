@@ -89,14 +89,18 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 		headerTextYOffset:    2,
 		divisor:              24,
 	}
+	/*
+		scans table twice however does not assume earliest time is in start and vice
+		versa; also prior to pg16 alias is needed for subquery.
+		`SELECT MIN(d) AS startDate, MAX(d) AS endDate
+		FROM (SELECT "start" d FROM events WHERE "group" = $1 UNION ALL
+		SELECT "end" d FROM events WHERE "group" = $1)`
+	*/
 	query := `SELECT
-		MIN(d) AS startDate,
-		MAX(d) AS endDate
-	FROM (
-		SELECT "start" d FROM events WHERE "group" = $1
-		UNION ALL
-		SELECT "end" d FROM events WHERE "group" = $1
-	)`
+		MIN("start") as startDate,
+		MAX("end") as endDate
+	FROM events
+	WHERE "group" = $1`
 	row := db.QueryRow(query, groupName)
 	if err := row.Scan(&g.groupStartTime, &g.groupEndTime); err != nil {
 		return ganttRenderMetadata{}, fmt.Errorf("\nfailed to scan start/end time and full duration:\n%w", err)
@@ -389,9 +393,9 @@ func buildGanttElmTree(events []models.GanttEvent, g ganttRenderMetadata) elm {
 	// should only take in GanttEventBase
 	geb := getGanttEventBase(events, g, false)
 	gss := buildGanttStyleString(geb.HeaderRectWidth, geb.HeaderRectHeight, geb.RowRectHeight)
-    svgE := svgElm
-    svgE.attrs.height = strconv.Itoa(geb.SvgHeight)
-    svgE.attrs.width = strconv.Itoa(geb.SvgWidth)
+	svgE := svgElm
+	svgE.attrs.height = strconv.Itoa(geb.SvgHeight)
+	svgE.attrs.width = strconv.Itoa(geb.SvgWidth)
 	for _, egh := range geb.Years {
 		e := buildHeaderGroup(egh.RectX, egh.RectWidth, egh.TextX, egh.TextY, egh.TextVal, "header year")
 		svgE.childs = append(svgE.childs, e)
@@ -462,6 +466,6 @@ func RenderGanttV2(conn *sql.DB, groupName string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Failed to get gantt render metadata for group %s: %v", groupName, err)
 	}
-    htmlString := RenderGanttHtml(events, g)
-    return htmlString, nil
+	htmlString := RenderGanttHtml(events, g)
+	return htmlString, nil
 }

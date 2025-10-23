@@ -159,8 +159,7 @@ func TestGetGanttRows(t *testing.T) {
 	}
 
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttRows(d0, g0, true)
-		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
+		resultGanttEventRow, resultOverflowDay := getGanttRows(d0, g0, true)
 		assert.Equal(t, 0, resultOverflowDay)
 		assert.Equal(t, 7, len(resultGanttEventRow))
 		assert.Equal(t, r0, resultGanttEventRow[0])
@@ -191,8 +190,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextVal:     "Mock task 1",
 	}
 	t.Run("base case without overflow `getGanttEventRows`", func(t *testing.T) {
-		resultGanttEventRow, resultOverflowDay, err := getGanttRows(d1, g1, true)
-		assert.NoError(t, err, "Not expecting parsing related error: %v", err)
+		resultGanttEventRow, resultOverflowDay := getGanttRows(d1, g1, true)
 		assert.Equal(t, 3, resultOverflowDay)
 		assert.Equal(t, 1, len(resultGanttEventRow))
 		assert.Equal(t, r7, resultGanttEventRow[0])

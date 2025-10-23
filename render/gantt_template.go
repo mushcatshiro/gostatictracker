@@ -102,6 +102,7 @@ const ganttStyleStringP2 = `.gantt .rows rect:hover {
 	padding: var(--spacing-2) var(--spacing-3);
 	border-radius: var(--radius-sm);
 	font-size: 14px;
+	white-space: nowrap;
 	font-family: var(--font-family-sans);
 	width: 250px;
 	max-height: 100px; /* fixed max height, content will scroll if longer */
@@ -132,7 +133,7 @@ const ganttStyleStringP2 = `.gantt .rows rect:hover {
 
 func buildHeaderGroup(rectX, rectWidth, textX, textY int, textVal, classVal string) elm {
 	rectE := rectElm
-	rectE.attrs = attrsStruct{x: strconv.Itoa(rectX), width: strconv.Itoa(rectWidth)}
+	rectE.attrs = attrsStruct{x: strconv.Itoa(rectX), style: fmt.Sprintf("width: %s", strconv.Itoa(rectWidth))}
 	textE := textElm
 	textE.attrs = attrsStruct{x: strconv.Itoa(textX), y: strconv.Itoa(textY)}
 	textE.innerText = textVal

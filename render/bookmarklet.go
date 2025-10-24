@@ -2,6 +2,7 @@ package render
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
@@ -28,12 +29,22 @@ func buildBookmarkletElmTree(bs []models.Bookmarklet) elm {
 	htmlBody.childs = append(htmlBody.childs, elm{tag: "h2", innerText: "Bookmarklet List"})
 	htmlBody.childs = append(htmlBody.childs, unorderedListElm)
 
-    return buildBaseHtml(listStyleString, htmlBody, listScript)
+	return buildBaseHtml(listStyleString, htmlBody, listScript)
 }
 
 func renderBookmarkletHtml(bs []models.Bookmarklet) string {
 	elm := buildBookmarkletElmTree(bs)
 	return h(elm)
+}
+
+func RenderBookmarkletSetupHtml(serverDomain string) string {
+	s := bkmkScript
+	bs := fmt.Sprintf(s, serverDomain)
+	beg := bkmkSetupElmGroup
+	beg = append(beg, elm{tag: "a", innerText: "Bookmark It!", attrs: attrsStruct{href: bs, style: bkmkStyleString}})
+	htmlBody := bodyElm
+	htmlBody.childs = beg
+	return h(buildBaseHtml("", htmlBody, elm{}))
 }
 
 func RenderBookmarklet(conn *sql.DB) (string, error) {

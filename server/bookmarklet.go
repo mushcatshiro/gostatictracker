@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 
@@ -56,30 +55,7 @@ func (s *Server) renderBookmarkletView() http.HandlerFunc {
 
 func (s *Server) renderBookmarkletSetup() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c := bkmkCode
-
-		bookmarkletCode := fmt.Sprintf(c, s.config.Server.Domain)
-		h := bkmkSetupHtml
-		fmt.Fprintf(w, h, template.HTMLEscapeString(bookmarkletCode))
+		bkmkSetupHtml := render.RenderBookmarkletSetupHtml(s.config.Server.Domain)
+		fmt.Fprint(w, bkmkSetupHtml)
 	}
 }
-
-const bkmkSetupHtml = `<h1>Your Bookmarklet</h1>
-<p>Drag this link to your bookmarks bar:</p>
-<a href="%s" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Bookmark It!</a>
-<p>When you click it on any page, it will save the URL to your collection.</p>`
-
-const bkmkCode = `javascript:void((function(){
-	function getMetaValue(propName){
-		const metas=document.getElementsByTagName('meta');
-		for(let i=0;i<metas.length;i++){
-			const metaName=metas[i].getAttribute('name')||metas[i].getAttribute('property');
-			if(metaName===propName){
-				return metas[i].getAttribute('content');
-			}
-		}
-		return'';
-	}
-	const metaDescription=getMetaValue('og:description')||getMetaValue('description')||'';
-	window.open('%s/api/bookmarklet?url='+encodeURIComponent(window.location.href)+'&title='+encodeURIComponent(document.title)+'&desc='+encodeURIComponent(metaDescription),'save-bookmark','width=500,height=300');
-})());`

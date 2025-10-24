@@ -73,6 +73,7 @@ svg text{
 	fill: var(--color-text-secondary);
 }
 svg .header rect{
+	rx: var(--radius-sm);
 	width: %dpx;
 	height: %dpx;
 	fill: var(--color-background-card);

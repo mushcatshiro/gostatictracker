@@ -122,7 +122,7 @@ func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, 
 }
 
 func getTextEstimateWidth(text string) int {
-	return len([]rune(text)) * 7
+	return len([]rune(text)) * 8
 }
 
 func getRowRectWidth(startTime time.Time, endTime time.Time, headerWidthWithSpacing int, divisor float64) int {
@@ -197,13 +197,12 @@ func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool)
 		// keeping text here since `maxWidth` is coupled with `textX`
 		textY = float32(rectY) + g.textYOffset
 		rowEndWidth = max(rowEndWidth, rectX+rowRectWidth)
-		if rowRectWidth-g.rowRectMargin < titleWidth {
-			// BUG titleWidth might not be divisible by 2 and will always floored, might get inconsistent spacing
-			textX = rectX + rowRectWidth + g.rectToTextMargin + (titleWidth / 2)
-			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.rectToTextMargin*2)+titleWidth)
-		} else {
-			textX = (rowRectWidth / 2) + rectX
+		if rowRectWidth-g.rowRectMargin-(2*g.rectToTextMargin) > titleWidth {
+			textX = rectX + g.rectToTextMargin
 			maxWidth = max(maxWidth, rectX+rowRectWidth)
+		} else {
+			textX = rectX + rowRectWidth + g.rectToTextMargin
+			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.rectToTextMargin*2)+titleWidth)
 		}
 
 		var description string
@@ -413,6 +412,8 @@ func buildGanttElmTree(events []models.GanttEvent, g ganttRenderMetadata) elm {
 		svgE.childs = append(svgE.childs, e)
 	}
 	htmlBody := bodyElm
+	headerElm := elm{tag: "h2", innerText: g.groupName}
+	htmlBody.childs = append(htmlBody.childs, headerElm)
 	htmlBody.childs = append(htmlBody.childs, svgE)
 	return buildBaseHtml(gss, htmlBody, todayIndicatorScript)
 }

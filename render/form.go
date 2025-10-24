@@ -38,16 +38,19 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 
 	for _, f := range fields {
 		formGroup := formGroupElm
-		formGroup.childs = []elm{
-			{tag: "label", attrs: attrsStruct{afor: f.Name}, innerText: f.Label},
-			{tag: f.FieldTag, attrs: attrsStruct{
-				atype:    f.Type,
-				id:       f.Name,
-				name:     f.Name,
-				value:    f.Value,
-				required: f.Required,
-			}},
+		labelE := elm{tag: "label", attrs: attrsStruct{afor: f.Name}, innerText: f.Label}
+		fieldE := elm{tag: f.FieldTag, attrs: attrsStruct{
+			atype:    f.Type,
+			id:       f.Name,
+			name:     f.Name,
+			required: f.Required,
+		}}
+		if f.FieldTag == "textarea" {
+			fieldE.innerText = f.Value
+		} else {
+			fieldE.attrs.value = f.Value
 		}
+		formGroup.childs = []elm{labelE, fieldE}
 		fieldset.childs = append(fieldset.childs, formGroup)
 	}
 

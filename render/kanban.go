@@ -8,13 +8,13 @@ import (
 	"github.com/mushcatshiro/gostatictracker/dbop"
 )
 
-func RenderKanban(db *sql.DB) (string, error) {
+func RenderKanban(db *sql.DB, groupName string) (string, error) {
 	var htmlString string
 	var slElmList []elm
 
 	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
 		titleName := idx.String()
-		listOfEvent, err := dbop.GetKanbanGroup(db, int(idx))
+		listOfEvent, err := dbop.GetKanbanGroup(db, int(idx), groupName)
 		if err != nil {
 			return htmlString, fmt.Errorf("failed to retrieve %s: %v", idx, err)
 		}

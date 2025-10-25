@@ -7,14 +7,10 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func GetKanbanGroup(db *sql.DB, status int) ([]models.Event, error) {
+func GetKanbanGroup(db *sql.DB, status int, groupName string) ([]models.Event, error) {
 	var events []models.Event
-	query := `SELECT
-		*
-	FROM events
-	WHERE status = $1
-	`
-	rows, err := db.Query(query, status)
+	query := `SELECT * FROM events WHERE status = $1 AND "group" = $2`
+	rows, err := db.Query(query, status, groupName)
 	if err != nil {
 		return events, fmt.Errorf("failed to get events: %v", err)
 	}

@@ -23,6 +23,6 @@ func (s *Server) renderListView() http.HandlerFunc {
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, page)
+		fmt.Fprint(w, page)
 	}
 }

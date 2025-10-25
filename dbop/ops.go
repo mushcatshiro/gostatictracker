@@ -128,22 +128,9 @@ func UpdateEvent(db *sql.DB, event models.Event) error {
 	// FIXME
 	updateQuery := `
 	UPDATE events
-	SET (
-		start = TO_TIMESTAMP($1, 'MM-DD-YYYY HH24:MI'),
-		"end" = TO_TIMESTAMP($2, 'MM-DD-YYYY HH24:MI'),
-		actualStart = TO_TIMESTAMP($3, 'MM-DD-YYYY HH24:MI'),
-		actualEnd = TO_TIMESTAMP($4, 'MM-DD-YYYY HH24:MI'),
-		insertTime = TO_TIMESTAMP($5, 'MM-DD-YYYY HH24:MI'),
-		"group" = $6,
-		allDay = $7,
-		title = $8,
-		url = $9,
-		description = $10
-		pid = $11,
-		priority = $12,
-		metadata = $13,
-		status = $14
-	)
+	SET  start = $1, "end" = $2, actualStart = $3, actualEnd = $4, insertTime = $5,
+		"group" = $6, allDay = $7, title = $8, url = $9, description = $10, pid = $11,
+		priority = $12, metadata = $13, status = $14
 	WHERE id = $15;`
 
 	result, err := db.Exec(updateQuery,

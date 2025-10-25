@@ -1,27 +1,34 @@
 package render
 
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/mushcatshiro/gostatictracker/dbop"
+)
+
 func buildIndexSearchFormSection(groups []string, endpoint string) elm {
 	var groupOptions, groupOptionElm []elm
-    r := formGroupElm
-    r.childs = renderOptionElm
+	r := formGroupElm
+	r.childs = renderOptionElm
 
-    for _, g := range groups {
-        groupOptions = append(
+	for _, g := range groups {
+		groupOptions = append(
 			groupOptions,
 			elm{tag: "option", attrs: attrsStruct{value: g}, innerText: g},
 		)
-    }
-    groupOptionElm = []elm{
+	}
+	groupOptionElm = []elm{
 		{tag: "label", attrs: attrsStruct{afor: "group"}, innerText: "Group"},
 		{tag: "select", attrs: attrsStruct{id: "group", name: "group"}, childs: groupOptions},
 	}
-    g := formGroupElm
-    g.childs = groupOptionElm
+	g := formGroupElm
+	g.childs = groupOptionElm
 
-    fieldset := elm{tag: "fieldset"}
-    fieldset.childs = append(fieldset.childs, g, r)
-    sb := submitButtonElm
-    form := elm{
+	fieldset := elm{tag: "fieldset"}
+	fieldset.childs = append(fieldset.childs, g, r)
+	sb := submitButtonElm
+	form := elm{
 		tag:   "form",
 		attrs: attrsStruct{action: endpoint, method: "post"},
 		childs: []elm{
@@ -33,11 +40,19 @@ func buildIndexSearchFormSection(groups []string, endpoint string) elm {
 	return form
 }
 
-func RenderIndexSearchFormHtml(groups []string, endpoint string) (string, error) {
-    formElm := buildIndexSearchFormSection(groups, endpoint)
+func RenderIndexSearchFormHtml(groups []string, endpoint string) string {
+	formElm := buildIndexSearchFormSection(groups, endpoint)
 	bd := bodyElm
 	bd.childs = append(bd.childs, formElm)
 
 	htmlBase := buildBaseHtml(formStyleString, bd, elm{})
-	return h(htmlBase), nil
+	return h(htmlBase)
+}
+
+func RenderIndexView(db *sql.DB, endpoint string) (string, error) {
+	groups, err := dbop.GetUniqueGroups(db)
+	if err != nil {
+		return "", fmt.Errorf("failed to get unique groups: %v", err)
+	}
+	return RenderIndexSearchFormHtml(groups, endpoint), nil
 }

@@ -57,6 +57,7 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 			}
 			_, err = dbop.InsertEvent(s.db, e)
 			if err != nil {
+				fmt.Printf("%v\n", err)
 				http.Error(w, "Bad Request: Failed to insert to database", http.StatusBadRequest)
 				return
 			}

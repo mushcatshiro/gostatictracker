@@ -30,7 +30,7 @@ func buildIndexSearchFormSection(groups []string, endpoint string) elm {
 	sb := submitButtonElm
 	form := elm{
 		tag:   "form",
-		attrs: attrsStruct{action: endpoint, method: "post"},
+		attrs: attrsStruct{action: endpoint, method: "get"},
 		childs: []elm{
 			{tag: "h2", innerText: "Form"},
 			fieldset,

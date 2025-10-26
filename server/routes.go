@@ -8,11 +8,16 @@ func (s *Server) RegisterRoutes() {
 	s.router.HandleFunc("/auth/google/callback", s.handleGoogleCallback())
 
 	if s.config.Server.Protected {
+		s.router.HandleFunc("/search", s.authMiddleware(s.handleSearch()))
+		s.router.HandleFunc("/searchRedirect", s.authMiddleware(s.handleSearchRedirect()))
 		s.router.HandleFunc("/eventForm", s.authMiddleware(s.handleEventFormView()))
 		s.router.HandleFunc("/api/bookmarklet", s.authMiddleware(s.handleInsertBookmarklet()))
 		s.router.HandleFunc("/bookmarkletsetup", s.authMiddleware(s.renderBookmarkletSetup()))
 		s.router.HandleFunc("/kanban", s.authMiddleware(s.renderKanbanView()))
+
 	} else {
+		s.router.HandleFunc("/search", s.handleSearch())
+		s.router.HandleFunc("/searchRedirect", s.handleSearchRedirect())
 		s.router.HandleFunc("/eventForm", s.handleEventFormView())
 		s.router.HandleFunc("/api/bookmarklet", s.handleInsertBookmarklet())
 		s.router.HandleFunc("/bookmarkletsetup", s.renderBookmarkletSetup())

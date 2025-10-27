@@ -360,7 +360,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 		RowRectHeight:    g.rowRectHeight,
 		Group:            g.groupName,
 	}
-	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin)
+	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin) + 2*8
 
 	rSlice, overflowUnits := getGanttRows(events, g, debug)
 	e.Rows = rSlice

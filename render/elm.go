@@ -57,6 +57,7 @@ func (a *attrsStruct) toString() string {
 		"x":       a.x,
 		"y":       a.y,
 		"width":   a.width,
+		"height":  a.height,
 		"x1":      a.x1,
 		"x2":      a.x2,
 		"y1":      a.y1,

@@ -21,6 +21,7 @@ type attrsStruct struct {
 	placeholder string
 	required    bool
 	disabled    bool
+	selected    bool
 	x           string
 	y           string
 	width       string
@@ -74,6 +75,9 @@ func (a *attrsStruct) toString() string {
 	}
 	if a.disabled {
 		attrParts = append(attrParts, "disabled")
+	}
+	if a.selected {
+		attrParts = append(attrParts, "selected")
 	}
 	return strings.Join(attrParts, " ")
 }

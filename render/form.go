@@ -58,9 +58,13 @@ func buildFormSection(m models.Event, viewOnly bool, endpoint string) elm {
 	for _, ff := range optionFields {
 		f := formGroupElm
 		if ff == "priority" {
-			f.childs = priorityElm
+			pE := priorityElm
+			pE[1].childs[int(m.Priority)].attrs.selected = true
+			f.childs = pE
 		} else {
-			f.childs = statusElm
+			sE := statusElm
+			sE[1].childs[int(m.Status)].attrs.selected = true
+			f.childs = sE
 		}
 		fieldset.childs = append(fieldset.childs, f)
 	}

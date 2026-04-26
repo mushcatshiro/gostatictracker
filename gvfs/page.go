@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Page struct {
@@ -19,14 +18,14 @@ type Page struct {
 }
 
 type PageMeta struct {
-	Title            string    `yaml:"title"`
-	HasMermaid       bool      `yaml:"mermaid"`
-	HasMathJax       bool      `yaml:"mathjax"`
-	IsDraft          bool      `yaml:"draft"`
-	IsPrivate        bool      `yaml:"private"`
-	Tags             []string  `yaml:"tags"`
-	LastModifiedDate time.Time `yaml:"lastmodified"`
-	CreateDate       time.Time `yaml:"date"`
+	Title            string   `toml:"title"`
+	HasMermaid       bool     `toml:"mermaid"`
+	HasMathJax       bool     `toml:"math"`
+	IsDraft          bool     `toml:"draft"`
+	IsPrivate        bool     `toml:"private"`
+	Tags             []string `toml:"tags"`
+	LastModifiedDate string   `toml:"lastmodified"`
+	CreateDate       string   `toml:"date"`
 }
 
 func extractFrontMatter(r io.Reader) (PageMeta, error) {
@@ -49,7 +48,7 @@ PARSE:
 		}
 
 		// Check for YAML delimiter '---'
-		if strings.TrimSpace(line) == "---" {
+		if strings.TrimSpace(line) == "+++" {
 			delimiterCount++
 
 			if delimiterCount == 1 {
@@ -82,10 +81,11 @@ PARSE:
 
 	// Now parse the collected YAML string into a map
 	var pageMeta PageMeta
+	fmt.Printf("%s\n", buffer.String())
 	if buffer.Len() > 0 {
-		err := yaml.Unmarshal(buffer.Bytes(), &pageMeta)
+		err := toml.Unmarshal(buffer.Bytes(), &pageMeta)
 		if err != nil {
-			return PageMeta{}, fmt.Errorf("yaml unmarshal error: %w", err)
+			return PageMeta{}, fmt.Errorf("toml unmarshal error: %v", err)
 		}
 	} else {
 		return PageMeta{}, fmt.Errorf("no font matter found")

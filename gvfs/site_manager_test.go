@@ -2,6 +2,7 @@ package gvfs
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -12,13 +13,13 @@ func TestBuildIndex(t *testing.T) {
 	appFS := &afero.Afero{Fs: fs}
 
 	files := map[string]string{
-		"content/nested/folder/keep-going/index.md": "---\ntitle: Nested\n---\nBody",
+		"content/nested/folder/keep-going/index.md":  "---\ntitle: Nested\n---\nBody",
 		"content/nested/folder/keep-going2/index.md": "---\ntitle: Nested2\n---\nBody",
-		"content/blog/post-1/index.md":              "---\ntitle: Post One\n---\nBody",
-		"content/blog/post-1/image.png":             "fake-image-data",
-		"content/docs/page-a.md":                    "---\ntitle: Alpha\n---\nBody",
-		"content/docs/page-b.md":                    "---\ntitle: Beta\n---\nBody",
-		"content/docs/siderepo/config.json":         "{}",
+		"content/blog/post-1/index.md":               "---\ntitle: Post One\n---\nBody",
+		"content/blog/post-1/image.png":              "fake-image-data",
+		"content/docs/page-a.md":                     "---\ntitle: Alpha\n---\nBody",
+		"content/docs/page-b.md":                     "---\ntitle: Beta\n---\nBody",
+		"content/docs/siderepo/config.json":          "{}",
 	}
 
 	for path, content := range files {
@@ -57,5 +58,25 @@ func TestBuildIndex(t *testing.T) {
 		if page.Meta.Title != tt.expected {
 			t.Errorf("URL %q: expected title %q, got %q", tt.url, tt.expected, page.Meta.Title)
 		}
+	}
+}
+
+func TTestBuildIndexRaceCondition(t *testing.T) {
+	fs := afero.NewMemMapFs()
+	appFS := &afero.Afero{Fs: fs}
+
+	// Create 100 dummy files to ensure multiple workers are busy
+	for i := range 100 {
+		path := fmt.Sprintf("content/post-%d.md", i)
+		appFS.WriteFile(path, []byte("---\ntitle: Race Test\n---\nBody"), 0644)
+	}
+
+	sm := NewSiteManager(fs)
+	sm.Pages = make(map[string]Page)
+
+	// This will trigger the race detector if your map is not protected
+	err := sm.BuildIndex(context.Background(), "content")
+	if err != nil {
+		t.Fatalf("BuildIndex failed: %v", err)
 	}
 }

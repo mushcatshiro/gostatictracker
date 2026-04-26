@@ -27,7 +27,7 @@ func renderKanbanCmd(app *App) *cobra.Command {
 				return fmt.Errorf("failed to validate input directory: %v", err)
 			}
 
-			htmlString, err := render.RenderKanban(app.DB)
+			htmlString, err := render.RenderKanban(app.DB, "")
 			if err != nil {
 				return fmt.Errorf("failed to render kanban: %v", err)
 			}

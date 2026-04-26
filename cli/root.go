@@ -51,6 +51,8 @@ func NewCliApp() *App {
 	app.RootCmd.AddCommand(renderFormCmd(app))
 	app.RootCmd.AddCommand(migrateCmd(app))
 	app.RootCmd.AddCommand(createUserCmd(app))
+	app.RootCmd.AddCommand(runMarkupCmd(app))
+	app.RootCmd.AddCommand(runWalkWithPrint())
 	return app
 }
 

@@ -7,8 +7,8 @@ import (
 
 var DayViewMockData = [...]models.Event{
 	{
-		Start:       common.ParseStringDate("12-27-2024 00:00", false),
-		End:         common.ParseStringDate("01-01-2025 00:00", false),
+		Start:       common.ParseStringDate("12-27-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-01-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 1",
@@ -18,8 +18,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.DONOW,
 	},
 	{
-		Start:       common.ParseStringDate("12-29-2024 00:00", false),
-		End:         common.ParseStringDate("01-02-2025 00:00", false),
+		Start:       common.ParseStringDate("12-29-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-02-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 2",
@@ -29,8 +29,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.DONOW,
 	},
 	{
-		Start:       common.ParseStringDate("12-31-2024 00:00", false),
-		End:         common.ParseStringDate("01-04-2025 00:00", false),
+		Start:       common.ParseStringDate("12-31-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-04-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 3",
@@ -40,8 +40,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.DOLATER,
 	},
 	{
-		Start:       common.ParseStringDate("12-31-2024 00:00", false),
-		End:         common.ParseStringDate("01-05-2025 00:00", false),
+		Start:       common.ParseStringDate("12-31-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-05-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 4",
@@ -51,8 +51,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.DOLATER,
 	},
 	{
-		Start:       common.ParseStringDate("12-31-2024 00:00", false),
-		End:         common.ParseStringDate("01-04-2025 00:00", false),
+		Start:       common.ParseStringDate("12-31-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-04-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 5",
@@ -62,8 +62,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.ELIMINATE,
 	},
 	{
-		Start:       common.ParseStringDate("12-30-2024 00:00", false),
-		End:         common.ParseStringDate("01-05-2025 00:00", false),
+		Start:       common.ParseStringDate("12-30-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-05-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 6",
@@ -73,8 +73,8 @@ var DayViewMockData = [...]models.Event{
 		Priority:    common.NOPRIORITY,
 	},
 	{
-		Start:       common.ParseStringDate("12-28-2024 00:00", false),
-		End:         common.ParseStringDate("01-05-2025 00:00", false),
+		Start:       common.ParseStringDate("12-28-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-05-2025 00:00", false, false),
 		Group:       "day view example",
 		AllDay:      false,
 		Title:       "Mock task 7",
@@ -87,8 +87,8 @@ var DayViewMockData = [...]models.Event{
 
 var DayViewOverflowMockData = [...]models.Event{
 	{
-		Start:       common.ParseStringDate("01-04-2025 00:00", false),
-		End:         common.ParseStringDate("01-05-2025 00:00", false),
+		Start:       common.ParseStringDate("01-04-2025 00:00", false, false),
+		End:         common.ParseStringDate("01-05-2025 00:00", false, false),
 		Group:       "day view overflow example",
 		AllDay:      false,
 		Title:       "Mock long long long long long long long long long task 1",
@@ -101,8 +101,8 @@ var DayViewOverflowMockData = [...]models.Event{
 
 var WeekViewMockData = [...]models.Event{
 	{
-		Start:       common.ParseStringDate("12-22-2024 00:00", false),
-		End:         common.ParseStringDate("01-03-2025 00:00", false),
+		Start:       common.ParseStringDate("12-22-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-03-2025 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 1",
@@ -112,8 +112,8 @@ var WeekViewMockData = [...]models.Event{
 		Priority:    common.DOLATER,
 	},
 	{
-		Start:       common.ParseStringDate("12-23-2024 00:00", false),
-		End:         common.ParseStringDate("01-02-2025 00:00", false),
+		Start:       common.ParseStringDate("12-23-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-02-2025 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 2",
@@ -123,8 +123,8 @@ var WeekViewMockData = [...]models.Event{
 		Priority:    common.DELEGATE,
 	},
 	{
-		Start:       common.ParseStringDate("12-23-2024 00:00", false),
-		End:         common.ParseStringDate("01-06-2025 00:00", false),
+		Start:       common.ParseStringDate("12-23-2024 00:00", false, false),
+		End:         common.ParseStringDate("01-06-2025 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 3",
@@ -134,8 +134,8 @@ var WeekViewMockData = [...]models.Event{
 		Priority:    common.DONOW,
 	},
 	{
-		Start:       common.ParseStringDate("12-23-2024 00:00", false),
-		End:         common.ParseStringDate("12-30-2024 00:00", false),
+		Start:       common.ParseStringDate("12-23-2024 00:00", false, false),
+		End:         common.ParseStringDate("12-30-2024 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 4",
@@ -145,8 +145,8 @@ var WeekViewMockData = [...]models.Event{
 		Priority:    common.DONOW,
 	},
 	{
-		Start:       common.ParseStringDate("01-13-2025 00:00", false),
-		End:         common.ParseStringDate("01-24-2025 00:00", false),
+		Start:       common.ParseStringDate("01-13-2025 00:00", false, false),
+		End:         common.ParseStringDate("01-24-2025 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 5",
@@ -156,8 +156,8 @@ var WeekViewMockData = [...]models.Event{
 		Priority:    common.ELIMINATE,
 	},
 	{
-		Start:       common.ParseStringDate("01-30-2025 00:00", false),
-		End:         common.ParseStringDate("02-05-2025 00:00", false),
+		Start:       common.ParseStringDate("01-30-2025 00:00", false, false),
+		End:         common.ParseStringDate("02-05-2025 00:00", false, false),
 		Group:       "week view example",
 		AllDay:      false,
 		Title:       "Mock task 6",

@@ -17,9 +17,9 @@ func TestUpdateEvent(t *testing.T) {
 	// Define the event to update
 	event := models.Event{
 		ID:          1,
-		Start:       common.ParseStringDate("2023-10-01 10:00", false),
-		End:         common.ParseStringDate("2023-10-01 11:00", false),
-		ActualEnd:   common.ParseStringDate("2023-10-01 11:00", false),
+		Start:       common.ParseStringDate("2023-10-01 10:00", false, false),
+		End:         common.ParseStringDate("2023-10-01 11:00", false, false),
+		ActualEnd:   common.ParseStringDate("2023-10-01 11:00", false, false),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",

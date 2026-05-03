@@ -1,0 +1,6 @@
+{{define "error-partial"}}
+<div class="alert alert-danger" style="background: red; color: white; padding: 1rem;">
+    <strong>Error:</strong> {{.ErrorMessage}}
+    <button onclick="this.parentElement.remove()">X</button>
+</div>
+{{end}}

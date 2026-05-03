@@ -1,0 +1,109 @@
+{{define "editor"}}
+<div class="row-controls">
+  <button id="upload-btn" onclick="toggleElement('upload-container')">Upload Content</button>
+  <div class="dropdown">
+    <button id="assets-btn" onclick="toggleElement('asset-dropdown')">View Assets</button>
+    <div id="asset-dropdown" onclick="event.stopPropagation()">
+      <ul id="asset-list"></ul>
+    </div>
+  </div>
+
+  <div id="upload-container" onclick="event.stopPropagation()">
+    <form
+      hx-post="/upload"
+      hx-encoding="multipart/form-data"
+      hx-target="#asset-list"
+      hx-swap="beforeend"
+      hx-on::after-request="toggleElement('upload-container')"
+    >
+      <label style="font-size: 13px; font-weight: 600;">Select Images:</label>
+      <input type="file" name="images" multiple accept="image/*" style="margin: 10px 0; display: block;">
+      <label style="font-size: 13px; font-weight: 600;">Paste Links (One per line):</label>
+      <textarea name="links" rows="5" class="links-input" placeholder="https://..."></textarea>
+      <button type="submit" style="width: 100%; background: #007bff; border-color: #007bff;">Upload Assets</button>
+    </form>
+  </div>
+</div>
+
+<div class="row-editor">
+  {{ if .TextBody }}
+  <textarea id="vim-textarea" >{{ .TextBody }}</textarea>
+  {{ else }}
+  <textarea id="vim-textarea" placeholder="Vim Editor Ready... (Esc for Normal Mode, i for Insert)"></textarea>
+  {{ end }}
+</div>
+
+<script type="text/javascript">
+(function() {
+    // 1. Handle Global Variable Redeclaration
+    // We attach it to window so it survives the swap or we check for existence.
+    window.referenceCount = window.referenceCount || 0;
+
+    // 2. Define functions on window so HTML 'onclick' attributes can find them
+    window.toggleElement = window.toggleElement || function(id) {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('visible');
+    };
+
+    window.insertMarkdownRef = function(url) {
+        const textarea = document.getElementById('vim-textarea');
+        if (!textarea) return;
+
+        window.referenceCount++;
+        const inlineMarker = `[${window.referenceCount}]`;
+        const footerEntry = `\n[${window.referenceCount}]: ${url}\n`;
+
+        textarea.focus();
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+
+        textarea.setRangeText(inlineMarker, start, end, 'end');
+        textarea.value = textarea.value.trimEnd() + "\n" + footerEntry;
+
+        const newPos = start + inlineMarker.length;
+        textarea.setSelectionRange(newPos, newPos);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+
+    // 3. Dependency Loading Logic
+    function initVim() {
+        if (window.vim) {
+            vim.open({
+                debug: false,
+                element: '#vim-textarea',
+                showMsg: function(msg) { console.log('Vim.js:', msg); }
+            });
+        }
+    }
+
+    if (!window.vim) {
+        const script = document.createElement('script');
+        script.src = "/static/vim.js";
+        script.onload = initVim;
+        document.head.appendChild(script);
+    } else {
+        initVim();
+    }
+
+    // 4. THE GLOBAL LISTENER (Use addEventListener instead of onclick)
+    // We only add this once to the window to avoid the "classList" error.
+    if (!window.hasEditorListener) {
+        window.addEventListener('click', function(event) {
+            const uploadContainer = document.getElementById('upload-container');
+            const assetDropdown = document.getElementById('asset-dropdown');
+
+            // Defensive check: if these aren't on the current page, do nothing
+            if (!uploadContainer || !assetDropdown) return;
+
+            if (!event.target.matches('button') &&
+                !event.target.closest('#upload-container') &&
+                !event.target.closest('#asset-dropdown')) {
+                uploadContainer.classList.remove('visible');
+                assetDropdown.classList.remove('visible');
+            }
+        });
+        window.hasEditorListener = true;
+    }
+})();
+</script>
+{{ end }}

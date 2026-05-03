@@ -1,0 +1,73 @@
+{{ define "base" }}
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script id="htmx-script" defer src="/static/htmx.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <a href="/"
+       id="title"
+       hx-get="/list/blog"
+       hx-target="#content"
+       hx-push-url="/"
+    >
+      <h2>{{ .SiteName }}</h2>
+    </a>
+    <nav>
+      <a href="/"
+         id="home"
+         hx-get="/list/blog"
+         hx-target="#content"
+         hx-push-url="/">Home</a>
+      {{ if .IsAuth }}
+      <a href="/editor"
+         id="editor"
+         hx-get="/editor"
+         hx-target="#content"
+         hx-push-url="true">Editor</a>
+      {{ end }}
+      <a href="/about"
+         id="about"
+         hx-get="/blog/about"
+         hx-target="#content"
+         hx-push-url="true">About</a>
+      <form
+         hx-get="/search"
+         hx-target="#content"
+         hx-push-url="true"
+         class="search-form"
+      >
+        <input
+         type="search"
+         name="q"
+         placeholder="Search..."
+         class="search-input"
+         required
+        >
+        <button type="submit" class="search-button">Search</button>
+      </form>
+    </nav>
+  </header>
+  <div id="error-banner">
+    {{ if .ShowError }}{{ template "error-partial" . }}{{ end }}
+  </div>
+  {{ if .IsIndex }}
+  <div id="content" hx-get="/list/blog" hx-trigger="load"></div>
+  {{ else if .IsBlog }}
+  <div id="content">{{ template "blog" . }}</div>
+  {{ end }}
+  <script>
+    document.body.addEventListener('htmx:beforeSwap', function(evt) {
+      if (evt.detail.xhr.status >= 400) {
+        evt.detail.shouldSwap = true;
+        evt.detail.isError = false; // Prevents HTMX from logging console error
+      }
+    });
+</script>
+</body>
+</html>
+{{ end }}

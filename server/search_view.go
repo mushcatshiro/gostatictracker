@@ -34,7 +34,7 @@ func (s *Server) handleSearch() http.HandlerFunc {
 			fmt.Fprintf(w, "")
 			return
 		}
-		fmt.Fprint(w, page)
+		fmt.Print(w, page)
 	}
 }
 

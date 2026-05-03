@@ -32,6 +32,9 @@ type OauthState struct {
 var ErrUnAuthori = errors.New("Forbidden: User not authorized")
 var ErrInsufPerm = errors.New("Forbidden: Insufficient permissions")
 
+type contextKey string
+const authKey contextKey = "IsAuth"
+
 func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	cc := CustomClaims{
 		UID:   userInfo.Id,
@@ -78,67 +81,87 @@ func (s *Server) checkUserAuth(ctx context.Context, claims *CustomClaims, ipaddr
 	return nil
 }
 
+func (s *Server) getOptionalUser(r *http.Request) (*CustomClaims, bool) {
+	jwtCookie, err := r.Cookie("app-jwt")
+	if err != nil {
+		return nil, false
+	}
+	claims := &CustomClaims{}
+	token, err := jwt.ParseWithClaims(jwtCookie.Value, claims, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(s.config.Auth.JKey), nil
+	})
+	/*
+		if err != nil {
+				if errors.Is(err, jwt.ErrTokenExpired) {
+					http.Error(w, "Token has expired", http.StatusUnauthorized)
+				} else {
+					http.Error(w, "Invalid token", http.StatusUnauthorized)
+				}
+				return
+			}
+			if !token.Valid {
+				http.Error(w, "Invalid token", http.StatusUnauthorized)
+				return
+			}
+	*/
+	if err != nil || !token.Valid {
+		return nil, false
+	}
+	return claims, true
+}
+
+func (s *Server) forceLogin(w http.ResponseWriter, r *http.Request) {
+	b := make([]byte, 16)
+	rand.Read(b)
+	nonce := base64.URLEncoding.EncodeToString(b)
+	state := OauthState{
+		Nonce:     nonce,
+		ReturnURL: r.URL.String(),
+	}
+	stateJson, _ := json.Marshal(state)
+	expiration := time.Now().Add(time.Duration(s.config.Auth.ExpDuration) * time.Minute)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauthstate",
+		Value:    base64.URLEncoding.EncodeToString(stateJson),
+		Expires:  expiration,
+		HttpOnly: true,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
+	loginURL := s.googleOauthConfig.AuthCodeURL(nonce)
+	http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
+}
+
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		jwtCookie, err := r.Cookie("app-jwt")
-		if err != nil {
-			b := make([]byte, 16)
-			rand.Read(b)
-			nonce := base64.URLEncoding.EncodeToString(b)
-			state := OauthState{
-				Nonce:     nonce,
-				ReturnURL: r.URL.String(),
+		claims, ok := s.getOptionalUser(r)
+		ctx := r.Context()
+		if s.config.Server.Protected {
+			if !ok {
+				s.forceLogin(w, r)
+				return
 			}
-			stateJson, _ := json.Marshal(state)
-			expiration := time.Now().Add(time.Duration(s.config.Auth.ExpDuration) * time.Minute)
-			http.SetCookie(w, &http.Cookie{
-				Name:     "oauthstate",
-				Value:    base64.URLEncoding.EncodeToString(stateJson),
-				Expires:  expiration,
-				HttpOnly: true,
-				Path:     "/",
-				SameSite: http.SameSiteLaxMode,
-			})
-			loginURL := s.googleOauthConfig.AuthCodeURL(nonce)
-			http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
-			return
+			ipaddr := getIPAddress(r)
+			err := s.checkUserAuth(r.Context(), claims, ipaddr)
+			if err != nil {
+				if errors.Is(err, ErrUnAuthori) {
+					http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)
+				} else if errors.Is(err, ErrInsufPerm) {
+					http.Error(w, "Forbidden: Insufficient permissions", http.StatusForbidden)
+				} else {
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+				return
+			}
+			ctx = context.WithValue(ctx, "userID", claims.UID)
+		} else {
+			ok = true
 		}
 
-		tokStr := jwtCookie.Value
-		claims := &CustomClaims{}
-		token, err := jwt.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(s.config.Auth.JKey), nil
-		})
-		if err != nil {
-			if errors.Is(err, jwt.ErrTokenExpired) {
-				http.Error(w, "Token has expired", http.StatusUnauthorized)
-			} else {
-				http.Error(w, "Invalid token", http.StatusUnauthorized)
-			}
-			return
-		}
-		if !token.Valid {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		ipaddr := getIPAddress(r)
-		err = s.checkUserAuth(r.Context(), claims, ipaddr)
-		if err != nil {
-			if errors.Is(err, ErrUnAuthori) {
-				http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)
-			} else if errors.Is(err, ErrInsufPerm) {
-				http.Error(w, "Forbidden: Insufficient permissions", http.StatusForbidden)
-			} else {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "userID", claims.UID)
+		ctx = context.WithValue(ctx, authKey, ok)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

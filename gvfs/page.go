@@ -14,6 +14,7 @@ type Page struct {
 	Path         string
 	FullURL      string
 	SideRepoPath string
+	Content      []byte
 	Meta         PageMeta
 }
 
@@ -26,6 +27,7 @@ type PageMeta struct {
 	Tags             []string `toml:"tags"`
 	LastModifiedDate string   `toml:"lastmodified"`
 	CreateDate       string   `toml:"date"`
+	ContentSidx      int
 }
 
 func extractFrontMatter(r io.Reader) (PageMeta, error) {
@@ -81,7 +83,7 @@ PARSE:
 
 	// Now parse the collected YAML string into a map
 	var pageMeta PageMeta
-	fmt.Printf("%s\n", buffer.String())
+	// fmt.Printf("%s\n", buffer.String())
 	if buffer.Len() > 0 {
 		err := toml.Unmarshal(buffer.Bytes(), &pageMeta)
 		if err != nil {
@@ -90,6 +92,8 @@ PARSE:
 	} else {
 		return PageMeta{}, fmt.Errorf("no font matter found")
 	}
+
+	pageMeta.ContentSidx = linecount
 
 	return pageMeta, nil
 }

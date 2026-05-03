@@ -1,6 +1,7 @@
 package gvfs
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -30,16 +31,20 @@ func (s *SiteManager) Walk(root, dir string) error {
 	indexLeaf := false
 
 	for _, e := range entries {
+		// fmt.Printf("processing %s\n", e.Name())
 		if e.IsDir() {
 			if slices.Contains(SkippedFolderNames, e.Name()) {
+				// fmt.Printf("skipping %s\n", e.Name())
 				continue
 			}
 			nextLevelDirs = append(nextLevelDirs, filepath.Join(dir, e.Name()))
+			// fmt.Printf("appending %s %s\n", dir, e.Name())
 			continue
 		}
 
 		fname := e.Name()
 		if fname == "index.md" || fname == "index.html" {
+			// fmt.Print("found index leaf\n")
 			indexLeaf = true
 			break
 		}
@@ -122,7 +127,13 @@ func (s *SiteManager) UpdatePages(indexPath, sideRepoPath, key string) error {
 		return err
 	}
 	pageMeta, err := extractFrontMatter(file)
+	if err != nil {
+		// fmt.Printf("%v\n", err)
+		return err
+	}
 	s.Pages[key] = Page{
+		Path:         indexPath,
+		FullURL:      fmt.Sprintf("blog/%s", key),
 		Meta:         pageMeta,
 		SideRepoPath: sideRepoPath,
 	}

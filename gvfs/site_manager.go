@@ -1,7 +1,12 @@
 package gvfs
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
 	"runtime"
 	"sync"
 
@@ -21,7 +26,7 @@ type SiteManager struct {
 	Cfg          SiteConf
 	Pages        map[string]Page
 	PendingRepos map[string]string
-	mu           sync.RWMutex
+	Mu           sync.RWMutex
 }
 
 func NewSiteManager(baseFs afero.Fs) SiteManager {
@@ -39,6 +44,8 @@ func (s *SiteManager) BuildIndex(ctx context.Context, root string) error {
 		return err
 	}
 	// TODO process PendingRepos when goroutines are added
+	pgs, err := json.MarshalIndent(s.Pages, "", "  ")
+	fmt.Println(string(pgs))
 	return nil
 }
 
@@ -66,6 +73,34 @@ func (s *SiteManager) BuildIndexFast(ctx context.Context, root string) error {
 	})
 
 	return g.Wait()
+}
+
+func (s *SiteManager) GetSpecificPageByPath(path string) (Page, error) {
+	page, exists := s.Pages[path]
+	if !exists {
+		return Page{}, fmt.Errorf("page %s does not exists", path)
+	}
+	file, err := os.Open(page.Path)
+	if err != nil {
+		return Page{}, fmt.Errorf("failed to read %s", path)
+	}
+	defer file.Close()
+	reader := bufio.NewReader(file)
+	for i := 0; i < page.Meta.ContentSidx; i++ {
+		_, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return Page{}, fmt.Errorf("unexpected EOF for %s", path)
+			}
+			return Page{}, fmt.Errorf("fail to read %s with error %v", path, err)
+		}
+	}
+	content, err := io.ReadAll(reader)
+	if err != nil {
+		return Page{}, fmt.Errorf("fail to read content with error %v", err)
+	}
+	page.Content = content
+	return page, nil
 }
 
 func (s *SiteManager) processSinglePage(root, path string) error {

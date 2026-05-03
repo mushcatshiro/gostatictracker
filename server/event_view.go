@@ -24,10 +24,10 @@ func handlePostForm(r *http.Request) (models.Event, error) {
 		return e, errors.New("Bad Request")
 	}
 	e = models.Event{
-		Start:       common.ParseStringDate(r.PostFormValue("start"), true),
-		End:         common.ParseStringDate(r.PostFormValue("end"), true),
-		ActualStart: common.ParseStringDate(r.PostFormValue("actualStart"), true),
-		ActualEnd:   common.ParseStringDate(r.PostFormValue("actualEnd"), true),
+		Start:       common.ParseStringDate(r.PostFormValue("start"), true, false),
+		End:         common.ParseStringDate(r.PostFormValue("end"), true, false),
+		ActualStart: common.ParseStringDate(r.PostFormValue("actualStart"), true, false),
+		ActualEnd:   common.ParseStringDate(r.PostFormValue("actualEnd"), true, false),
 		Group:       r.PostFormValue("group"),
 		Title:       r.PostFormValue("title"),
 		URL:         r.PostFormValue("url"),

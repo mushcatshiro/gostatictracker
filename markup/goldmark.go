@@ -19,11 +19,11 @@ import (
 
 var pageContextKey = parser.NewContextKey()
 
-type goldmarkConverter struct {
+type GoldmarkConverter struct {
 	engine goldmark.Markdown
 }
 
-func NewGoldmarkConverter() *goldmarkConverter {
+func NewGoldmarkConverter() *GoldmarkConverter {
 	gm := goldmark.New(
 		goldmark.WithExtensions(
 			// 1. Hugo's Passthrough for MathJax
@@ -42,7 +42,7 @@ func NewGoldmarkConverter() *goldmarkConverter {
 			),
 		),
 	)
-	return &goldmarkConverter{engine: gm}
+	return &GoldmarkConverter{engine: gm}
 }
 
 // HugoHTMLRenderer handles both standard code blocks (Chroma) and our custom readFile shortcode

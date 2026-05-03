@@ -19,7 +19,8 @@ func Render(content []byte, page gvfs.Page) ([]byte, error) {
 	return c.Convert(content, page)
 }
 
-func (c *goldmarkConverter) Convert(content []byte, page gvfs.Page) ([]byte, error) {
+// to clean up the args
+func (c *GoldmarkConverter) Convert(content []byte, page gvfs.Page) ([]byte, error) {
 	var buf bytes.Buffer
 	pc := parser.NewContext()
 	pc.Set(pageContextKey, page)

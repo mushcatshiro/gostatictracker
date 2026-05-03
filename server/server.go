@@ -1,11 +1,16 @@
 package server
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/gvfs"
+	"github.com/mushcatshiro/gostatictracker/markup"
+	"github.com/spf13/afero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -15,6 +20,8 @@ type Server struct {
 	router            *http.ServeMux
 	db                *sql.DB
 	googleOauthConfig *oauth2.Config
+	blogSiteManager   *gvfs.SiteManager
+	muConverter       *markup.GoldmarkConverter
 }
 
 func New(config Config) (*Server, error) {
@@ -44,12 +51,27 @@ func New(config Config) (*Server, error) {
 		Scopes:       config.GoogleOauthConfig.Scopes,
 		Endpoint:     google.Endpoint,
 	}
+
+	InitTemplates()
+
+	fs := afero.NewReadOnlyFs(afero.NewOsFs())
+	bsm := gvfs.NewSiteManager(fs)
+	err = bsm.BuildIndex(context.Background(), "E:/hugo/mushcatshiro/content/blog")
+	if err != nil {
+		return &Server{}, fmt.Errorf("%v", err)
+	}
+
+	muc := markup.NewGoldmarkConverter()
+
 	s := &Server{
 		config:            config,
 		router:            http.NewServeMux(), // instead of global
 		db:                conn,
 		googleOauthConfig: oauthConfig,
+		blogSiteManager:   &bsm,
+		muConverter:       muc,
 	}
+
 	s.RegisterRoutes()
 	return s, nil
 }

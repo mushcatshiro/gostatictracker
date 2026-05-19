@@ -22,9 +22,9 @@ func (s *Server) RegisterRoutes() {
 	s.router.HandleFunc("/blog/{title...}", s.authMiddleware(s.renderBlogView()))
 	s.router.HandleFunc("/list/blog", s.authMiddleware(s.renderBlogIndexView()))
 	s.router.HandleFunc("/editor/{title...}", s.authMiddleware(s.renderEditorView()))
-	s.router.HandleFunc("/editor", s.authMiddleware(s.renderNewEditorView()))
+	s.router.HandleFunc("/editor", s.authMiddleware(s.renderEditorView()))
 	s.router.HandleFunc("/api/assetUpload", s.authMiddleware(s.handleAssetUpload()))
-	s.router.HandleFunc("/preview", s.authMiddleware(s.renderMarkdownPreviewView()))
+	s.router.HandleFunc("/preview", s.authMiddleware(s.renderBlogPreviewView()))
 	s.router.HandleFunc("/siderepo/{path...}", s.authMiddleware(s.renderSideRepoView()))
 
 	// TODO refactor by using map to register routes

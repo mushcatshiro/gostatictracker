@@ -96,7 +96,7 @@ func (s *Server) renderBlogIndexView() http.HandlerFunc {
 	}
 }
 
-func (s *Server) renderMarkdownPreviewView() http.HandlerFunc {
+func (s *Server) renderBlogPreviewView() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fmt.Print(w, "")
 	}

@@ -1,7 +1,12 @@
 {{ define "bloglist" }}
 <ul>
 {{ range . }}
-  <li><a href="{{ .URL }}">{{ .Title }}</a> {{ .CreateDate }}</li>
+  <li>
+    <a href="{{ .URL }}">{{ .Title }}</a> {{ .CreateDate }}
+    {{ if .IsAuth }}
+    <a href="{{ .EditURL }}">Edit</a>
+    {{ end }}
+  </li>
 {{ end }}
 </ul>
 {{ end }}

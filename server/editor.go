@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,7 +32,8 @@ func (s *Server) handleAssetUpload() http.HandlerFunc {
 		if files, ok := r.MultipartForm.File["images"]; ok {
 			for _, fileHeader := range files {
 				// to change filePath
-				filePath := "/static/uploads/" + fileHeader.Filename
+				safeFname := filepath.Base(fileHeader.Filename)
+				filePath := "/static/uploads/" + safeFname
 				resultList.WriteString(generateAssetItem(filePath))
 			}
 		}

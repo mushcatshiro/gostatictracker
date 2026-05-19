@@ -126,7 +126,7 @@ func (s *SiteManager) UpdatePages(indexPath, sideRepoPath, key string) error {
 	if err != nil {
 		return err
 	}
-	pageMeta, err := extractFrontMatter(file)
+	pageMeta, err := ExtractFrontMatter(file)
 	if err != nil {
 		// fmt.Printf("%v\n", err)
 		return err

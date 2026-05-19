@@ -30,7 +30,7 @@ type PageMeta struct {
 	ContentSidx      int
 }
 
-func extractFrontMatter(r io.Reader) (PageMeta, error) {
+func ExtractFrontMatter(r io.Reader) (PageMeta, error) {
 	scanner := bufio.NewScanner(r)
 	var buffer bytes.Buffer
 	var inFrontMatter bool

@@ -45,10 +45,10 @@ func TestExtractFrontMatter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reader := strings.NewReader(tt.input)
-			meta, err := extractFrontMatter(reader)
+			meta, err := ExtractFrontMatter(reader)
 
 			if (err != nil) != tt.wantErr {
-				t.Errorf("extractFrontMatter() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ExtractFrontMatter() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if meta.Title != tt.title {

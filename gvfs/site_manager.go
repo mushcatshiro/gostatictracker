@@ -80,7 +80,7 @@ func (s *SiteManager) GetSpecificPageByPath(path string) (Page, error) {
 	if !exists {
 		return Page{}, fmt.Errorf("page %s does not exists", path)
 	}
-	file, err := os.Open(page.Path)
+	file, err := s.Fs.Open(page.Path)
 	if err != nil {
 		return Page{}, fmt.Errorf("failed to read %s", path)
 	}

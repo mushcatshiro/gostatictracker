@@ -27,47 +27,42 @@ func (s *SiteManager) Walk(root, dir string) error {
 	}
 
 	var nextLevelDirs []string
-	proceedNextDepth := true
 	indexLeaf := false
+	var effectiveEntries []os.FileInfo
 
 	for _, e := range entries {
-		// fmt.Printf("processing %s\n", e.Name())
 		if e.IsDir() {
 			if slices.Contains(SkippedFolderNames, e.Name()) {
-				// fmt.Printf("skipping %s\n", e.Name())
 				continue
 			}
 			nextLevelDirs = append(nextLevelDirs, filepath.Join(dir, e.Name()))
-			// fmt.Printf("appending %s %s\n", dir, e.Name())
 			continue
 		}
 
 		fname := e.Name()
+		if fname == "_index.md" {
+			continue
+		}
+		effectiveEntries = append(effectiveEntries, e)
 		if fname == "index.md" || fname == "index.html" {
-			// fmt.Print("found index leaf\n")
 			indexLeaf = true
-			break
+			continue
 		}
 
-		ext := filepath.Ext(e.Name())
-		if ext == ".md" || ext == ".html" {
-			proceedNextDepth = false
-			break
-		}
 	}
-	if proceedNextDepth && !indexLeaf {
+	if len(nextLevelDirs) > 0 {
 		for _, dir := range nextLevelDirs {
 			if err := s.Walk(root, dir); err != nil {
 				return err
 			}
 		}
-		return nil
 	}
 	if indexLeaf {
-		return s.AssembleIndexLeaf(root, dir, entries)
+		fmt.Printf("assemble index leaf %s\n", dir)
+		return s.AssembleIndexLeaf(root, dir, effectiveEntries)
 	}
-
-	return s.AssembleBundle(root, dir, entries)
+	fmt.Printf("assemble bundle %s\n", dir)
+	return s.AssembleBundle(root, dir, effectiveEntries)
 }
 
 // Url prefix referring to "content/blog/post-1/index.md" -> "blog/post-1"
@@ -124,11 +119,13 @@ func (s *SiteManager) AssembleBundle(root, dir string, entries []os.FileInfo) er
 func (s *SiteManager) UpdatePages(indexPath, sideRepoPath, key string) error {
 	file, err := s.Fs.Open(indexPath)
 	if err != nil {
+		fmt.Printf("%s: %v\n", indexPath, err)
 		return err
 	}
+	defer file.Close()
 	pageMeta, err := ExtractFrontMatter(file)
 	if err != nil {
-		// fmt.Printf("%v\n", err)
+		fmt.Printf("%v\n", err)
 		return err
 	}
 	s.Pages[key] = Page{

@@ -33,7 +33,7 @@ func buildIndexSearchFormSection(groups []string, endpoint string) elm {
 	return form
 }
 
-func RenderIndexSearchFormHtml(groups []string, endpoint string) string {
+func RenderIndexView(groups []string, endpoint string) string {
 	formElm := buildIndexSearchFormSection(groups, endpoint)
 	bd := bodyElm
 	bd.childs = append(bd.childs, formElm)

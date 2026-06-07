@@ -4,36 +4,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/render"
 )
 
 func (s *Server) handleSearch() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		jwtCookie, err := r.Cookie("app-jwt")
+		isAuth := getIsAuth(r)
+		if !isAuth {
+			s.handleError(w, r, http.StatusUnauthorized, "Unauthorized request")
+			return
+		}
+		groups, err := dbop.GetUniqueGroups(s.db)
 		if err != nil {
-			fmt.Printf("failed to get token: %v", err)
-			http.Error(w, "Bad Request", http.StatusBadRequest)
+			s.handleError(w, r, 404, err.Error())
 			return
 		}
-		tokStr := jwtCookie.Value
-		claims := &CustomClaims{}
-		token, err := jwt.ParseWithClaims(tokStr, claims, func(token *jwt.Token) (any, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-			return []byte(s.config.Auth.JKey), nil
-		})
-		if err != nil || !token.Valid {
-			fmt.Printf("err: %v || token: %t", err, token.Valid)
-			http.Error(w, "Unauthorized request", http.StatusUnauthorized)
-			return
-		}
-		page, err := render.RenderIndexView(s.db, "/searchRedirect")
-		if err != nil {
-			fmt.Fprintf(w, "")
-			return
-		}
+		page := render.RenderIndexView(groups, "/searchRedirect")
 		fmt.Print(w, page)
 	}
 }

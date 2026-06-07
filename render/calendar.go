@@ -1,14 +1,12 @@
 package render
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
@@ -119,16 +117,12 @@ func renderCalendarHTML(mg models.MonthGroup, file *os.File) error {
 	return nil
 }
 
-func RenderCalendar(conn *sql.DB, month, year int, renderTargetPath string) {
+func RenderCalendar(monthGroups []models.MonthGroup, renderTargetPath string) {
 	/*
 		query by month of interest - then generate - color code by group;
 		paradigm shift, to render by month(s) instead of group centric
 	*/
 
-	monthGroups, err := dbop.GetCalendarMonthGroups(conn, month, year)
-	if err != nil {
-		log.Fatalf("Not able to query any group(s): %v", err)
-	}
 	for _, mg := range monthGroups {
 		fmt.Printf("%+v\n", mg)
 		fileName := strconv.Itoa(int(mg.FirstDayOfMonth.Month())) +

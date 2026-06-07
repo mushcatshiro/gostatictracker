@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
@@ -30,4 +31,18 @@ func GetKanbanGroup(db *sql.DB, status int, groupName string) ([]models.Event, e
 		return events, fmt.Errorf("error reading events: %v", err)
 	}
 	return events, nil
+}
+
+func GetKanbanGroups(db *sql.DB, groupName string) (map[string][]models.Event, error) {
+	var out map[string][]models.Event
+
+	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
+		titleName := idx.String()
+		listOfEvent, err := GetKanbanGroup(db, int(idx), groupName)
+		if err != nil {
+			return out, err
+		}
+		out[titleName] = listOfEvent
+	}
+	return out, nil
 }

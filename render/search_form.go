@@ -1,12 +1,5 @@
 package render
 
-import (
-	"database/sql"
-	"fmt"
-
-	"github.com/mushcatshiro/gostatictracker/dbop"
-)
-
 func buildIndexSearchFormSection(groups []string, endpoint string) elm {
 	var groupOptions, groupOptionElm []elm
 	r := formGroupElm
@@ -47,12 +40,4 @@ func RenderIndexSearchFormHtml(groups []string, endpoint string) string {
 
 	htmlBase := buildBaseHtml(formStyleString, bd, elm{})
 	return h(htmlBase)
-}
-
-func RenderIndexView(db *sql.DB, endpoint string) (string, error) {
-	groups, err := dbop.GetUniqueGroups(db)
-	if err != nil {
-		return "", fmt.Errorf("failed to get unique groups: %v", err)
-	}
-	return RenderIndexSearchFormHtml(groups, endpoint), nil
 }

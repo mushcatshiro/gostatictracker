@@ -1,22 +1,21 @@
 package render
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/mushcatshiro/gostatictracker/common"
-	"github.com/mushcatshiro/gostatictracker/dbop"
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func RenderKanban(db *sql.DB, groupName string) (string, error) {
+func RenderKanban(moloe map[string][]models.Event, groupName string) (string, error) {
 	var htmlString string
 	var slElmList []elm
 
 	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
 		titleName := idx.String()
-		listOfEvent, err := dbop.GetKanbanGroup(db, int(idx), groupName)
-		if err != nil {
-			return htmlString, fmt.Errorf("failed to retrieve %s: %v", idx, err)
+		listOfEvent, ok := moloe[titleName]
+		if !ok {
+			return "", fmt.Errorf("missing title %s", titleName)
 		}
 
 		slElm := buildOneSwimlane(listOfEvent, titleName)

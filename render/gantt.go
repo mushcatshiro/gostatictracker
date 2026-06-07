@@ -55,72 +55,6 @@ type eventGanttBase struct {
 	Rows             []eventGanttRow
 }
 
-type ganttRenderMetadata struct {
-	isDayView            bool
-	groupStartTime       *time.Time
-	groupEndTime         *time.Time
-	groupName            string
-	rowTextInRectPadding int     // LR padding for text to be place in rect
-	rectToTextMargin     int     // spacing between rect and text
-	textYOffset          float32 // approximate text Y offset from Y (center)
-	rowRectMargin        int     // spacing between two rect/row
-	rowRectHeight        int
-	headersOffset        int
-	baseHeaderRectWidth  int // date or week rect width
-	headerRectHeight     int
-	headerRectMargin     int
-	headerTextYOffset    int // somehow it needs +2 after dividing height by 2
-	divisor              int
-}
-
-func getGanttRenderMetadata(db *sql.DB, groupName string) (ganttRenderMetadata, error) {
-	g := ganttRenderMetadata{
-		isDayView:            true,
-		groupName:            groupName,
-		rowTextInRectPadding: 4,
-		rectToTextMargin:     2,
-		textYOffset:          6.3,
-		rowRectMargin:        2,
-		rowRectHeight:        10,
-		headersOffset:        (24 + 2) * 3,
-		baseHeaderRectWidth:  30,
-		headerRectHeight:     24,
-		headerRectMargin:     2,
-		headerTextYOffset:    2,
-		divisor:              24,
-	}
-	/*
-		scans table twice however does not assume earliest time is in start and vice
-		versa; also prior to pg16 alias is needed for subquery.
-		`SELECT MIN(d) AS startDate, MAX(d) AS endDate
-		FROM (SELECT "start" d FROM events WHERE "group" = $1 UNION ALL
-		SELECT "end" d FROM events WHERE "group" = $1)`
-	*/
-	query := `SELECT
-		MIN("start") as startDate,
-		MAX("end") as endDate
-	FROM events
-	WHERE "group" = $1`
-	row := db.QueryRow(query, groupName)
-	if err := row.Scan(&g.groupStartTime, &g.groupEndTime); err != nil {
-		return ganttRenderMetadata{}, fmt.Errorf("\nfailed to scan start/end time and full duration:\n%w", err)
-	}
-
-	query = `SELECT MIN(("end"::date - start::date)+1) AS minTaskDuration FROM events WHERE "group" = $1`
-	var minTaskDuration sql.NullInt64
-	err := db.QueryRow(query, groupName).Scan(&minTaskDuration)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return ganttRenderMetadata{}, fmt.Errorf("\nno events found for group %s:\n%w", groupName, err)
-		}
-		log.Printf("Failed to scan minimum task duration: %v; using default day view", err)
-	} else if minTaskDuration.Valid && minTaskDuration.Int64 >= 7 {
-		g.isDayView = false
-		g.divisor = 7 * 24
-	}
-	return g, nil
-}
-
 func getTextEstimateWidth(text string) int {
 	return len([]rune(text)) * 8
 }
@@ -144,15 +78,15 @@ func formatEventTimes(s, e *time.Time, isDayView bool) (time.Time, time.Time) {
 	return iStartTime, iEndTime
 }
 
-func processRectAndLine(spacing, rowIdx, rowRectWidth int, g ganttRenderMetadata) (int, int, int, int) {
-	rectX := spacing * (g.baseHeaderRectWidth + g.headerRectMargin)
-	rectY := (rowIdx * (g.rowRectHeight + g.rowRectMargin)) + g.headersOffset
+func processRectAndLine(spacing, rowIdx, rowRectWidth int, g models.GanttRenderMetadata) (int, int, int, int) {
+	rectX := spacing * (g.BaseHeaderRectWidth + g.HeaderRectMargin)
+	rectY := (rowIdx * (g.RowRectHeight + g.RowRectMargin)) + g.HeadersOffset
 	lineX1 := rectX + rowRectWidth
 	lineX2 := rectX + rowRectWidth
 	return rectX, rectY, lineX1, lineX2
 }
 
-func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int {
+func processOverFlowUnits(maxWidth, rowEndWidth int, g models.GanttRenderMetadata) int {
 	// visually still blocking last few chars due to padding 0.5rem
 	diff := maxWidth - rowEndWidth
 	var overflowUnits int
@@ -161,33 +95,33 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g ganttRenderMetadata) int 
 	}
 
 	for diff > 0 {
-		diff = diff - (g.baseHeaderRectWidth + g.headerRectMargin)
+		diff = diff - (g.BaseHeaderRectWidth + g.HeaderRectMargin)
 		overflowUnits++
 	}
 
 	return overflowUnits
 }
 
-func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool) ([]eventGanttRow, int) {
+func getGanttRows(events []models.GanttEvent, g models.GanttRenderMetadata, debug bool) ([]eventGanttRow, int) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
 	rSlice := []eventGanttRow{}
 
 	var maxWidth, rowEndWidth int
 
-	lineY1 := g.headersOffset - 2
-	lineY2 := g.headersOffset + len(events)*(g.rowRectHeight+g.rowRectMargin)
+	lineY1 := g.HeadersOffset - 2
+	lineY2 := g.HeadersOffset + len(events)*(g.RowRectHeight+g.RowRectMargin)
 
 	for idx, event := range events {
-		iStartTime, iEndTime := formatEventTimes(event.Start, event.End, g.isDayView)
-		if !g.isDayView && idx == 0 {
-			g.groupStartTime = &iStartTime
+		iStartTime, iEndTime := formatEventTimes(event.Start, event.End, g.IsDayView)
+		if !g.IsDayView && idx == 0 {
+			g.GroupStartTime = &iStartTime
 		}
-		duration := iStartTime.Sub(*g.groupStartTime)
-		daysSpacing := int(duration.Hours() / float64(g.divisor))
+		duration := iStartTime.Sub(*g.GroupStartTime)
+		daysSpacing := int(duration.Hours() / float64(g.Divisor))
 
 		titleWidth := getTextEstimateWidth(event.Title)
-		rowRectWidth := getRowRectWidth(iStartTime, iEndTime, g.baseHeaderRectWidth+g.headerRectMargin, float64(g.divisor))
+		rowRectWidth := getRowRectWidth(iStartTime, iEndTime, g.BaseHeaderRectWidth+g.HeaderRectMargin, float64(g.Divisor))
 
 		var textX int
 		var textY float32
@@ -195,14 +129,14 @@ func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool)
 		rectX, rectY, lineX1, lineX2 := processRectAndLine(daysSpacing, idx, rowRectWidth, g)
 
 		// keeping text here since `maxWidth` is coupled with `textX`
-		textY = float32(rectY) + g.textYOffset
+		textY = float32(rectY) + g.TextYOffset
 		rowEndWidth = max(rowEndWidth, rectX+rowRectWidth)
-		if rowRectWidth-g.rowRectMargin-(2*g.rectToTextMargin) > titleWidth {
-			textX = rectX + g.rectToTextMargin
+		if rowRectWidth-g.RowRectMargin-(2*g.RectToTextMargin) > titleWidth {
+			textX = rectX + g.RectToTextMargin
 			maxWidth = max(maxWidth, rectX+rowRectWidth)
 		} else {
-			textX = rectX + rowRectWidth + g.rectToTextMargin
-			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.rectToTextMargin*2)+titleWidth)
+			textX = rectX + rowRectWidth + g.RectToTextMargin
+			maxWidth = max(maxWidth, rectX+rowRectWidth+(g.RectToTextMargin*2)+titleWidth)
 		}
 
 		var description string
@@ -233,12 +167,12 @@ func getGanttRows(events []models.GanttEvent, g ganttRenderMetadata, debug bool)
 	return rSlice, overFlowUnits
 }
 
-func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
-	startTime := *g.groupStartTime
-	endTime := *g.groupEndTime
+func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
+	startTime := *g.GroupStartTime
+	endTime := *g.GroupEndTime
 
 	var overflowDays int
-	if g.isDayView {
+	if g.IsDayView {
 		overflowDays = overflowUnits
 	} else {
 		for overflowDays < overflowUnits*7 {
@@ -247,7 +181,7 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 
 	}
 	endTime = endTime.AddDate(0, 0, overflowDays)
-	if !g.isDayView {
+	if !g.IsDayView {
 		ey, ew := endTime.ISOWeek()
 		endTime = isoweek.StartTime(ey, ew, time.UTC)
 	}
@@ -265,12 +199,12 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 		_, iterWeek = startTime.ISOWeek()
 
 		var d eventGanttHeader
-		if g.isDayView {
+		if g.IsDayView {
 			d = eventGanttHeader{
-				RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
-				RectWidth: g.baseHeaderRectWidth,
-				TextX:     dIdx*(g.baseHeaderRectWidth+g.headerRectMargin) + int(g.baseHeaderRectWidth/2),
-				TextY:     2*(g.headerRectHeight+g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+				RectX:     dIdx * (g.BaseHeaderRectWidth + g.HeaderRectMargin),
+				RectWidth: g.BaseHeaderRectWidth,
+				TextX:     dIdx*(g.BaseHeaderRectWidth+g.HeaderRectMargin) + int(g.BaseHeaderRectWidth/2),
+				TextY:     2*(g.HeaderRectHeight+g.HeaderRectMargin) + int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 				TextVal:   strconv.Itoa(iterDay),
 				DataDate:  startTime.Format("2006-01-02"), // YYYY-MM-DD, BUG?
 			}
@@ -285,10 +219,10 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 				t := isoweek.StartTime(iterYear, iterWeek, time.UTC)
 				_, _, iterDay = t.Date()
 				d = eventGanttHeader{
-					RectX:     dIdx * (g.baseHeaderRectWidth + g.headerRectMargin),
-					RectWidth: g.baseHeaderRectWidth,
-					TextX:     dIdx*(g.baseHeaderRectWidth+g.headerRectMargin) + int(g.baseHeaderRectWidth/2),
-					TextY:     2*(g.headerRectHeight+g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+					RectX:     dIdx * (g.BaseHeaderRectWidth + g.HeaderRectMargin),
+					RectWidth: g.BaseHeaderRectWidth,
+					TextX:     dIdx*(g.BaseHeaderRectWidth+g.HeaderRectMargin) + int(g.BaseHeaderRectWidth/2),
+					TextY:     2*(g.HeaderRectHeight+g.HeaderRectMargin) + int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 					TextVal:   strconv.Itoa(iterDay),
 					DataDate:  startTime.Format("2006-01-02"), // YYYY-MM-DD, BUG?
 				}
@@ -301,72 +235,72 @@ func getGanttHeaders(g ganttRenderMetadata, overflowUnits int) ([]eventGanttHead
 		}
 
 		if startTime.AddDate(0, 0, 1).Month() != startTime.Month() {
-			currentMonthWidth := (cumForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+			currentMonthWidth := (cumForMonth * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
 			m := eventGanttHeader{
 				RectX:     monthRectEndX,
 				RectWidth: currentMonthWidth,
 				TextX:     monthRectEndX + int(currentMonthWidth/2),
-				TextY:     (g.headerRectHeight + g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+				TextY:     (g.HeaderRectHeight + g.HeaderRectMargin) + int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 				TextVal:   strconv.Itoa(int(iterMonth)),
 			}
 			monthGanttHeader = append(monthGanttHeader, m)
-			monthRectEndX += currentMonthWidth + g.headerRectMargin
+			monthRectEndX += currentMonthWidth + g.HeaderRectMargin
 			cumForMonth = 0
 		}
 		if startTime.AddDate(0, 0, 1).Year() != startTime.Year() {
-			currentYearWidth := (cumForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+			currentYearWidth := (cumForYear * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
 			y := eventGanttHeader{
 				RectX:     yearRectEndX,
 				RectWidth: currentYearWidth,
 				TextX:     yearRectEndX + int(currentYearWidth/2),
-				TextY:     int(g.headerRectHeight/2) + g.headerTextYOffset,
+				TextY:     int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 				TextVal:   strconv.Itoa(iterYear)}
 			yearGanttHeader = append(yearGanttHeader, y)
-			yearRectEndX += currentYearWidth + g.headerRectMargin
+			yearRectEndX += currentYearWidth + g.HeaderRectMargin
 			cumForYear = 0
 		}
 
 		startTime = startTime.AddDate(0, 0, 1)
 	}
 	if cumForMonth > 0 {
-		currentMonthWidth := (cumForMonth * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+		currentMonthWidth := (cumForMonth * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
 		m := eventGanttHeader{
 			RectX:     monthRectEndX,
 			RectWidth: currentMonthWidth,
 			TextX:     monthRectEndX + int(currentMonthWidth/2),
-			TextY:     (g.headerRectHeight + g.headerRectMargin) + int(g.headerRectHeight/2) + g.headerTextYOffset,
+			TextY:     (g.HeaderRectHeight + g.HeaderRectMargin) + int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 			TextVal:   strconv.Itoa(int(iterMonth)),
 		}
 		monthGanttHeader = append(monthGanttHeader, m)
 	}
 	if cumForYear > 0 {
-		currentYearWidth := (cumForYear * (g.baseHeaderRectWidth + g.headerRectMargin)) - g.headerRectMargin
+		currentYearWidth := (cumForYear * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
 		y := eventGanttHeader{
 			RectX:     yearRectEndX,
 			RectWidth: currentYearWidth,
 			TextX:     yearRectEndX + int(currentYearWidth/2),
-			TextY:     int(g.headerRectHeight/2) + g.headerTextYOffset,
+			TextY:     int(g.HeaderRectHeight/2) + g.HeaderTextYOffset,
 			TextVal:   strconv.Itoa(iterYear)}
 		yearGanttHeader = append(yearGanttHeader, y)
 	}
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug bool) eventGanttBase {
+func getGanttEventBase(events []models.GanttEvent, g models.GanttRenderMetadata, debug bool) eventGanttBase {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
 	e := eventGanttBase{
-		HeaderRectWidth:  g.baseHeaderRectWidth,
-		HeaderRectHeight: g.headerRectHeight,
-		RowRectHeight:    g.rowRectHeight,
-		Group:            g.groupName,
+		HeaderRectWidth:  g.BaseHeaderRectWidth,
+		HeaderRectHeight: g.HeaderRectHeight,
+		RowRectHeight:    g.RowRectHeight,
+		Group:            g.GroupName,
 	}
-	e.SvgHeight = g.headersOffset + len(events)*(e.RowRectHeight+g.rowRectMargin) + 2*8
+	e.SvgHeight = g.HeadersOffset + len(events)*(e.RowRectHeight+g.RowRectMargin) + 2*8
 
 	rSlice, overflowUnits := getGanttRows(events, g, debug)
 	e.Rows = rSlice
 
 	y, m, d := getGanttHeaders(g, overflowUnits)
-	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.headerRectMargin) + 17 // buffer
+	e.SvgWidth = len(d)*(e.HeaderRectWidth+g.HeaderRectMargin) + 17 // buffer
 
 	e.Years = y
 	e.Months = m
@@ -374,7 +308,7 @@ func getGanttEventBase(events []models.GanttEvent, g ganttRenderMetadata, debug 
 	return e
 }
 
-func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMetadata, debug bool) error {
+func RenderGanttHTML(events []models.GanttEvent, file *os.File, g models.GanttRenderMetadata, debug bool) error {
 	var t *template.Template
 	var err error
 
@@ -388,7 +322,7 @@ func RenderGanttHTML(events []models.GanttEvent, file *os.File, g ganttRenderMet
 	return err
 }
 
-func buildGanttElmTree(events []models.GanttEvent, g ganttRenderMetadata) elm {
+func buildGanttElmTree(events []models.GanttEvent, g models.GanttRenderMetadata) elm {
 	// should only take in GanttEventBase
 	geb := getGanttEventBase(events, g, false)
 	gss := buildGanttStyleString(geb.HeaderRectWidth, geb.HeaderRectHeight, geb.RowRectHeight)
@@ -412,7 +346,7 @@ func buildGanttElmTree(events []models.GanttEvent, g ganttRenderMetadata) elm {
 		svgE.childs = append(svgE.childs, e)
 	}
 	htmlBody := bodyElm
-	headerElm := elm{tag: "h2", innerText: g.groupName}
+	headerElm := elm{tag: "h2", innerText: g.GroupName}
 	htmlBody.childs = append(htmlBody.childs, headerElm)
 	htmlBody.childs = append(htmlBody.childs, svgE)
 	return buildBaseHtml(gss, htmlBody, todayIndicatorScript)
@@ -443,7 +377,7 @@ func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 		*/
 		defer file.Close()
 
-		g, err := getGanttRenderMetadata(conn, group)
+		g, err := dbop.GetGanttRenderMetadata(conn, group)
 		if err != nil {
 			log.Fatalf("Failed to get gantt render metadata for group %s: %v", group, err)
 		}
@@ -454,22 +388,10 @@ func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 	}
 }
 
-func RenderGanttHtml(events []models.GanttEvent, g ganttRenderMetadata) string {
-	return h(buildGanttElmTree(events, g))
-}
-
-func RenderGanttV2(conn *sql.DB, groupName string) (string, error) {
-	events, err := dbop.GetGanttGroupEvents(conn, groupName, true)
-	if err != nil {
-		return "", err
-	}
+func RenderGanttV2(events []models.GanttEvent, g models.GanttRenderMetadata, groupName string) (string, error) {
 	if len(events) == 0 {
 		return "", fmt.Errorf("no rows found for group %s", groupName)
 	}
-	g, err := getGanttRenderMetadata(conn, groupName)
-	if err != nil {
-		return "", fmt.Errorf("Failed to get gantt render metadata for group %s: %v", groupName, err)
-	}
-	htmlString := RenderGanttHtml(events, g)
+	htmlString := h(buildGanttElmTree(events, g))
 	return htmlString, nil
 }

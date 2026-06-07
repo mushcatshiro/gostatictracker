@@ -1,9 +1,12 @@
 package markup
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/alecthomas/chroma/formatters/html"
@@ -19,6 +22,14 @@ import (
 
 var pageContextKey = parser.NewContextKey()
 
+type RenderContext struct {
+	FilePath string
+}
+
+type Converter interface {
+	Convert(content []byte, ctx RenderContext) ([]byte, error)
+}
+
 type GoldmarkConverter struct {
 	engine goldmark.Markdown
 }
@@ -29,10 +40,10 @@ func NewGoldmarkConverter() *GoldmarkConverter {
 			// 1. Hugo's Passthrough for MathJax
 			passthrough.New(passthrough.Config{
 				InlineDelimiters: []passthrough.Delimiters{
-					{ Open: "$", Close:"$"},
+					{Open: "$", Close: "$"},
 				},
 				BlockDelimiters: []passthrough.Delimiters{
-					{ Open: "$$", Close: "$$"},
+					{Open: "$$", Close: "$$"},
 				},
 			}),
 		),
@@ -45,7 +56,23 @@ func NewGoldmarkConverter() *GoldmarkConverter {
 	return &GoldmarkConverter{engine: gm}
 }
 
-// HugoHTMLRenderer handles both standard code blocks (Chroma) and our custom readFile shortcode
+func (c *GoldmarkConverter) Convert(content []byte, ctx RenderContext) ([]byte, error) {
+	var buf bytes.Buffer
+	pc := parser.NewContext()
+	pc.Set(pageContextKey, ctx)
+	if err := c.engine.Convert(content, &buf); err != nil {
+		return nil, fmt.Errorf("failed to convert markdown: %w", err)
+	}
+	return buf.Bytes(), nil
+}
+
+func Render(content []byte, ctx RenderContext) ([]byte, error) {
+	c := NewGoldmarkConverter()
+	return c.Convert(content, ctx)
+}
+
+// HugoHTMLRenderer handles both standard code blocks (Chroma)
+// and our custom readFile shortcode
 type HugoHTMLRenderer struct{}
 
 func NewHugoHTMLRenderer() renderer.NodeRenderer {
@@ -53,34 +80,42 @@ func NewHugoHTMLRenderer() renderer.NodeRenderer {
 }
 
 func (r *HugoHTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
-	// Handle standard code fences
 	reg.Register(ast.KindFencedCodeBlock, r.renderCodeBlock)
-	// Handle our shortcode-like text
 	reg.Register(ast.KindText, r.renderTextWithShortcodes)
 }
 
-// renderCodeBlock manually uses Chroma (Hugo style)
 func (r *HugoHTMLRenderer) renderCodeBlock(
 	w util.BufWriter, source []byte, node ast.Node, entering bool,
 ) (ast.WalkStatus, error) {
-	if entering {
-		n := node.(*ast.FencedCodeBlock)
-		lang := string(n.Language(source))
-
-		var b strings.Builder
-		for i := 0; i < n.Lines().Len(); i++ {
-			line := n.Lines().At(i)
-			b.Write(line.Value(source))
-		}
-
-		// Use 'friendly' style from your hugo.toml
-		htmlContent, _ := highlight(b.String(), lang, "friendly")
-		w.WriteString(htmlContent)
+	if !entering {
+		return ast.WalkSkipChildren, nil
 	}
+
+	n := node.(*ast.FencedCodeBlock)
+	lang := string(n.Language(source))
+
+	if lang == "mermaid" {
+		w.WriteString(`<pre><code class="language-mermaid">`)
+		for i := 0; i < n.Lines().Len(); i++ {
+			// FIX: Assign to a variable first to make it addressable
+			line := n.Lines().At(i)
+			w.Write(line.Value(source))
+		}
+		w.WriteString(`</code></pre>`)
+		return ast.WalkSkipChildren, nil
+	}
+
+	var b strings.Builder
+	for i := 0; i < n.Lines().Len(); i++ {
+		line := n.Lines().At(i)
+		b.Write(line.Value(source))
+	}
+
+	htmlContent, _ := highlight(b.String(), lang, "friendly")
+	w.WriteString(htmlContent)
 	return ast.WalkSkipChildren, nil
 }
 
-// renderTextWithShortcodes looks for {{< readFile ... >}} pattern
 var readFileRegex = regexp.MustCompile(`\{\{<\s*readFile\s+file="([^"]+)"\s+lines="([^"]+)"\s+lang="([^"]+)"\s*>\}\}`)
 
 func (r *HugoHTMLRenderer) renderTextWithShortcodes(
@@ -100,7 +135,6 @@ func (r *HugoHTMLRenderer) renderTextWithShortcodes(
 		return ast.WalkContinue, nil
 	}
 
-	// Extract params
 	fileName := match[1]
 	lineRange := match[2]
 	lang := match[3]
@@ -112,7 +146,7 @@ func (r *HugoHTMLRenderer) renderTextWithShortcodes(
 	// Implementation of reading and highlighting
 	snippet, err := readSnippet(fileName, lineRange) // Needs implementation logic
 	if err != nil {
-		w.WriteString(fmt.Sprintf("", err))
+		w.WriteString(fmt.Sprintf("<!-- error: %v -->", err))
 		return ast.WalkContinue, nil
 	}
 
@@ -122,7 +156,6 @@ func (r *HugoHTMLRenderer) renderTextWithShortcodes(
 	return ast.WalkContinue, nil
 }
 
-// highlight is a helper to use Chroma manually
 func highlight(code, lang, styleName string) (string, error) {
 	lexer := lexers.Get(lang)
 	if lexer == nil {
@@ -142,7 +175,56 @@ func highlight(code, lang, styleName string) (string, error) {
 }
 
 func readSnippet(filePath string, rangeStr string) (string, error) {
-	// Logic to open file and grab lines "3:22"
-	// Use bufio.Scanner and a counter
-	return "/* code snippet logic */", nil
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	startLine := 1
+	endLine := -1 // -1 acts as an indicator to read until the End Of File (EOF)
+
+	// Parse the line range string
+	parts := strings.Split(rangeStr, ":")
+	if len(parts) > 0 && parts[0] != "" {
+		if s, err := strconv.Atoi(parts[0]); err == nil {
+			startLine = s
+		}
+	}
+	if len(parts) > 1 {
+		if parts[1] != "" {
+			if e, err := strconv.Atoi(parts[1]); err == nil {
+				endLine = e
+			}
+		}
+	} else if len(parts) == 1 && parts[0] != "" {
+		// If only a single number is provided without a colon (e.g., "10")
+		endLine = startLine
+	}
+
+	var builder strings.Builder
+	scanner := bufio.NewScanner(file)
+	currentLine := 1
+
+	for scanner.Scan() {
+		// Start appending once we reach the start line
+		if currentLine >= startLine {
+			builder.WriteString(scanner.Text())
+			builder.WriteString("\n")
+		}
+
+		// Stop reading early if we have hit the end line
+		if endLine != -1 && currentLine >= endLine {
+			break
+		}
+		currentLine++
+	}
+
+	if err := scanner.Err(); err != nil {
+		return "", fmt.Errorf("error scanning file: %w", err)
+	}
+
+	// Remove the trailing newline for cleaner code block formatting
+	return strings.TrimSuffix(builder.String(), "\n"), nil
+
 }

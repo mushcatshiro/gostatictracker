@@ -1,31 +1,14 @@
 package markup
 
-import (
-	"bytes"
-	"fmt"
+import "errors"
 
-	"github.com/mushcatshiro/gostatictracker/gvfs"
-	"github.com/yuin/goldmark/parser"
-)
-
-// Converter defines the interface for markdown to HTML conversion
-type Converter interface {
-	Convert(content []byte, page gvfs.Page) ([]byte, error)
+type MockConverter struct {
+	ShouldFail bool
 }
 
-// Render is the high-level function that uses the Goldmark implementation
-func Render(content []byte, page gvfs.Page) ([]byte, error) {
-	c := NewGoldmarkConverter()
-	return c.Convert(content, page)
-}
-
-// to clean up the args
-func (c *GoldmarkConverter) Convert(content []byte, page gvfs.Page) ([]byte, error) {
-	var buf bytes.Buffer
-	pc := parser.NewContext()
-	pc.Set(pageContextKey, page)
-	if err := c.engine.Convert(content, &buf); err != nil {
-		return nil, fmt.Errorf("failed to convert markdown: %w", err)
+func (m *MockConverter) Convert(content []byte, ctx RenderContext) ([]byte, error) {
+	if m.ShouldFail {
+		return nil, errors.New("fail to convert: forced test error")
 	}
-	return buf.Bytes(), nil
+	return []byte("<p>mock converted HTML</p>"), nil
 }

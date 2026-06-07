@@ -20,13 +20,18 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:     "Code Block with Chroma",
-			input:    "```go\npackage main\n```",
+			input:    "```go\npackage main\nimport \"fmt\"\n\nfunc main() {\nfmt.Println(\"Hello, World!\")\n}```",
 			contains: "chroma", // Check if chroma classes are injected
 		},
 		{
 			name:     "Mermaid Block",
 			input:    "```mermaid\ngraph TD;\nA-->B;\n```",
 			contains: "language-mermaid",
+		},
+		{
+			name:     "Malicious Script Injection",
+			input:    "<script>alert('XSS')</script>",
+			contains: "&lt;script&gt;alert('XSS')&lt;/script&gt;", // Ensure HTML is escaped
 		},
 	}
 

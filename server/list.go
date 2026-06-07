@@ -26,3 +26,11 @@ func (s *Server) renderListView() http.HandlerFunc {
 		fmt.Fprint(w, page)
 	}
 }
+
+func (s *Server) processListIndexView(group string) {
+	// default to scratchpad
+}
+
+func (s *Server) renderListIndexView() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {}
+}

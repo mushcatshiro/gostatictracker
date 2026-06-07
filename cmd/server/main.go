@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/mushcatshiro/gostatictracker/server"
 )
@@ -9,11 +9,11 @@ import (
 func main() {
 	cfg, err := server.LoadConfig()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		slog.Error("Failed to load config: ", "error", err.Error())
 	}
 	srv, err := server.New(cfg)
 	if err != nil {
-		log.Fatalf("Failed to create new server: %v", err)
+		slog.Error("Failed to create new server: ", "error", err.Error())
 	}
 	srv.Start()
 }

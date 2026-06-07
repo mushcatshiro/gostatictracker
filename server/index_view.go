@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 )
 
@@ -31,7 +30,7 @@ func (s *Server) handleIndex() http.HandlerFunc {
 			s.forceLogin(w, r)
 		}
 
-		tmpl.ExecuteTemplate(
+		s.tmpl.ExecuteTemplate(
 			w, "base", BaseTmplMeta{
 				SiteName: "Mushcat`Shiro's Fortress of Solitude",
 				IsAuth:   isAuth,
@@ -42,23 +41,38 @@ func (s *Server) handleIndex() http.HandlerFunc {
 }
 
 func (s *Server) handleError(w http.ResponseWriter, r *http.Request, status int, msg string) {
-	fmt.Println(r.URL.Path)
-	w.WriteHeader(status)
-
+	// TODO need redo; first condition will prevents much more redirects that it
+	// should be from actually showing error banner
+	isHTMX := r.Header.Get("HX-Request") == "true"
 	accept := r.Header.Get("Accept")
-	acceptFormats := strings.Split(accept, ",")
-	if !slices.Contains(acceptFormats, "text/html") && r.Header.Get("HX-Request") == "" {
-		fmt.Fprint(w, msg)
+	wantsHTML := strings.Contains(accept, "text/html")
+
+	if !isHTMX && wantsHTML && r.URL.Path != "/" {
+		// You can optionally pass the error message via a flash cookie or query param
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		fmt.Printf("see other for %s with status %d and msg %s", r.URL.Path, status, msg)
 		return
 	}
 
-	if r.Header.Get("HX-Request") == "true" {
-		tmpl.ExecuteTemplate(
+	if !wantsHTML && !isHTMX {
+		w.WriteHeader(status)
+		fmt.Fprintf(w, msg)
+		fmt.Printf("dont want html and not htmx for %s with status %d and msg %s", r.URL.Path, status, msg)
+		return
+	}
+
+	if isHTMX {
+		w.Header().Set("HX-Push-Url", "/")
+		w.WriteHeader(status)
+		s.tmpl.ExecuteTemplate(
 			w, "error-partial", ErrPageTmplMeta{ErrorMessage: msg},
 		)
+		fmt.Printf("is htmx for %s with status %d and msg %s", r.URL.Path, status, msg)
 		return
 	}
-	tmpl.ExecuteTemplate(w, "base",
+
+	w.WriteHeader(status)
+	s.tmpl.ExecuteTemplate(w, "base",
 		BaseTmplMeta{
 			ShowError:       true,
 			SiteName:        "Mushcat`Shiro's Fortress of Solitude",
@@ -67,4 +81,5 @@ func (s *Server) handleError(w http.ResponseWriter, r *http.Request, status int,
 			ErrPageTmplMeta: &ErrPageTmplMeta{ErrorMessage: msg},
 		},
 	)
+	fmt.Printf("base for %s with status %d and msg %s", r.URL.Path, status, msg)
 }

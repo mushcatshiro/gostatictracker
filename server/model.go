@@ -2,7 +2,7 @@ package server
 
 import "html/template"
 
-type tmplBlogPageMeta struct {
+type tmplBlogEntryMeta struct {
 	Title            string
 	HasMermaid       bool
 	HasMathJax       bool
@@ -12,6 +12,7 @@ type tmplBlogPageMeta struct {
 	LastModifiedDate string
 	CreateDate       string
 	URL              string
+	EditURL          string
 }
 
 type BaseTmplMeta struct {
@@ -20,6 +21,7 @@ type BaseTmplMeta struct {
 	ShowError bool
 	IsIndex   bool
 	IsBlog    bool
+	IsEditor  bool
 	*ErrPageTmplMeta
 	*BlogPageTmplMeta
 }
@@ -29,11 +31,17 @@ type ErrPageTmplMeta struct {
 }
 
 type EditorTmplMeta struct {
-	TextBody string
+	FrontMatter []byte
+	TextBody template.HTML
 }
 
 type BlogPageTmplMeta struct {
 	InnerText  template.HTML
 	HasMermaid bool
 	HasMathJax bool
+}
+
+type BlogListTmplMeta struct {
+	IsAuth bool
+	Tbem   []tmplBlogEntryMeta
 }

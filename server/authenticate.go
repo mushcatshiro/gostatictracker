@@ -29,10 +29,12 @@ type OauthState struct {
 	ReturnURL string `json:"return_url"`
 }
 
+var ErrNeedsLogin = errors.New("needs login")
 var ErrUnAuthori = errors.New("Forbidden: User not authorized")
 var ErrInsufPerm = errors.New("Forbidden: Insufficient permissions")
 
 type contextKey string
+
 const authKey contextKey = "IsAuth"
 
 func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
@@ -81,7 +83,11 @@ func (s *Server) checkUserAuth(ctx context.Context, claims *CustomClaims, ipaddr
 	return nil
 }
 
+// cryptographic, can be expensive
 func (s *Server) getOptionalUser(r *http.Request) (*CustomClaims, bool) {
+	if !s.config.Server.Protected {
+		return nil, true
+	}
 	jwtCookie, err := r.Cookie("app-jwt")
 	if err != nil {
 		return nil, false
@@ -93,24 +99,21 @@ func (s *Server) getOptionalUser(r *http.Request) (*CustomClaims, bool) {
 		}
 		return []byte(s.config.Auth.JKey), nil
 	})
-	/*
-		if err != nil {
-				if errors.Is(err, jwt.ErrTokenExpired) {
-					http.Error(w, "Token has expired", http.StatusUnauthorized)
-				} else {
-					http.Error(w, "Invalid token", http.StatusUnauthorized)
-				}
-				return
-			}
-			if !token.Valid {
-				http.Error(w, "Invalid token", http.StatusUnauthorized)
-				return
-			}
-	*/
+
 	if err != nil || !token.Valid {
 		return nil, false
 	}
 	return claims, true
+}
+
+func getIsAuth(r *http.Request) bool {
+	isAuth, ok := r.Context().Value(authKey).(bool)
+
+	if !ok {
+		return false
+	}
+
+	return isAuth
 }
 
 func (s *Server) forceLogin(w http.ResponseWriter, r *http.Request) {
@@ -135,33 +138,50 @@ func (s *Server) forceLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, loginURL, http.StatusTemporaryRedirect)
 }
 
+func (s *Server) verifyAuth(r *http.Request) (context.Context, error) {
+	claims, ok := s.getOptionalUser(r)
+	ctx := r.Context()
+
+	if s.config.Server.Protected {
+		if !ok {
+			return nil, ErrNeedsLogin
+		}
+
+		ipaddr := getIPAddress(r)
+		err := s.checkUserAuth(ctx, claims, ipaddr)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = context.WithValue(ctx, "userID", claims.UID)
+	} else {
+		ok = true
+	}
+
+	ctx = context.WithValue(ctx, authKey, ok)
+	return ctx, nil
+}
+
 func (s *Server) authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := s.getOptionalUser(r)
-		ctx := r.Context()
-		if s.config.Server.Protected {
-			if !ok {
+		ctx, err := s.verifyAuth(r)
+
+		if err != nil {
+			if errors.Is(err, ErrNeedsLogin) {
 				s.forceLogin(w, r)
 				return
 			}
-			ipaddr := getIPAddress(r)
-			err := s.checkUserAuth(r.Context(), claims, ipaddr)
-			if err != nil {
-				if errors.Is(err, ErrUnAuthori) {
-					http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)
-				} else if errors.Is(err, ErrInsufPerm) {
-					http.Error(w, "Forbidden: Insufficient permissions", http.StatusForbidden)
-				} else {
-					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				}
-				return
+
+			if errors.Is(err, ErrUnAuthori) {
+				http.Error(w, "Forbidden: User not authorized", http.StatusForbidden)
+			} else if errors.Is(err, ErrInsufPerm) {
+				http.Error(w, "Forbidden: Insufficient permissions", http.StatusForbidden)
+			} else {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			}
-			ctx = context.WithValue(ctx, "userID", claims.UID)
-		} else {
-			ok = true
+			return
 		}
 
-		ctx = context.WithValue(ctx, authKey, ok)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

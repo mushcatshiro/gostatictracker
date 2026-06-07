@@ -41,7 +41,12 @@ func (s *Server) renderBookmarkletView() http.HandlerFunc {
 		if r.Method != http.MethodGet {
 			http.Error(w, "unexpected request method", http.StatusMethodNotAllowed)
 		}
-		page, err := render.RenderBookmarklet(s.db)
+		bkmks, err := dbop.GetSpecificGroupEvents(s.db, "bookmarklet")
+		if err != nil {
+			s.handleError(w, r, 404, err.Error())
+			return
+		}
+		page := render.RenderBookmarklet(bkmks)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Printf("Failed to render bookmarklet page: %v\n", err)

@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"html/template"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/gvfs"
@@ -21,7 +23,8 @@ type Server struct {
 	db                *sql.DB
 	googleOauthConfig *oauth2.Config
 	blogSiteManager   *gvfs.SiteManager
-	muConverter       *markup.GoldmarkConverter
+	muConverter       markup.Converter
+	tmpl              *template.Template
 }
 
 func New(config Config) (*Server, error) {
@@ -52,7 +55,10 @@ func New(config Config) (*Server, error) {
 		Endpoint:     google.Endpoint,
 	}
 
-	InitTemplates()
+	templates, err := template.ParseFS(assets, "static/templates/*.html")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse templates: %w", err)
+	}
 
 	fs := afero.NewReadOnlyFs(afero.NewOsFs())
 	bsm := gvfs.NewSiteManager(fs)
@@ -70,6 +76,7 @@ func New(config Config) (*Server, error) {
 		googleOauthConfig: oauthConfig,
 		blogSiteManager:   &bsm,
 		muConverter:       muc,
+		tmpl:              templates,
 	}
 
 	s.RegisterRoutes()
@@ -78,6 +85,9 @@ func New(config Config) (*Server, error) {
 
 func (s *Server) Start() {
 	addr := ":" + s.config.Server.Port
-	log.Printf("Starting server on %s", addr)
-	log.Fatal(http.ListenAndServe(addr, s.router))
+	slog.Info("Starting server on", "info", addr)
+	if err := http.ListenAndServe(addr, s.router); err != nil {
+		slog.Error("server failed to start", "error", err)
+		os.Exit(1)
+	}
 }

@@ -2,9 +2,9 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/render"
 )
 
@@ -15,13 +15,18 @@ func (s *Server) renderListView() http.HandlerFunc {
 			return
 		}
 		groupName := r.URL.Query().Get("group")
-		page, err := render.RenderList(s.db, groupName)
+		le, err := dbop.GetListGroupEntries(s.db, groupName)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Printf("Failed to render gantt page: %v\n", err)
-			fmt.Fprintf(w, "error")
+			s.handleError(w, r, 404, err.Error())
 			return
 		}
+		page := render.RenderList(le, groupName)
+		// if err != nil {
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// 	log.Printf("Failed to render gantt page: %v\n", err)
+		// 	fmt.Fprintf(w, "error")
+		// 	return
+		// }
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, page)
 	}

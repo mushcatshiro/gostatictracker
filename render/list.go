@@ -24,7 +24,7 @@ func buildListElmTree(listEntries []models.ListEntry, groupName string) elm {
 	return buildBaseHtml(listStyleString, htmlBody, listScript)
 }
 
-func RenderListHTML(listEntries []models.ListEntry, groupName string) string {
+func RenderList(listEntries []models.ListEntry, groupName string) string {
 	listHtmlElmTree := buildListElmTree(listEntries, groupName)
 	htmlString := h(listHtmlElmTree)
 	return htmlString

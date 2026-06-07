@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/render"
 )
 
@@ -15,7 +16,12 @@ func (s *Server) renderKanbanView() http.HandlerFunc {
 			return
 		}
 		groupName := r.URL.Query().Get("group")
-		page, err := render.RenderKanban(s.db, groupName)
+		moloe, err := dbop.GetKanbanGroups(s.db, groupName)
+		if err != nil {
+			s.handleError(w, r, 404, err.Error())
+			return
+		}
+		page, err := render.RenderKanban(moloe, groupName)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Printf("Failed to render gantt page: %v\n", err)

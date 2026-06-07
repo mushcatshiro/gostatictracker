@@ -48,17 +48,17 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 		switch m {
 		case http.MethodPost:
 			if err := r.ParseForm(); err != nil {
-				http.Error(w, "Bad Request: Failed to parse form", http.StatusBadRequest)
+				s.handleError(w, r, http.StatusBadRequest, "Bad Request: Failed to parse form")
 				return
 			}
 			e, err := handlePostForm(r)
 			if err != nil {
-				http.Error(w, fmt.Sprint(err), http.StatusBadRequest)
+				s.handleError(w, r, http.StatusBadRequest, fmt.Sprint(err))
 			}
 			_, err = dbop.InsertEvent(s.db, e)
 			if err != nil {
 				fmt.Printf("%v\n", err)
-				http.Error(w, "Bad Request: Failed to insert to database", http.StatusBadRequest)
+				s.handleError(w, r, http.StatusBadRequest, "Bad Request: Failed to insert to database")
 				return
 			}
 			http.Redirect(w, r, nextURL, http.StatusSeeOther)
@@ -69,23 +69,23 @@ func (s *Server) handleEventFormView() http.HandlerFunc {
 			if id != "" {
 				iid, err := strconv.Atoi(id)
 				if err != nil {
-					http.Error(w, "Bad Request: Unexpected id", http.StatusBadRequest)
+					s.handleError(w, r, http.StatusBadRequest, "Bad Request: Unexpected id")
 					return
 				}
 				e, err = dbop.ReadEventById(s.db, int64(iid))
 				if err != nil {
-					http.Error(w, fmt.Sprintf("Bad Request: event %s not found", id), http.StatusBadRequest)
+					s.handleError(w, r, http.StatusBadRequest, fmt.Sprintf("Bad Request: event %s not found", id))
 					return
 				}
 			}
 			htmlString, err := render.RenderFormHtml(e, false, "/eventForm")
 			if err != nil {
-				http.Error(w, "Bad Request: failed to render view", http.StatusBadRequest)
+				s.handleError(w, r, http.StatusBadRequest, "Bad Request: failed to render view")
 			}
 			io.WriteString(w, htmlString)
 		default:
 			w.Header().Set("Allow", "GET, POST")
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			s.handleError(w, r, http.StatusMethodNotAllowed, "Method Not Allowed")
 		}
 	}
 }

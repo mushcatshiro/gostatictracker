@@ -35,7 +35,7 @@ func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.Handler {
 
 		// BLOCK ACCESS TO TEMPLATES
 		// If someone tries to access /static/index.html directly, reject it.
-		if strings.HasSuffix(path, ".html") {
+		if strings.HasSuffix(strings.ToLower(path), ".html") {
 			s.handleError(w, r, 403, fmt.Sprintf("Forbidden Access to %s", path))
 			return
 		}
@@ -43,7 +43,6 @@ func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.Handler {
 		// ... existing IsDir() and Open() checks ...
 		f, err := root.Open(strings.TrimPrefix(path, "/"))
 		if err != nil {
-			http.Error(w, "File not found", http.StatusNotFound)
 			s.handleError(w, r, 404, fmt.Sprintf("File %s not found", path))
 			return
 		}

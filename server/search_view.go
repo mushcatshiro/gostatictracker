@@ -30,7 +30,7 @@ func (s *Server) handleSearchRedirect() http.HandlerFunc {
 		renderMode := r.URL.Query().Get("render") // e.g., "gantt"
 		group := r.URL.Query().Get("group")
 		if renderMode == "" || group == "" {
-			http.Error(w, render.RenderSimpleView("Not Found", fmt.Sprintf("/%s/%s", renderMode, group)), http.StatusNotFound)
+			s.handleError(w, r, http.StatusNotFound, fmt.Sprintf("/%s/%s", renderMode, group))
 			return
 		}
 		newURL := fmt.Sprintf("/%s?group=%s", renderMode, group)

@@ -18,6 +18,7 @@ import (
 	googleOauth2 "google.golang.org/api/oauth2/v2"
 )
 
+
 type CustomClaims struct {
 	UID   string `json:"uid"`
 	Email string `json:"email"`
@@ -36,6 +37,7 @@ var ErrInsufPerm = errors.New("Forbidden: Insufficient permissions")
 type contextKey string
 
 const authKey contextKey = "IsAuth"
+const userIDKey contextKey = "userID"
 
 func (s *Server) createJWT(userInfo *googleOauth2.Userinfo) (string, error) {
 	cc := CustomClaims{
@@ -153,7 +155,7 @@ func (s *Server) verifyAuth(r *http.Request) (context.Context, error) {
 			return nil, err
 		}
 
-		ctx = context.WithValue(ctx, "userID", claims.UID)
+		ctx = context.WithValue(ctx, userIDKey, claims.UID)
 	} else {
 		ok = true
 	}

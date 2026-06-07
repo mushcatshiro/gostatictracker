@@ -30,11 +30,16 @@ type GoogleOauthConfig struct {
 	Scopes       []string `mapstructure:"scopes"`
 }
 
+type BlogConfig struct {
+	BlogRoot string `mapstructure:"blogRoot"`
+}
+
 type Config struct {
 	Server            ServerConfig      `mapstructure:"server"`
 	DB                DBConfig          `mapstructure:"db"`
 	Auth              AuthConfig        `mapstructure:"auth"`
 	GoogleOauthConfig GoogleOauthConfig `mapstructure:"googleOauth"`
+	Blog              BlogConfig        `mapstructure:"blog"`
 }
 
 func LoadConfig() (Config, error) {

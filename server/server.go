@@ -62,7 +62,7 @@ func New(config Config) (*Server, error) {
 
 	fs := afero.NewReadOnlyFs(afero.NewOsFs())
 	bsm := gvfs.NewSiteManager(fs)
-	err = bsm.BuildIndex(context.Background(), "E:/hugo/mushcatshiro/content/blog")
+	err = bsm.BuildIndex(context.Background(), config.Blog.BlogRoot)
 	if err != nil {
 		return &Server{}, fmt.Errorf("%v", err)
 	}

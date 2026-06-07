@@ -19,7 +19,7 @@
       <label>Select Images:</label>
       <input type="file" name="images" multiple accept="image/*">
       <label>Paste Links (One per line):</label>
-      <textarea name="links" rows="5" class="links-input" placeholder="https://..."></textarea>
+      <textarea name="links" class="links-input" placeholder="https://..."></textarea>
       <button type="submit">Upload Assets</button>
     </form>
   </div>
@@ -28,6 +28,7 @@
          hx-post="/editor"
          hx-target="#vim-textarea"
          hx-push-url="true"
+         hx-include="#vim-textarea"
       >
       <button type="submit">Submit</button>
     </form>
@@ -36,9 +37,13 @@
 
 <div class="row-editor">
   {{ if .TextBody }}
-  <textarea id="vim-textarea" >{{ .TextBody }}</textarea>
+  <textarea id="vim-textarea" name="content">{{ .TextBody }}</textarea>
   {{ else }}
-  <textarea id="vim-textarea" placeholder="Vim Editor Ready... (Esc for Normal Mode, i for Insert)"></textarea>
+  <textarea
+    id="vim-textarea"
+    name="content"
+    placeholder="Vim Editor Ready... (Esc for Normal Mode, i for Insert)"
+  ></textarea>
   {{ end }}
 </div>
 
@@ -116,6 +121,28 @@
         });
         window.hasEditorListener = true;
     }
+
+    // 5. text area auto resize
+    const autoResize = function(tx) {
+      tx.style.height = 'auto';
+      tx.style.height = tx.scrollHeight + 'px';
+    }
+  const txs = document.querySelectorAll('textarea');
+  txs.forEach((tx) => {
+    tx.addEventListener('input', () => autoResize(tx))
+    setTimeout(() => autoResize(tx), 0);
+  })
+  // 6. focus snap
+  const vimTx = document.getElementById('vim-textarea');
+  if (vimTx) {
+    vimTx.addEventListener('keyup', function(e) {
+      // Only trigger on keys that typically cause large jumps
+      if (e.key === 'g' || e.key === 'G') {
+        // Use a tiny timeout to let Vim.js finish moving the internal cursor first
+        setTimeout(() => { vimTx.blur(); vimTx.focus();}, 50);
+      }
+    });
+  }
 })();
 </script>
 {{ end }}

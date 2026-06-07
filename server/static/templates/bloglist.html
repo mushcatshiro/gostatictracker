@@ -1,12 +1,18 @@
 {{ define "bloglist" }}
 <ul>
-{{ range . }}
+{{ if .IsAuth }}
+  {{ range .Entries }}
   <li>
     <a href="{{ .URL }}">{{ .Title }}</a> {{ .CreateDate }}
-    {{ if .IsAuth }}
-    <a href="{{ .EditURL }}">Edit</a>
-    {{ end }}
+    <a href="{{ .EditURL }}" hx-get="{{ .EditURL }}" hx-target="#content" hx-push-url="true">Edit</a>
   </li>
+  {{ end }}
+{{ else }}
+  {{ range .Entries }}
+  <li>
+    <a href="{{ .URL }}">{{ .Title }}</a> {{ .CreateDate }}
+  </li>
+  {{ end }}
 {{ end }}
 </ul>
 {{ end }}

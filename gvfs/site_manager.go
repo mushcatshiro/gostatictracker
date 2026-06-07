@@ -4,15 +4,17 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"sync"
 
 	"github.com/spf13/afero"
 	"golang.org/x/sync/errgroup"
 )
+
+var ErrPageDoesNotExists = errors.New("page does not exists")
 
 type SiteConf struct {
 	AllowedExts []string
@@ -75,10 +77,10 @@ func (s *SiteManager) BuildIndexFast(ctx context.Context, root string) error {
 	return g.Wait()
 }
 
-func (s *SiteManager) GetSpecificPageByPath(path string) (Page, error) {
+func (s *SiteManager) GetSpecificPageByPath(path string, contentOnly bool) (Page, error) {
 	page, exists := s.Pages[path]
 	if !exists {
-		return Page{}, fmt.Errorf("page %s does not exists", path)
+		return Page{}, ErrPageDoesNotExists
 	}
 	file, err := s.Fs.Open(page.Path)
 	if err != nil {
@@ -86,13 +88,15 @@ func (s *SiteManager) GetSpecificPageByPath(path string) (Page, error) {
 	}
 	defer file.Close()
 	reader := bufio.NewReader(file)
-	for i := 0; i < page.Meta.ContentSidx; i++ {
-		_, err := reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				return Page{}, fmt.Errorf("unexpected EOF for %s", path)
+	if contentOnly {
+		for i := 0; i < page.Meta.ContentSidx; i++ {
+			_, err := reader.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					return Page{}, fmt.Errorf("unexpected EOF for %s", path)
+				}
+				return Page{}, fmt.Errorf("fail to read %s with error %v", path, err)
 			}
-			return Page{}, fmt.Errorf("fail to read %s with error %v", path, err)
 		}
 	}
 	content, err := io.ReadAll(reader)

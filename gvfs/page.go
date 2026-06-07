@@ -16,6 +16,8 @@ type Page struct {
 	SideRepoPath string
 	Content      []byte
 	Meta         PageMeta
+	EditUrl      string
+	Assets       []AssetsMeta
 }
 
 type PageMeta struct {
@@ -28,6 +30,10 @@ type PageMeta struct {
 	LastModifiedDate string   `toml:"lastmodified"`
 	CreateDate       string   `toml:"date"`
 	ContentSidx      int
+}
+
+type AssetsMeta struct {
+	Fname string
 }
 
 func ExtractFrontMatter(r io.Reader) (PageMeta, error) {

@@ -2,6 +2,7 @@ package gvfs
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -58,10 +59,8 @@ func (s *SiteManager) Walk(root, dir string) error {
 		}
 	}
 	if indexLeaf {
-		fmt.Printf("assemble index leaf %s\n", dir)
 		return s.AssembleIndexLeaf(root, dir, effectiveEntries)
 	}
-	fmt.Printf("assemble bundle %s\n", dir)
 	return s.AssembleBundle(root, dir, effectiveEntries)
 }
 
@@ -119,20 +118,21 @@ func (s *SiteManager) AssembleBundle(root, dir string, entries []os.FileInfo) er
 func (s *SiteManager) UpdatePages(indexPath, sideRepoPath, key string) error {
 	file, err := s.Fs.Open(indexPath)
 	if err != nil {
-		fmt.Printf("%s: %v\n", indexPath, err)
-		return err
+		return fmt.Errorf("failed to open %s: %w\n", indexPath, err)
 	}
 	defer file.Close()
 	pageMeta, err := ExtractFrontMatter(file)
 	if err != nil {
-		fmt.Printf("%v\n", err)
-		return err
+		return fmt.Errorf("failed to extract %s: %w\n", indexPath, err)
 	}
+	fullUrl, _ := url.JoinPath("/blog", key)
+	editUrl, _ := url.JoinPath("/editor", key)
 	s.Pages[key] = Page{
 		Path:         indexPath,
-		FullURL:      fmt.Sprintf("blog/%s", key),
+		FullURL:      fullUrl,
 		Meta:         pageMeta,
 		SideRepoPath: sideRepoPath,
+		EditUrl:      editUrl,
 	}
 	return nil
 }

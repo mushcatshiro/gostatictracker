@@ -30,3 +30,7 @@ func TestWalkSkipsFolders(t *testing.T) {
 		t.Errorf("Expected 1 page, got %d", len(sm.Pages))
 	}
 }
+
+func TestWalk(t *testing.T) {
+	// to include assets
+}

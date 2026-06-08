@@ -1,4 +1,4 @@
-package gvfs
+package blog
 
 import (
 	"strings"

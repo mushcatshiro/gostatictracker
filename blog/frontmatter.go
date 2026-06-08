@@ -1,4 +1,4 @@
-package gvfs
+package blog
 
 import (
 	"bufio"
@@ -8,40 +8,16 @@ import (
 	"strings"
 
 	"github.com/pelletier/go-toml/v2"
+	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-type Page struct {
-	Path         string
-	FullURL      string
-	SideRepoPath string
-	Content      []byte
-	Meta         PageMeta
-	EditUrl      string
-	Assets       []AssetsMeta
-}
-
-type PageMeta struct {
-	Title            string   `toml:"title"`
-	HasMermaid       bool     `toml:"mermaid"`
-	HasMathJax       bool     `toml:"math"`
-	IsDraft          bool     `toml:"draft"`
-	IsPrivate        bool     `toml:"private"`
-	Tags             []string `toml:"tags"`
-	LastModifiedDate string   `toml:"lastmodified"`
-	CreateDate       string   `toml:"date"`
-	ContentSidx      int
-}
-
-type AssetsMeta struct {
-	Fname string
-}
-
-func ExtractFrontMatter(r io.Reader) (PageMeta, error) {
+func ExtractFrontMatter(r io.Reader) (models.FrontMatter, error) {
 	scanner := bufio.NewScanner(r)
 	var buffer bytes.Buffer
 	var inFrontMatter bool
 	var delimiterCount int
 	var linecount int
+	var fm models.FrontMatter
 
 	const MaxFrontMatterLines = 30
 
@@ -52,7 +28,7 @@ PARSE:
 		linecount++
 
 		if linecount > MaxFrontMatterLines && inFrontMatter {
-			return PageMeta{}, fmt.Errorf("front matter exceeded %d lines; missing closing '---'?", MaxFrontMatterLines)
+			return fm, fmt.Errorf("front matter exceeded %d lines; missing closing '---'?", MaxFrontMatterLines)
 		}
 
 		// Check for YAML delimiter '---'
@@ -80,26 +56,25 @@ PARSE:
 	}
 
 	if err := scanner.Err(); err != nil {
-		return PageMeta{}, err
+		return fm, err
 	}
 
 	if delimiterCount == 1 {
-		return PageMeta{}, fmt.Errorf("found opening '---' but reached EOF without closing it")
+		return fm, fmt.Errorf("found opening '---' but reached EOF without closing it")
 	}
 
 	// Now parse the collected YAML string into a map
-	var pageMeta PageMeta
 	// fmt.Printf("%s\n", buffer.String())
 	if buffer.Len() > 0 {
-		err := toml.Unmarshal(buffer.Bytes(), &pageMeta)
+		err := toml.Unmarshal(buffer.Bytes(), &fm)
 		if err != nil {
-			return PageMeta{}, fmt.Errorf("toml unmarshal error: %v", err)
+			return fm, fmt.Errorf("toml unmarshal error: %v", err)
 		}
 	} else {
-		return PageMeta{}, fmt.Errorf("no font matter found")
+		return fm, fmt.Errorf("no font matter found")
 	}
 
-	pageMeta.ContentSidx = linecount
+	fm.ContentSidx = linecount
 
-	return pageMeta, nil
+	return fm, nil
 }

@@ -1,4 +1,4 @@
-package gvfs
+package blog
 
 import (
 	"testing"
@@ -15,10 +15,7 @@ func TestWalkSkipsFolders(t *testing.T) {
 	appFS.WriteFile(".git/config", []byte("should skip"), 0644)
 	appFS.WriteFile("index.md", []byte("---\ntitle: Home\n---"), 0644)
 
-	sm := &SiteManager{
-		Fs:    appFS,
-		Pages: make(map[string]Page),
-	}
+	sm := NewBlogManager(appFS)
 
 	err := sm.Walk(".", ".")
 	if err != nil {
@@ -26,8 +23,8 @@ func TestWalkSkipsFolders(t *testing.T) {
 	}
 
 	// Assert: Map should have the home page but NOT the .git config
-	if len(sm.Pages) != 1 {
-		t.Errorf("Expected 1 page, got %d", len(sm.Pages))
+	if len(sm.BlogEntries) != 1 {
+		t.Errorf("Expected 1 page, got %d", len(sm.BlogEntries))
 	}
 }
 

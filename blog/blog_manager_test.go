@@ -1,10 +1,11 @@
-package gvfs
+package blog
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
+	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/spf13/afero"
 )
 
@@ -26,10 +27,7 @@ func TestBuildIndex(t *testing.T) {
 		appFS.WriteFile(path, []byte(content), 0644)
 	}
 
-	sm := &SiteManager{
-		Fs:    appFS,
-		Pages: make(map[string]Page),
-	}
+	sm := NewBlogManager(fs)
 
 	err := sm.BuildIndex(context.Background(), "content")
 	if err != nil {
@@ -45,18 +43,18 @@ func TestBuildIndex(t *testing.T) {
 		{"nested/folder/keep-going", "Nested"},
 		{"nested/folder/keep-going2", "Nested2"},
 	}
-	for k, v := range sm.Pages {
+	for k, v := range sm.BlogEntries {
 		t.Logf("%s, %+v\n", k, v)
 	}
 
 	for _, tt := range tests {
-		page, exists := sm.Pages[tt.url]
+		page, exists := sm.BlogEntries[tt.url]
 		if !exists {
 			t.Errorf("Expected page at URL %q not found", tt.url)
 			continue
 		}
-		if page.Meta.Title != tt.expected {
-			t.Errorf("URL %q: expected title %q, got %q", tt.url, tt.expected, page.Meta.Title)
+		if page.FrontMatter.Title != tt.expected {
+			t.Errorf("URL %q: expected title %q, got %q", tt.url, tt.expected, page.FrontMatter.Title)
 		}
 	}
 }
@@ -71,8 +69,8 @@ func TTestBuildIndexRaceCondition(t *testing.T) {
 		appFS.WriteFile(path, []byte("---\ntitle: Race Test\n---\nBody"), 0644)
 	}
 
-	sm := NewSiteManager(fs)
-	sm.Pages = make(map[string]Page)
+	sm := NewBlogManager(fs)
+	sm.BlogEntries = make(map[string]models.BlogEntry)
 
 	// This will trigger the race detector if your map is not protected
 	err := sm.BuildIndex(context.Background(), "content")

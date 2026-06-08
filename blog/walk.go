@@ -1,4 +1,4 @@
-package gvfs
+package blog
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/spf13/afero"
 )
 
@@ -21,8 +22,8 @@ var SkippedFolderNames = []string{".git", "siderepo", "node_modules", ".venv"}
 // 1. to continue to the next depth
 // 2. will prioritize index.html > index.md
 // in 3. it is possible to mix *.md and *.html
-func (s *SiteManager) Walk(root, dir string) error {
-	entries, err := afero.ReadDir(s.Fs, dir)
+func (bm *BlogManager) Walk(root, dir string) error {
+	entries, err := afero.ReadDir(bm.Fs, dir)
 	if err != nil {
 		return err
 	}
@@ -53,30 +54,30 @@ func (s *SiteManager) Walk(root, dir string) error {
 	}
 	if len(nextLevelDirs) > 0 {
 		for _, dir := range nextLevelDirs {
-			if err := s.Walk(root, dir); err != nil {
+			if err := bm.Walk(root, dir); err != nil {
 				return err
 			}
 		}
 	}
 	if indexLeaf {
-		return s.AssembleIndexLeaf(root, dir, effectiveEntries)
+		return bm.AssembleIndexLeaf(root, dir, effectiveEntries)
 	}
-	return s.AssembleBundle(root, dir, effectiveEntries)
+	return bm.AssembleBundle(root, dir, effectiveEntries)
 }
 
 // Url prefix referring to "content/blog/post-1/index.md" -> "blog/post-1"
-func (s *SiteManager) generateIndexLeafUrl(root, path string) string {
+func (bm *BlogManager) generateIndexLeafUrl(root, path string) string {
 	relPath, _ := filepath.Rel(root, path)
 	return filepath.ToSlash(filepath.Dir(relPath))
 }
 
-func (s *SiteManager) generateBundleUrl(root, path, ext string) string {
+func (bm *BlogManager) generateBundleUrl(root, path, ext string) string {
 	relPath, _ := filepath.Rel(root, path)
 	noExtPath := strings.ReplaceAll(relPath, ext, "")
 	return filepath.ToSlash(noExtPath)
 }
 
-func (s *SiteManager) AssembleIndexLeaf(root, dir string, entries []os.FileInfo) error {
+func (bm *BlogManager) AssembleIndexLeaf(root, dir string, entries []os.FileInfo) error {
 	var indexPath, sideRepoPath string
 	for _, e := range entries {
 		if strings.HasPrefix(e.Name(), "index.") {
@@ -88,10 +89,10 @@ func (s *SiteManager) AssembleIndexLeaf(root, dir string, entries []os.FileInfo)
 			continue
 		}
 	}
-	return s.UpdatePages(indexPath, sideRepoPath, s.generateIndexLeafUrl(root, indexPath))
+	return bm.UpdatePages(indexPath, sideRepoPath, s.generateIndexLeafUrl(root, indexPath))
 }
 
-func (s *SiteManager) AssembleBundle(root, dir string, entries []os.FileInfo) error {
+func (bm *BlogManager) AssembleBundle(root, dir string, entries []os.FileInfo) error {
 	var sideRepoPath string
 	for _, e := range entries {
 		if e.IsDir() && e.Name() == "siderepo" {
@@ -106,8 +107,8 @@ func (s *SiteManager) AssembleBundle(root, dir string, entries []os.FileInfo) er
 		ext := filepath.Ext(e.Name())
 		if ext == ".md" || ext == ".html" {
 			indexPath := filepath.Join(dir, e.Name()) // keeping naming convention the same
-			key := s.generateBundleUrl(root, indexPath, ext)
-			if err := s.UpdatePages(indexPath, sideRepoPath, key); err != nil {
+			key := bm.generateBundleUrl(root, indexPath, ext)
+			if err := bm.UpdatePages(indexPath, sideRepoPath, key); err != nil {
 				return err
 			}
 		}
@@ -115,22 +116,22 @@ func (s *SiteManager) AssembleBundle(root, dir string, entries []os.FileInfo) er
 	return nil
 }
 
-func (s *SiteManager) UpdatePages(indexPath, sideRepoPath, key string) error {
-	file, err := s.Fs.Open(indexPath)
+func (bm *BlogManager) UpdatePages(indexPath, sideRepoPath, key string) error {
+	file, err := bm.Fs.Open(indexPath)
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %w\n", indexPath, err)
 	}
 	defer file.Close()
-	pageMeta, err := ExtractFrontMatter(file)
+	frontMatter, err := ExtractFrontMatter(file)
 	if err != nil {
 		return fmt.Errorf("failed to extract %s: %w\n", indexPath, err)
 	}
 	fullUrl, _ := url.JoinPath("/blog", key)
 	editUrl, _ := url.JoinPath("/editor", key)
-	s.Pages[key] = Page{
+	bm.BlogEntries[key] = models.BlogEntry{
 		Path:         indexPath,
 		FullURL:      fullUrl,
-		Meta:         pageMeta,
+		FrontMatter:  frontMatter,
 		SideRepoPath: sideRepoPath,
 		EditUrl:      editUrl,
 	}

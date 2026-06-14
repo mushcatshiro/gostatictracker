@@ -9,8 +9,6 @@ import (
 	"github.com/mushcatshiro/gostatictracker/common"
 )
 
-// struct event
-
 type Event struct {
 	ID          int64           `json:"id"`
 	Start       *time.Time      `json:"start"`
@@ -19,6 +17,8 @@ type Event struct {
 	ActualEnd   *time.Time      `json:"actualEnd"`
 	InsertTime  *time.Time      `json:"insertTime"`
 	Group       string          `json:"group"`
+	DefaultMode string          `json:"mode"`   // default render mode, todo etc
+	Repeat      string          `json:"repeat"` // cron like syntax
 	AllDay      bool            `json:"allDay"`
 	Title       string          `json:"title"`
 	URL         string          `json:"url"`
@@ -146,5 +146,11 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 	now := time.Now()
 	e.InsertTime = &now
 
+	return nil
+}
+
+func (e *Event) Validate() error {
+	// validate repeat format
+	// validate metadata format (tags)
 	return nil
 }

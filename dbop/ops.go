@@ -1,13 +1,13 @@
 package dbop
 
 import (
-	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func InitDB(db *sql.DB, truncate, drop bool) error {
+func InitDB(db DBTX, truncate, drop bool) error {
 	createEventTableQuery := `CREATE TABLE IF NOT EXISTS events (
 		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
 		start TIMESTAMP,
@@ -33,6 +33,7 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 		role TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	);`
+	// deletes all rows while keeping table structure intact
 	if truncate {
 		_, err := db.Exec("TRUNCATE TABLE events RESTART IDENTITY CASCADE")
 		if err != nil {
@@ -43,6 +44,7 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 			return err
 		}
 	}
+	// removes the entire table definition with data, indexes and constraints
 	if drop {
 		_, err := db.Exec("DROP TABLE IF EXISTS events CASCADE")
 		if err != nil {
@@ -64,7 +66,7 @@ func InitDB(db *sql.DB, truncate, drop bool) error {
 	return nil
 }
 
-func ReadEventById(db *sql.DB, id int64) (models.Event, error) {
+func ReadEventById(db DBTX, id int64) (models.Event, error) {
 	var e models.Event
 	readQuery := `SELECT id, start, "end", actualStart, actualEnd, insertTime,
 		"group", allDay, title, url, description, pid, priority, metadata, status
@@ -92,7 +94,85 @@ func ReadEventById(db *sql.DB, id int64) (models.Event, error) {
 	return e, nil
 }
 
-func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
+func ReadFilteredEvents(db DBTX, filterCols models.FilterCols) ([]models.Event, error) {
+	var events []models.Event
+
+	query := `SELECT id, start, "end", actualStart, actualEnd, insertTime,
+		"group", allDay, title, url, description, pid, priority, metadata, status
+	FROM events`
+	var conditions []string
+	var args []any
+	if filterCols.Group != "" {
+		conditions = append(conditions, fmt.Sprintf(`"group" = $%d`, len(conditions)+1))
+		args = append(args, filterCols.Group)
+	}
+	if filterCols.Mode != "" {
+		conditions = append(conditions, fmt.Sprintf(`"mode" = $%d`, len(conditions)+1))
+		args = append(args, filterCols.Mode)
+	}
+	if filterCols.Status != nil {
+		conditions = append(conditions, fmt.Sprintf(`"status" = $%d`, len(conditions)+1))
+		args = append(args, &filterCols.Status)
+	}
+	if len(conditions) > 0 {
+		query = query + " WHERE " + strings.Join(conditions, " AND ")
+	}
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return events, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var e models.Event
+		if err := rows.Scan(
+			&e.ID,
+			&e.Start,
+			&e.End,
+			&e.ActualStart,
+			&e.ActualEnd,
+			&e.InsertTime,
+			&e.Group,
+			&e.AllDay,
+			&e.Title,
+			&e.URL,
+			&e.Description,
+			&e.PID,
+			&e.Priority,
+			&e.Metadata,
+			&e.Status,
+		); err != nil {
+			return events, err
+		}
+		events = append(events, e)
+	}
+	if err := rows.Err(); err != nil {
+		return events, err
+	}
+	return events, nil
+}
+
+func GetUniqueGroups(db DBTX) ([]string, error) {
+	var groups []string
+	rows, err := db.Query(`SELECT DISTINCT "group" FROM events;`)
+	if err != nil {
+		return groups, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var group string
+		if err := rows.Scan(&group); err != nil {
+			return groups, err
+		}
+		groups = append(groups, group)
+	}
+	if err := rows.Err(); err != nil {
+		return groups, err
+	}
+	return groups, nil
+}
+
+func InsertEvent(db DBTX, event models.Event) (int64, error) {
 	insertQuery := `
 	INSERT INTO events (
 		start, "end", actualStart, actualEnd, "group", allDay, title, url,
@@ -124,11 +204,9 @@ func InsertEvent(db *sql.DB, event models.Event) (int64, error) {
 	return id, nil
 }
 
-func UpdateEvent(db *sql.DB, event models.Event) error {
-	// FIXME
-	updateQuery := `
-	UPDATE events
-	SET  start = $1, "end" = $2, actualStart = $3, actualEnd = $4, insertTime = $5,
+func UpdateEvent(db DBTX, event models.Event) error {
+	updateQuery := `UPDATE events
+	SET start = $1, "end" = $2, actualStart = $3, actualEnd = $4, insertTime = $5,
 		"group" = $6, allDay = $7, title = $8, url = $9, description = $10, pid = $11,
 		priority = $12, metadata = $13, status = $14
 	WHERE id = $15;`

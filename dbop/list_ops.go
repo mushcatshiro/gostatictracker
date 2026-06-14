@@ -3,58 +3,47 @@ package dbop
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/mushcatshiro/gostatictracker/common"
-	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func GetListGroupEntries(db *sql.DB, groupName string) ([]models.ListEntry, error) {
-	// TODO consider adding ordering by "end" DESC
-	var events []models.ListEntry
-	query := `SELECT
-        "id",
-        TO_CHAR(insertTime, 'YYYY-MM-DD'),
-        "group",
-        title,
-        priority,
-        status
-    FROM events
-    WHERE "group" = $1
-    ORDER BY insertTime;`
-	rows, err := db.Query(query, groupName)
-	if err != nil {
-		return events, fmt.Errorf("failed to get events: %v", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var e models.ListEntry
-		if err := rows.Scan(&e.ID, &e.InsertTime, &e.Group, &e.Title, &e.Priority, &e.Status); err != nil {
-			return events, fmt.Errorf("failed to scan event: %v", err)
-		}
-		events = append(events, e)
-	}
-	if err := rows.Err(); err != nil {
-		return events, fmt.Errorf("error reading events: %v", err)
-	}
-	return events, nil
-}
-
-func UpdateStatus(db *sql.DB, id int64, status common.Status) error {
-
+func updateStatus(db DBTX, id int64, status common.Status) error {
 	e, err := ReadEventById(db, id)
 	if err != nil {
 		return err
 	}
 	e.Status = status
-	/*
-		if status == COMPLETED {
-			ae := time.Now()
-			e.ActualEnd = &ae
-		}
-	*/
-	id, err = InsertEvent(db, e)
+	if status == common.COMPLETED {
+		ae := time.Now()
+		e.ActualEnd = &ae
+	}
+	err = UpdateEvent(db, e)
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func UpdateStatusSafe(db *sql.DB, id int64, status common.Status) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	// If tx.Commit() is successful later, this Rollback does nothing.
+	// If the function returns early due to an error, this ensures the database
+	// safely reverts the transaction and releases any locks.
+	defer tx.Rollback()
+
+	err = updateStatus(tx, id, status)
+	if err != nil {
+		return fmt.Errorf("failed to update status: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
 	return nil
 }

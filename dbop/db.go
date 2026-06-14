@@ -1,6 +1,7 @@
 package dbop
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"path/filepath"
@@ -9,6 +10,18 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/mushcatshiro/gostatictracker/common"
 )
+
+type DBTX interface {
+	// Exec implicitly uses `context.Background()` and calls `ExecContext`
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+
+	// Context variants (Best practice to include these for future-proofing)
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
 
 func GenerateConnStr(dbType, username, password, dbhost, dbname, sslmode string) (string, error) {
 	var connStr string
@@ -36,8 +49,8 @@ func GenerateConnStr(dbType, username, password, dbhost, dbname, sslmode string)
 	return connStr, nil
 }
 
-func ConnectDB(connStr string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connStr)
+func ConnectDB(connStr, dbType string) (*sql.DB, error) {
+	db, err := sql.Open(dbType, connStr)
 	if err != nil {
 		return nil, err
 	}

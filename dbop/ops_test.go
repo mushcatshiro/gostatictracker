@@ -1,6 +1,7 @@
 package dbop
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -84,4 +85,37 @@ func TestSqlMockUpdateEventDoesNotExist(t *testing.T) {
 
 	err = UpdateEvent(db, event)
 	assert.Error(t, err)
+}
+
+func TestEventOperations(t *testing.T) {
+	tx := SetupTestTx(t)
+
+	e := models.Event{
+		Title: "test insert",
+	}
+	id, err := InsertEvent(tx, e)
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, id, fmt.Sprintf("expected non zero value, got: %d", id))
+
+	e.ID = id
+	e.Title = "test update"
+	err = UpdateEvent(tx, e)
+	assert.NoError(t, err)
+
+	ue, err := ReadEventById(tx, id)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		e.Title,
+		ue.Title,
+		fmt.Sprintf("expected %s, got: %s", e.Title, ue.Title),
+	)
+
+	dneE := models.Event{
+		ID: 9999,
+		Title: "DNE",
+	}
+	err = UpdateEvent(tx, dneE)
+	assert.ErrorContains(t, err, "no event found with ID")
+
 }

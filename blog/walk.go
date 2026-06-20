@@ -89,7 +89,7 @@ func (bm *BlogManager) AssembleIndexLeaf(root, dir string, entries []os.FileInfo
 			continue
 		}
 	}
-	return bm.UpdatePages(indexPath, sideRepoPath, s.generateIndexLeafUrl(root, indexPath))
+	return bm.UpdatePages(indexPath, sideRepoPath, bm.generateIndexLeafUrl(root, indexPath))
 }
 
 func (bm *BlogManager) AssembleBundle(root, dir string, entries []os.FileInfo) error {

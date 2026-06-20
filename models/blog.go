@@ -6,7 +6,7 @@ type BlogEntry struct {
 	FullURL      string
 	SideRepoPath string
 	Content      []byte
-	FrontMatter  FrontMatter
+	FrontMatter
 	EditUrl      string
 	Assets       []AssetsMeta
 }

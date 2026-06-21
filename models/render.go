@@ -35,12 +35,14 @@ type ErrorRenderMeta struct {
 type BookmarkletIndexRenderMeta struct {
 	BaseRenderMeta
 	Bookmarklets []Bookmarklet
-	ServerDomain string
+	SetupScript  string
 }
 
 type BlogEntryMeta struct {
+	BaseRenderMeta
 	BlogEntry
-	EditorURL string
+	EditURL   string
+	InnerText template.HTML
 }
 
 type BlogIndexRenderMeta struct {
@@ -79,7 +81,7 @@ func NewFormMeta(
 ) (FormRenderMeta, error) {
 	frm := FormRenderMeta{
 		BaseRenderMeta: baseRenderMeta,
-		PostEndpoint: endpoint,
+		PostEndpoint:   endpoint,
 	}
 	switch formType {
 	case SimpleForm:
@@ -118,8 +120,17 @@ type CalendarRenderMeta struct{}
 
 type KanbanRenderMeta struct{}
 
-type ChecklistRenderMeta struct {
-	BaseRenderMeta
-}
+type ChecklistRenderMeta struct{}
 
 type TableFormRenderMeta struct{}
+
+type GroupEntry struct {
+	GroupName   string
+	DefaultMode string
+	URL         string
+}
+
+type GroupIndexRenderMeta struct {
+	BaseRenderMeta
+	GroupEntries []GroupEntry
+}

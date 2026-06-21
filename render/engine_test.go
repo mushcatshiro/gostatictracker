@@ -15,6 +15,7 @@ import (
 )
 
 var updateFlag = flag.Bool("update", false, "update golden files")
+var authFlag = flag.Bool("auth", false, "render auth page")
 
 // supports two mode, manual approval and auto review
 // trigger manual approval with `go test ./render -update`,
@@ -46,27 +47,30 @@ func TestFullRenderEngine(t *testing.T) {
 	assert.NoError(t, err, "failed to create golden directory")
 
 	// doesnt include form
-	for tmplName, meta := range mock.TemplateMetaMap {
-		t.Logf("processing %s form", tmplName)
-		rc := models.RenderMeta{
-			TemplateName: tmplName,
-			Data:         meta,
-		}
-		var buf bytes.Buffer
-		err := re.Render(&buf, rc)
-		assert.NoError(t, err)
+	for tmplName, metaFactory := range mock.TemplateMetaMap {
+		t.Logf("processing %s", tmplName)
+		for _, isAuth := range []bool{false, true} {
+			rc := models.RenderMeta{
+				TemplateName: tmplName,
+				Data:         metaFactory(isAuth),
+			}
+			var buf bytes.Buffer
+			err := re.Render(&buf, rc)
+			assert.NoError(t, err)
 
-		goldenPath := filepath.Join(goldenDir, tmplName[:len(tmplName)-5]+".golden.html")
-		if *updateFlag {
-			err = os.WriteFile(goldenPath, buf.Bytes(), 0644)
-			assert.NoError(t, err, "failed to update golden file")
-			continue
-		}
-		expected, err := os.ReadFile(goldenPath)
-		assert.NoError(t, err, "golden file missing for %s. Run tests with -update flag to generate it. Error: %v", tmplName, err)
+			fname := fmt.Sprintf("%s-auth-%v.golden.html", tmplName[:len(tmplName)-5], isAuth)
+			goldenPath := filepath.Join(goldenDir, fname)
+			if *updateFlag {
+				err = os.WriteFile(goldenPath, buf.Bytes(), 0644)
+				assert.NoError(t, err, "failed to update golden file")
+				continue
+			}
+			expected, err := os.ReadFile(goldenPath)
+			assert.NoError(t, err, "golden file missing for %s. Run tests with -update flag to generate it. Error: %v", tmplName, err)
 
-		if !bytes.Equal(expected, buf.Bytes()) {
-			assert.Equal(t, string(expected), buf.String(), "render output does not match golden file for template: "+tmplName)
+			if !bytes.Equal(expected, buf.Bytes()) {
+				assert.Equal(t, string(expected), buf.String(), "render output does not match golden file for template: "+tmplName)
+			}
 		}
 	}
 
@@ -97,7 +101,7 @@ func TestRenderForm(t *testing.T) {
 		err := re.Render(&buf, rc)
 		assert.NoError(t, err)
 
-		goldenPath := filepath.Join(goldenDir, formType+".golden.html")
+		goldenPath := filepath.Join(goldenDir, formType+"-form.golden.html")
 		if *updateFlag {
 			err = os.WriteFile(goldenPath, buf.Bytes(), 0644)
 			assert.NoError(t, err, "failed to update golden file")

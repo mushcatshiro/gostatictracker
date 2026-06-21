@@ -26,9 +26,54 @@ var BlogEntry2 = models.BlogEntry{
 	},
 }
 
+const blogInnerText = `<h1>A Perspective Change</h1>
+<p>
+  <i>
+    <time datetime="2025-08-23">
+      23 Aug, 2025
+    </time>
+  </i>
+</p>`
+
 var BlogEntryMetas = []models.BlogEntryMeta{
-	{BlogEntry: BlogEntry1, EditorURL: "/editor/path1/file1"},
-	{BlogEntry: BlogEntry1, EditorURL: "/editor/path2/file2"},
+	{
+		BaseRenderMeta: MockBaseRenderMeta,
+		BlogEntry:      BlogEntry1,
+		EditURL:        "/editor/path1/file1",
+		InnerText:      blogInnerText,
+	},
+	{
+		BaseRenderMeta: MockBaseRenderMeta,
+		BlogEntry:      BlogEntry1,
+		EditURL:        "/editor/path2/file2",
+		InnerText:      blogInnerText,
+	},
+}
+
+var Bookmarklet1 = models.Bookmarklet{
+	Title:       "bkmk1",
+	Description: "bkmk1",
+	Group:       "bookmarklet",
+	URL:         "https://bkmk1/bkmk1",
+}
+
+var Bookmarklet2 = models.Bookmarklet{
+	Title:       "bkmk2",
+	Description: "bkmk2",
+	Group:       "bookmarklet",
+	URL:         "https://bkmk2/bkmk2",
+}
+
+var GroupEntry1 = models.GroupEntry{
+	GroupName:   "bookmarklet",
+	DefaultMode: "bookmarkletlist.html",
+	URL:         "https://localhost/bookmarkletlist",
+}
+
+var GroupEntry2 = models.GroupEntry{
+	GroupName:   "blog",
+	DefaultMode: "bloglist.html",
+	URL:         "https://localhost/bloglist",
 }
 
 var quickFormMeta models.FormRenderMeta
@@ -38,7 +83,7 @@ var ideaFormMeta models.FormRenderMeta
 var reminderFormMeta models.FormRenderMeta
 var editFormMeta models.FormRenderMeta
 var FormTemplateMetaMap map[string]any
-var TemplateMetaMap map[string]any
+var TemplateMetaMap map[string]func(isAuth bool) any
 
 func init() {
 	quickFormMeta, _ = models.NewFormMeta(MockBaseRenderMeta, "/form", models.SimpleForm, nil)
@@ -56,14 +101,45 @@ func init() {
 		"edit":     editFormMeta,
 	}
 	// doesnt include form
-	TemplateMetaMap = map[string]any{
-		"bloglist.html": models.BlogIndexRenderMeta{
-			BaseRenderMeta: MockBaseRenderMeta,
-			BlogEntryMetas: BlogEntryMetas,
+	TemplateMetaMap = map[string]func(isAuth bool) any{
+		"blog.html": func(isAuth bool) any {
+			meta := BlogEntryMetas[0]
+			meta.IsAuth = isAuth
+			return meta
 		},
-		"error.html": models.ErrorRenderMeta{
-			BaseRenderMeta: MockBaseRenderMeta,
-			ErrorMessage: "404 Not Found",
+		"bloglist.html": func(isAuth bool) any {
+			meta := models.BlogIndexRenderMeta{
+				BaseRenderMeta: MockBaseRenderMeta,
+				BlogEntryMetas: BlogEntryMetas,
+			}
+			meta.IsAuth = isAuth
+			return meta
+		},
+		"bookmarkletlist.html": func(isAuth bool) any {
+			meta := models.BookmarkletIndexRenderMeta{
+				BaseRenderMeta: MockBaseRenderMeta,
+				Bookmarklets:   []models.Bookmarklet{Bookmarklet1, Bookmarklet2},
+			}
+			meta.IsAuth = isAuth
+			return meta
+		},
+		"error.html": func(isAuth bool) any {
+			meta := models.ErrorRenderMeta{
+				BaseRenderMeta: MockBaseRenderMeta,
+				ErrorMessage:   "404 Not Found",
+			}
+			meta.IsAuth = isAuth
+			return meta
+		},
+		"groupindex.html": func(isAuth bool) any {
+			meta := models.GroupIndexRenderMeta{
+				BaseRenderMeta: MockBaseRenderMeta,
+				GroupEntries: []models.GroupEntry{
+					GroupEntry1, GroupEntry2,
+				},
+			}
+			meta.IsAuth = isAuth
+			return meta
 		},
 	}
 }

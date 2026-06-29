@@ -1,6 +1,8 @@
 package mock
 
 import (
+	"html/template"
+
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
@@ -76,6 +78,18 @@ var GroupEntry2 = models.GroupEntry{
 	URL:         "https://localhost/bloglist",
 }
 
+var FrontMatter = template.HTML(
+	`+++
+title = "A Study of bfloat16 for deep learning training"
++++
+`)
+
+var TextBody = template.HTML(
+	`This paper presents the first comprehensive empirical study demonstrating
+the efficacy of the Brain Floating Point (BFLOAT16) half-precision format for
+Deep Learning training across image classification, speech recognition,
+language modeling, generative networks and industrial recommendation systems.`)
+
 var quickFormMeta models.FormRenderMeta
 var fullFormMeta models.FormRenderMeta
 var taskFormMeta models.FormRenderMeta
@@ -119,6 +133,15 @@ func init() {
 			meta := models.BookmarkletIndexRenderMeta{
 				BaseRenderMeta: MockBaseRenderMeta,
 				Bookmarklets:   []models.Bookmarklet{Bookmarklet1, Bookmarklet2},
+			}
+			meta.IsAuth = isAuth
+			return meta
+		},
+		"editor.html": func(isAuth bool) any {
+			meta := models.EditorRenderMeta{
+				BaseRenderMeta: MockBaseRenderMeta,
+				FrontMatter:    FrontMatter,
+				TextBody:       TextBody,
 			}
 			meta.IsAuth = isAuth
 			return meta

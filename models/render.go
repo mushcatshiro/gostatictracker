@@ -59,7 +59,7 @@ type BlogRenderMeta struct {
 
 type EditorRenderMeta struct {
 	BaseRenderMeta
-	FrontMatter []byte
+	FrontMatter template.HTML
 	TextBody    template.HTML
 }
 

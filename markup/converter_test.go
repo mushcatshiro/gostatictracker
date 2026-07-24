@@ -3,8 +3,6 @@ package markup
 import (
 	"strings"
 	"testing"
-
-	"github.com/mushcatshiro/gostatictracker/gvfs"
 )
 
 func TestConvert(t *testing.T) {
@@ -36,11 +34,11 @@ func TestConvert(t *testing.T) {
 	}
 
 	converter := NewGoldmarkConverter()
-	page := gvfs.Page{Path: "test.md"}
+	renderCtx := RenderContext{FilePath: "test.md"}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output, err := converter.Convert([]byte(tt.input), page)
+			output, err := converter.Convert([]byte(tt.input), renderCtx)
 			if err != nil {
 				t.Errorf("conversion failed: %v", err)
 			}

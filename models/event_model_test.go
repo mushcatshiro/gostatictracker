@@ -8,7 +8,7 @@ import (
 )
 
 func TestMarshalEventJSON(t *testing.T) {
-	e := Event{
+	r := Record{
 		ID:          1,
 		Start:       common.ParseStringDate("01-02-2023 10:00", false, false),
 		End:         common.ParseStringDate("01-02-2023 11:00", false, false),
@@ -20,7 +20,7 @@ func TestMarshalEventJSON(t *testing.T) {
 		Description: "Description A",
 	}
 
-	data, err := e.MarshalJSON()
+	data, err := r.MarshalJSON()
 	assert.NoError(t, err)
 	assert.Contains(t, string(data), `"id":1`)
 	assert.Contains(t, string(data), `"start":"01-02-2023 10:00"`)
@@ -40,17 +40,17 @@ func TestUnmarshalEventJSON(t *testing.T) {
 		"description": "Description A"
 	}`
 
-	var e Event
-	err := e.UnmarshalJSON([]byte(jsonData))
+	var r Record
+	err := r.UnmarshalJSON([]byte(jsonData))
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1), e.ID)
-	assert.Equal(t, "01-02-2023 10:00", e.Start)
-	assert.Equal(t, "01-02-2023 11:00", e.End)
-	assert.Equal(t, "Group A", e.Group)
-	assert.Equal(t, false, e.AllDay)
-	assert.Equal(t, "Event A", e.Title)
-	assert.Equal(t, "http://example.com/a", e.URL)
-	assert.Equal(t, "Description A", e.Description)
+	assert.Equal(t, int64(1), r.ID)
+	assert.Equal(t, "01-02-2023 10:00", r.Start)
+	assert.Equal(t, "01-02-2023 11:00", r.End)
+	assert.Equal(t, "Group A", r.Group)
+	assert.Equal(t, false, r.AllDay)
+	assert.Equal(t, "Event A", r.Title)
+	assert.Equal(t, "http://example.com/a", r.URL)
+	assert.Equal(t, "Description A", r.Description)
 }
 
 func TestUnmarshalEventJSONInvalidStart(t *testing.T) {
@@ -60,8 +60,8 @@ func TestUnmarshalEventJSONInvalidStart(t *testing.T) {
 		"title": "Event A"
 	}`
 
-	var e Event
-	err := e.UnmarshalJSON([]byte(jsonData))
+	var r Record
+	err := r.UnmarshalJSON([]byte(jsonData))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid start format")
 }

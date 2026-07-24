@@ -10,8 +10,8 @@ type Bookmarklet struct {
 	URL         string
 }
 
-func (b *Bookmarklet) ToEvent() Event {
-	return Event{
+func (b *Bookmarklet) ToEvent() Record {
+	return Record {
 		Title:       b.Title,
 		Description: b.Description,
 		Group:       "bookmarklet",

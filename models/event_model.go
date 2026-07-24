@@ -3,13 +3,24 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/common"
 )
 
-type Event struct {
+const GBookmarklet = "bookmarklet"
+const GQuick = "quick"
+const GTodo = "todo"
+const GImage = "image"
+const GReminder = "Reminder"
+const GBlogpost = "blogpost"
+
+var ReservedGroupName = []string{GBookmarklet, GQuick, GTodo, GImage, GReminder, GBlogpost}
+
+type Record struct {
 	ID          int64           `json:"id"`
 	Start       *time.Time      `json:"start"`
 	End         *time.Time      `json:"end"`
@@ -29,65 +40,41 @@ type Event struct {
 	Status      common.Status   `json:"status"`
 }
 
-func (e *Event) ToGanttEvent() GanttEvent {
-	ge := GanttEvent{
-		ID:          e.ID,
-		Start:       e.Start,
-		End:         e.End,
-		Group:       e.Group,
-		AllDay:      e.AllDay,
-		Title:       e.Title,
-		URL:         e.URL,
-		Description: e.Description,
-	}
-	return ge
-}
-
-func (e *Event) ToBookmarklet() Bookmarklet {
-	return Bookmarklet{
-		Title:       e.Title,
-		Description: e.Description,
-		URL:         e.URL,
-		InsertTime:  e.InsertTime,
-		Group:       e.Group,
-	}
-}
-
-func (e *Event) ToDataMap() map[string]string {
+func RecordToDataMap(r Record) map[string]string {
 	retMap := make(map[string]string)
-	retMap["id"] = strconv.FormatInt(e.ID, 10)
-	if e.Start != nil {
-		retMap["start"] = e.Start.Format(common.TimeLayout)
+	retMap["id"] = strconv.FormatInt(r.ID, 10)
+	if r.Start != nil {
+		retMap["start"] = r.Start.Format(common.TimeLayout)
 	}
-	if e.End != nil {
-		retMap["end"] = e.End.Format(common.TimeLayout)
+	if r.End != nil {
+		retMap["end"] = r.End.Format(common.TimeLayout)
 	}
-	if e.ActualStart != nil {
-		retMap["actualstart"] = e.ActualStart.Format(common.TimeLayout)
+	if r.ActualStart != nil {
+		retMap["actualstart"] = r.ActualStart.Format(common.TimeLayout)
 	}
-	if e.ActualEnd != nil {
-		retMap["actualend"] = e.ActualEnd.Format(common.TimeLayout)
+	if r.ActualEnd != nil {
+		retMap["actualend"] = r.ActualEnd.Format(common.TimeLayout)
 	}
-	retMap["end"] = e.InsertTime.Format(common.TimeLayout)
-	retMap["group"] = e.Group
-	retMap["title"] = e.Title
-	retMap["url"] = e.URL
-	retMap["description"] = e.Description
-	retMap["priority"] = strconv.FormatInt(int64(e.Priority), 10)
-	retMap["metadata"] = e.Metadata
-	retMap["status"] = strconv.FormatInt(int64(e.Status), 10)
+	retMap["end"] = r.InsertTime.Format(common.TimeLayout)
+	retMap["group"] = r.Group
+	retMap["title"] = r.Title
+	retMap["url"] = r.URL
+	retMap["description"] = r.Description
+	retMap["priority"] = strconv.FormatInt(int64(r.Priority), 10)
+	retMap["metadata"] = r.Metadata
+	retMap["status"] = strconv.FormatInt(int64(r.Status), 10)
 	return retMap
 }
 
 // marhsall Event to JSON
-func (e *Event) MarshalJSON() ([]byte, error) {
-	type Alias Event // Create an alias to avoid recursion
-	return json.Marshal((*Alias)(e))
+func (r *Record) MarshalJSON() ([]byte, error) {
+	type Alias Record// Create an alias to avoid recursion
+	return json.Marshal((*Alias)(r))
 }
 
 // UnmarshalJSON unmarshals JSON data into an Event struct
-func (e *Event) UnmarshalJSON(data []byte) error {
-	type Alias Event // Create an alias to avoid recursion
+func (r *Record) UnmarshalJSON(data []byte) error {
+	type Alias Record// Create an alias to avoid recursion
 	aux := &struct {
 		Start       string `json:"start"`
 		End         string `json:"end"`
@@ -96,7 +83,7 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		InsertTime  string `json:"insertTime"`
 		*Alias
 	}{
-		Alias: (*Alias)(e),
+		Alias: (*Alias)(r),
 	}
 
 	if err := json.Unmarshal(data, &aux); err != nil {
@@ -108,9 +95,9 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("invalid start format: %q (expected MM-DD-YYYY HH:MM): %w", aux.Start, err)
 		}
-		e.Start = &parsedStart
+		r.Start = &parsedStart
 	} else {
-		e.Start = nil
+		r.Start = nil
 	}
 
 	if aux.End != "" {
@@ -118,9 +105,9 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("invalid end format: %q (expected MM-DD-YYYY HH:MM): %w", aux.End, err)
 		}
-		e.End = &parsedEnd
+		r.End = &parsedEnd
 	} else {
-		e.Start = nil
+		r.Start = nil
 	}
 
 	if aux.ActualStart != "" {
@@ -128,9 +115,9 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("invalid actualStart format: %q (expected MM-DD-YYYY HH:MM): %w", aux.ActualStart, err)
 		}
-		e.ActualStart = &parsedActualStart
+		r.ActualStart = &parsedActualStart
 	} else {
-		e.Start = nil
+		r.Start = nil
 	}
 
 	if aux.ActualEnd != "" {
@@ -138,19 +125,23 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return fmt.Errorf("invalid actualEnd format: %q (expected MM-DD-YYYY HH:MM): %w", aux.ActualEnd, err)
 		}
-		e.ActualEnd = &parsedActualEnd
+		r.ActualEnd = &parsedActualEnd
 	} else {
-		e.Start = nil
+		r.Start = nil
 	}
 
 	now := time.Now()
-	e.InsertTime = &now
+	r.InsertTime = &now
 
 	return nil
 }
 
-func (e *Event) Validate() error {
+func (r *Record) Validate() bool {
 	// validate repeat format
 	// validate metadata format (tags)
-	return nil
+	r.Group = strings.ToLower(r.Group)
+	if slices.Contains(ReservedGroupName, r.Group) {
+		return false
+	}
+	return true
 }

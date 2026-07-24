@@ -73,11 +73,11 @@ type FormRenderMeta struct {
 	IsIdea       bool
 	IsReminder   bool
 	IsEdit       bool
-	Event
+	Record
 }
 
 func NewFormMeta(
-	baseRenderMeta BaseRenderMeta, endpoint string, formType FormType, e *Event,
+	baseRenderMeta BaseRenderMeta, endpoint string, formType FormType, r *Record,
 ) (FormRenderMeta, error) {
 	frm := FormRenderMeta{
 		BaseRenderMeta: baseRenderMeta,
@@ -102,10 +102,10 @@ func NewFormMeta(
 	case EditForm:
 		frm.FormTitle = "Edit Form"
 		frm.IsEdit = true
-		if e == nil {
+		if r == nil {
 			return frm, errors.New("event must not be null")
 		}
-		frm.Event = *e
+		frm.Record = *r
 	default:
 		return frm, errors.New("undefined form")
 	}

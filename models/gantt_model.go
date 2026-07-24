@@ -13,8 +13,8 @@ type GanttEvent struct {
 	Description string     `json:"description"`
 }
 
-func (ge *GanttEvent) ToEvent() Event {
-	return Event{
+func (ge *GanttEvent) ToEvent() Record {
+	return Record {
 		ID:          ge.ID,
 		Start:       ge.Start,
 		End:         ge.End,

@@ -5,18 +5,14 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func GetKanbanGroups(db DBTX, groupName string) (map[string][]models.Event, error) {
-	out := make(map[string][]models.Event)
+func (db *DB) GetKanbanGroups(groupName string) (map[string][]models.Record, error) {
+	out := make(map[string][]models.Record)
 
 	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
-		out[idx.String()] = []models.Event{}
+		out[idx.String()] = []models.Record{}
 	}
 
-	fc := models.FilterCols{
-		Group: groupName,
-	}
-
-	allEvents, err := ReadFilteredEvents(db, fc)
+	allEvents, err := db.ReadRecords(models.Record{Group: groupName})
 	if err != nil {
 		return nil, err
 	}

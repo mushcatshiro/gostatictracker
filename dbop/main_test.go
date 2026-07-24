@@ -2,7 +2,6 @@ package dbop
 
 import (
 	"database/sql"
-	"flag"
 	"log"
 	"os"
 	"slices"
@@ -11,62 +10,63 @@ import (
 	"github.com/mushcatshiro/gostatictracker/mock"
 )
 
-var conn *sql.DB
+var globalTestDB *DB
 
 func TestMain(m *testing.M) {
-	flag.Parse()
-	if !testing.Short() {
-		testDbUrl := os.Getenv("TEST_DATABASE_URL")
-		if testDbUrl == "" {
-			log.Fatal("Environment varibale `TEST_DATABASE_URL cannot be empty\n")
-		}
-		testDbType := os.Getenv("TEST_DATABASE_TYPE")
-		if testDbType == "" {
-			log.Fatal("Environment varibale `TEST_DATABASE_TYPE cannot be empty\n")
-		}
-
-		var err error
-		conn, err = ConnectDB(testDbUrl, testDbType)
-		if err != nil {
-			log.Fatalf("Connection to DB failed: %v", err)
-		}
-		err = InitDB(conn, false, true)
-		if err != nil {
-			log.Fatalf("Failed to initialize test database: %s", err)
-		}
-
-		mockData := slices.Concat(
-			mock.DayViewMockData[:],
-			mock.DayViewOverflowMockData[:],
-			mock.WeekViewMockData[:],
-		)
-		for _, event := range mockData {
-			_, err := InsertEvent(conn, event)
-			if err != nil {
-				log.Fatalf("Failed to insert mock event: %v", err)
-			}
-		}
-
+	var err error
+	globalTestDB, err = NewDB("sqlite", "", "", ".", "test", "")
+	if err != nil {
+		log.Fatalf("Connection to DB failed: %v", err)
 	}
+	err = globalTestDB.InitDB(false, true)
+	if err != nil {
+		log.Fatalf("Failed to initialize test database: %s", err)
+	}
+
+	mockData := slices.Concat(
+		mock.DayViewMockData[:],
+		mock.DayViewOverflowMockData[:],
+		mock.WeekViewMockData[:],
+	)
+	for _, record := range mockData {
+		_, err := globalTestDB.InsertRecord(record)
+		if err != nil {
+			log.Fatalf("Failed to insert mock event: %v", err)
+		}
+	}
+
 	exitCode := m.Run()
-	if conn != nil {
-		conn.Close()
+	if globalTestDB != nil {
+		globalTestDB.Close()
+	}
+	err = os.Remove("test.db")
+	if err != nil {
+		log.Printf("failed to delete test.db, got %v", err)
 	}
 	os.Exit(exitCode)
 }
 
-func SetupTestTx(t *testing.T) *sql.Tx {
+func SetupTestTx(t *testing.T) *DB {
 	t.Helper()
 
-	if conn == nil {
+	if globalTestDB == nil {
 		t.Skip("Database not initialized, skipping test")
 	}
-	tx, err := conn.Begin()
+	sqlDB, ok := globalTestDB.DBTX.(*sql.DB)
+	if !ok {
+		t.Fatalf("globalTestDB.DBTX is not a *sql.DB connection pool")
+	}
+
+	tx, err := sqlDB.Begin()
 	if err != nil {
 		t.Fatalf("failed to begin transaction: %v", err)
 	}
 	t.Cleanup(func() {
 		tx.Rollback()
 	})
-	return tx
+	return &DB{
+		DBTX:       tx,
+		queryAsset: globalTestDB.queryAsset,
+		identifier: globalTestDB.identifier,
+	}
 }

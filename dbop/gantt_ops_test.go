@@ -48,9 +48,9 @@ func verifyResult(g, r models.GanttRenderMetadata) error {
 }
 
 func TestGetGanttRenderMetadata(t *testing.T) {
-	tx := SetupTestTx(t)
+	db := SetupTestTx(t)
 
-	dveG, err := GetGanttRenderMetadata(tx, "day view example")
+	dveG, err := db.GetGanttRenderMetadata("day view example")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -76,7 +76,7 @@ func TestGetGanttRenderMetadata(t *testing.T) {
 	}
 	// day view overflow example
 	// week view example
-	wveG, err := GetGanttRenderMetadata(tx, "week view example")
+	wveG, err := db.GetGanttRenderMetadata("week view example")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

@@ -1,13 +1,6 @@
 package dbop
 
-import (
-	"database/sql"
-	"fmt"
-	"time"
-
-	"github.com/mushcatshiro/gostatictracker/common"
-)
-
+/*
 func updateStatus(db DBTX, id int64, status common.Status) error {
 	e, err := ReadEventById(db, id)
 	if err != nil {
@@ -47,3 +40,4 @@ func UpdateStatusSafe(db *sql.DB, id int64, status common.Status) error {
 
 	return nil
 }
+*/

@@ -2,200 +2,182 @@ package dbop
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
+	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func InitDB(db DBTX, truncate, drop bool) error {
-	createEventTableQuery := `CREATE TABLE IF NOT EXISTS events (
-		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-		start TIMESTAMP,
-		"end" TIMESTAMP,
-		actualStart TIMESTAMP,
-		actualEnd TIMESTAMP,
-		insertTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		"group" TEXT DEFAULT 'default' NOT NULL,
-		allDay BOOLEAN DEFAULT FALSE,
-		title TEXT NOT NULL,
-		url TEXT,
-		description TEXT,
-		pid BIGINT,
-		priority INT,
-		metadata TEXT,
-		status INT
-	);`
-	createUserTableQuery := `CREATE TABLE IF NOT EXISTS users (
-		id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-		google_id TEXT NOT NULL UNIQUE,
-		email TEXT,
-		ipaddress TEXT,
-		role TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	);`
+func (db *DB) InitDB(truncate, drop bool) error {
 	// deletes all rows while keeping table structure intact
+	qTruncTables, err := db.getSql("truncate-tables.sql")
+	if err != nil {
+		return err
+	}
+	qDropTables, err := db.getSql("drop-tables.sql")
+	if err != nil {
+		return err
+	}
+	qCreateRecordTable, err := db.getSql("create-record-table.sql")
+	if err != nil {
+		return err
+	}
+	qCreateUserTable, err := db.getSql("create-user-table.sql")
+	if err != nil {
+		return err
+	}
+
 	if truncate {
-		_, err := db.Exec("TRUNCATE TABLE events RESTART IDENTITY CASCADE")
+		_, err = db.Exec(qTruncTables)
 		if err != nil {
-			return err
-		}
-		_, err = db.Exec("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
-		if err != nil {
-			return err
+			return fmt.Errorf("failed to truncate tables: %v", err)
 		}
 	}
 	// removes the entire table definition with data, indexes and constraints
 	if drop {
-		_, err := db.Exec("DROP TABLE IF EXISTS events CASCADE")
+		_, err = db.Exec(qDropTables)
 		if err != nil {
-			return err
-		}
-		_, err = db.Exec("DROP TABLE IF EXISTS users CASCADE")
-		if err != nil {
-			return err
+			return fmt.Errorf("failed to drop tables: %v", err)
 		}
 	}
-	_, err := db.Exec(createEventTableQuery)
+	_, err = db.Exec(qCreateRecordTable)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create record table: %v", err)
 	}
-	_, err = db.Exec(createUserTableQuery)
+	_, err = db.Exec(qCreateUserTable)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create user table: %v", err)
 	}
 	return nil
 }
 
-func ReadEventById(db DBTX, id int64) (models.Event, error) {
-	var e models.Event
-	readQuery := `SELECT id, start, "end", actualStart, actualEnd, insertTime,
-		"group", allDay, title, url, description, pid, priority, metadata, status
-	FROM events WHERE id = $1`
-	err := db.QueryRow(readQuery, id).Scan(
-		&e.ID,
-		&e.Start,
-		&e.End,
-		&e.ActualStart,
-		&e.ActualEnd,
-		&e.InsertTime,
-		&e.Group,
-		&e.AllDay,
-		&e.Title,
-		&e.URL,
-		&e.Description,
-		&e.PID,
-		&e.Priority,
-		&e.Metadata,
-		&e.Status,
+func (db *DB) ReadRecord(f models.Record) (models.Record, error) {
+	var r models.Record
+	qSelectRecord, err := db.getSql("select-record.sql")
+	if err != nil {
+		return r, err
+	}
+	q, args := AppendWhereClause(
+		qSelectRecord, db.identifier, models.Record{ID: f.ID},
+	)
+
+	err = db.QueryRow(q, args...).Scan(
+		&r.ID,
+		&r.Start,
+		&r.End,
+		&r.ActualStart,
+		&r.ActualEnd,
+		&r.InsertTime,
+		&r.Group,
+		&r.DefaultMode,
+		&r.Repeat,
+		&r.AllDay,
+		&r.Title,
+		&r.URL,
+		&r.Description,
+		&r.PID,
+		&r.Priority,
+		&r.Metadata,
+		&r.Status,
 	)
 	if err != nil {
-		return models.Event{}, err
+		return r, err
 	}
-	return e, nil
+	return r, nil
 }
 
-func ReadFilteredEvents(db DBTX, filterCols models.FilterCols) ([]models.Event, error) {
-	var events []models.Event
-
-	query := `SELECT id, start, "end", actualStart, actualEnd, insertTime,
-		"group", allDay, title, url, description, pid, priority, metadata, status
-	FROM events`
-	var conditions []string
-	var args []any
-	if filterCols.Group != "" {
-		conditions = append(conditions, fmt.Sprintf(`"group" = $%d`, len(conditions)+1))
-		args = append(args, filterCols.Group)
-	}
-	if filterCols.Mode != "" {
-		conditions = append(conditions, fmt.Sprintf(`"mode" = $%d`, len(conditions)+1))
-		args = append(args, filterCols.Mode)
-	}
-	if filterCols.Status != nil {
-		conditions = append(conditions, fmt.Sprintf(`"status" = $%d`, len(conditions)+1))
-		args = append(args, &filterCols.Status)
-	}
-	if len(conditions) > 0 {
-		query = query + " WHERE " + strings.Join(conditions, " AND ")
-	}
-	rows, err := db.Query(query, args...)
+func (db *DB) ReadRecords(f models.Record) ([]models.Record, error) {
+	var rs []models.Record
+	qSelectRecord, err := db.getSql("select-record.sql")
 	if err != nil {
-		return events, err
+		return rs, err
+	}
+	q, args := AppendWhereClause(qSelectRecord, db.identifier, f)
+
+	rows, err := db.Query(q, args...)
+	if err != nil {
+		return rs, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var e models.Event
+		var r models.Record
 		if err := rows.Scan(
-			&e.ID,
-			&e.Start,
-			&e.End,
-			&e.ActualStart,
-			&e.ActualEnd,
-			&e.InsertTime,
-			&e.Group,
-			&e.AllDay,
-			&e.Title,
-			&e.URL,
-			&e.Description,
-			&e.PID,
-			&e.Priority,
-			&e.Metadata,
-			&e.Status,
+			&r.ID,
+			&r.Start,
+			&r.End,
+			&r.ActualStart,
+			&r.ActualEnd,
+			&r.InsertTime,
+			&r.Group,
+			&r.DefaultMode,
+			&r.Repeat,
+			&r.AllDay,
+			&r.Title,
+			&r.URL,
+			&r.Description,
+			&r.PID,
+			&r.Priority,
+			&r.Metadata,
+			&r.Status,
 		); err != nil {
-			return events, err
+			return rs, err
 		}
-		events = append(events, e)
+		rs = append(rs, r)
 	}
 	if err := rows.Err(); err != nil {
-		return events, err
+		return rs, err
 	}
-	return events, nil
+	return rs, nil
 }
 
-func GetUniqueGroups(db DBTX) ([]string, error) {
-	var groups []string
-	rows, err := db.Query(`SELECT DISTINCT "group" FROM events;`)
+func (db *DB) ReadUniqueGroups() ([]string, error) {
+	var gs []string
+	qSelectUniqGroups, err := db.getSql("select-unique-groups.sql")
 	if err != nil {
-		return groups, err
+		return gs, err
+	}
+	rows, err := db.Query(qSelectUniqGroups)
+	if err != nil {
+		return gs, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var group string
 		if err := rows.Scan(&group); err != nil {
-			return groups, err
+			return gs, err
 		}
-		groups = append(groups, group)
+		gs = append(gs, group)
 	}
 	if err := rows.Err(); err != nil {
-		return groups, err
+		return gs, err
 	}
-	return groups, nil
+	return gs, nil
 }
 
-func InsertEvent(db DBTX, event models.Event) (int64, error) {
-	insertQuery := `
-	INSERT INTO events (
-		start, "end", actualStart, actualEnd, "group", allDay, title, url,
-		description, pid, priority, metadata, status
-	)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	RETURNING id;`
-
+func (db *DB) InsertRecord(r models.Record) (int64, error) {
 	var id int64
-	err := db.QueryRow(insertQuery,
-		event.Start,
-		event.End,
-		event.ActualStart,
-		event.ActualEnd,
-		event.Group,
-		event.AllDay,
-		event.Title,
-		event.URL,
-		event.Description,
-		event.PID,
-		event.Priority,
-		event.Metadata,
-		event.Status,
+	qInsertRecord, err := db.getSql("insert-record.sql")
+	if err != nil {
+		return id, err
+	}
+
+	err = db.QueryRow(qInsertRecord,
+		r.Start,
+		r.End,
+		r.ActualStart,
+		r.ActualEnd,
+		r.Group,
+		r.DefaultMode,
+		r.Repeat,
+		r.AllDay,
+		r.Title,
+		r.URL,
+		r.Description,
+		r.PID,
+		r.Priority,
+		r.Metadata,
+		r.Status,
 	).Scan(&id)
 
 	if err != nil {
@@ -204,33 +186,31 @@ func InsertEvent(db DBTX, event models.Event) (int64, error) {
 	return id, nil
 }
 
-func UpdateEvent(db DBTX, event models.Event) error {
-	updateQuery := `UPDATE events
-	SET start = $1, "end" = $2, actualStart = $3, actualEnd = $4, insertTime = $5,
-		"group" = $6, allDay = $7, title = $8, url = $9, description = $10, pid = $11,
-		priority = $12, metadata = $13, status = $14
-	WHERE id = $15;`
+func (db *DB) UpdateRecord(r models.Record) error {
+	qUpdateRecord, err := db.getSql("update-record.sql")
+	if err != nil {
+		return err
+	}
 
-	result, err := db.Exec(updateQuery,
-		event.Start,
-		event.End,
-		event.ActualStart,
-		event.ActualEnd,
-		event.InsertTime,
-		event.Group,
-		event.AllDay,
-		event.Title,
-		event.URL,
-		event.Description,
-		event.PID,
-		event.Priority,
-		event.Metadata,
-		event.Status,
-		event.ID,
+	result, err := db.Exec(qUpdateRecord,
+		r.Start,
+		r.End,
+		r.ActualStart,
+		r.ActualEnd,
+		r.Group,
+		r.AllDay,
+		r.Title,
+		r.URL,
+		r.Description,
+		r.PID,
+		r.Priority,
+		r.Metadata,
+		r.Status,
+		r.ID,
 	)
 
 	if err != nil {
-		return fmt.Errorf("failed to update event: %w", err)
+		return fmt.Errorf("failed to update record: %w", err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
@@ -239,7 +219,33 @@ func UpdateEvent(db DBTX, event models.Event) error {
 	}
 
 	if rowsAffected == 0 {
-		return fmt.Errorf("no event found with ID %d", event.ID)
+		return fmt.Errorf("no record found with ID %d", r.ID)
 	}
 	return nil
+}
+
+func (db *DB) UpdateRecordStatus(id int64, status common.Status) error {
+	r, err := db.ReadRecord(models.Record{ID: id})
+	if err != nil {
+		return err
+	}
+	r.Status = status
+	if status == common.COMPLETED {
+		actlEnd := time.Now()
+		r.ActualEnd = &actlEnd
+	}
+	return db.UpdateRecord(r)
+}
+
+func (db *DB) UpdateRecordPriority(id int64, priority common.Priority) error {
+	r, err := db.ReadRecord(models.Record{ID: id})
+	if err != nil {
+		return err
+	}
+	r.Priority = priority
+	return db.UpdateRecord(r)
+}
+
+func (db *DB) GetUngrouppedRecords() ([]models.Record, error) {
+	return db.ReadRecords(models.Record{Group: "default"})
 }

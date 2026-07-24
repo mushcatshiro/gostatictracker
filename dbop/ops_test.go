@@ -4,69 +4,44 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/mushcatshiro/gostatictracker/common"
+	"github.com/mushcatshiro/gostatictracker/mock"
 	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlMockUpdateEvent(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+func TestUpdateRecord(t *testing.T) {
+	db := SetupTestTx(t)
 
-	// Define the event to update
-	event := models.Event{
-		ID:          1,
-		Start:       common.ParseStringDate("10-01-2023 10:00", false, false),
-		End:         common.ParseStringDate("10-01-2023 11:00", false, false),
-		ActualEnd:   common.ParseStringDate("10-01-2023 11:00", false, false),
+	record := models.Record{
+		Start:       common.MustParseStringDate("2023-10-01T10:00", ""),
+		End:         common.MustParseStringDate("2023-10-01T11:00", ""),
+		ActualEnd:   common.MustParseStringDate("2023-10-01T11:00", ""),
 		Group:       "Group A",
 		AllDay:      false,
-		Title:       "Updated Event",
+		Title:       "record",
 		URL:         "http://example.com/updated",
 		Description: "Updated Description",
 	}
 
-	// Expect the update query
-	mock.ExpectExec(`UPDATE events
-	SET start = \$1, "end" = \$2, actualStart = \$3, actualEnd = \$4, insertTime = \$5,
-	"group" = \$6, allDay = \$7, title = \$8, url = \$9, description = \$10, pid = \$11,
-	priority = \$12, metadata = \$13, status = \$14
-	WHERE id = \$15;`).
-		WithArgs(
-			event.Start,
-			event.End,
-			event.ActualStart,
-			event.ActualEnd,
-			event.InsertTime,
-			event.Group,
-			event.AllDay,
-			event.Title,
-			event.URL,
-			event.Description,
-			event.PID,
-			event.Priority,
-			event.Metadata,
-			event.Status,
-			event.ID,
-		).WillReturnResult(sqlmock.NewResult(1, 1))
+	id, err := db.InsertRecord(record)
+	assert.NoError(t, err)
 
-	err = UpdateEvent(db, event)
+	record.ID = id
+	record.Title = "updated record"
+
+	err = db.UpdateRecord(record)
 	assert.NoError(t, err)
 }
 
-func TestSqlMockUpdateEventDoesNotExist(t *testing.T) {
-	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer db.Close()
+func TestUpdateRecordDoesNotExist(t *testing.T) {
+	db := SetupTestTx(t)
 
-	// Define the event to update
-	event := models.Event{
-		ID:          999, // Non-existent ID
-		Start:       common.ParseStringDate("10-01-2023 10:00", false, false),
-		End:         common.ParseStringDate("10-01-2023 11:00", false, false),
-		ActualEnd:   common.ParseStringDate("10-01-2023 11:00", false, false),
+	record := models.Record{
+		ID:          999,
+		Start:       common.MustParseStringDate("2023-10-01T10:00", ""),
+		End:         common.MustParseStringDate("2023-10-01T11:00", ""),
+		ActualEnd:   common.MustParseStringDate("2023-10-01T11:00", ""),
 		Group:       "Group A",
 		AllDay:      false,
 		Title:       "Updated Event",
@@ -74,48 +49,35 @@ func TestSqlMockUpdateEventDoesNotExist(t *testing.T) {
 		Description: "Updated Description",
 	}
 
-	// Expect the update query to return no rows affected
-	mock.ExpectExec(`UPDATE events
-	SET start = \$1, "end" = \$2, actualStart = \$3, actualEnd = \$4, insertTime = \$5,
-	"group" = \$6, allDay = \$7, title = \$8, url = \$9, description = \$10, pid = \$11,
-	priority = \$12, metadata = \$13, status = \$14
-	WHERE id = \$15;`).
-		WithArgs(event.Start, event.End, event.ActualEnd, event.Group, event.AllDay, event.Title, event.URL, event.Description, event.ID).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-
-	err = UpdateEvent(db, event)
+	err := db.UpdateRecord(record)
 	assert.Error(t, err)
 }
 
-func TestEventOperations(t *testing.T) {
-	tx := SetupTestTx(t)
+func TestInsertNullTimeRecord(t *testing.T) {
+	db := SetupTestTx(t)
 
-	e := models.Event{
+	r := models.Record{
 		Title: "test insert",
 	}
-	id, err := InsertEvent(tx, e)
+	id, err := db.InsertRecord(r)
 	assert.NoError(t, err)
 	assert.NotEqual(t, 0, id, fmt.Sprintf("expected non zero value, got: %d", id))
 
-	e.ID = id
-	e.Title = "test update"
-	err = UpdateEvent(tx, e)
+	// test nullable
+	rr, err := db.ReadRecord(models.Record{ID: id})
+	assert.NoError(t, err)
+	t.Logf("%+v", rr)
+	assert.Nil(t, rr.Start)
+	assert.Nil(t, rr.End)
+}
+
+func TestReadRecord(t *testing.T) {
+	db := SetupTestTx(t)
+
+	_, err := db.ReadRecord(models.Record{ID: 1})
 	assert.NoError(t, err)
 
-	ue, err := ReadEventById(tx, id)
+	rs, err := db.ReadRecords(models.Record{Group: "day view example"})
 	assert.NoError(t, err)
-	assert.Equal(
-		t,
-		e.Title,
-		ue.Title,
-		fmt.Sprintf("expected %s, got: %s", e.Title, ue.Title),
-	)
-
-	dneE := models.Event{
-		ID: 9999,
-		Title: "DNE",
-	}
-	err = UpdateEvent(tx, dneE)
-	assert.ErrorContains(t, err, "no event found with ID")
-
+	assert.Equal(t, len(rs), len(mock.DayViewMockData))
 }

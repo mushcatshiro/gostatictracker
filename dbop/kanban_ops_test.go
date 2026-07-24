@@ -7,9 +7,9 @@ import (
 )
 
 func TestGetKanbanGroups(t *testing.T) {
-	tx := SetupTestTx(t)
+	db := SetupTestTx(t)
 
-	result, err := GetKanbanGroups(tx, "day view example")
+	result, err := db.GetKanbanGroups("day view example")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

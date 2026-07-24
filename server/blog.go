@@ -15,21 +15,21 @@ import (
 func (s *Server) processBlogView(path string) (BlogPageTmplMeta, error) {
 	var b BlogPageTmplMeta
 
-	page, err := s.blogSiteManager.GetSpecificPageByPath(path, true)
+	blogEntry, err := s.blogManager.GetSpecificBlogByPath(path, true)
 	if err != nil {
 		return b, err
 	}
 	ctx := markup.RenderContext{
-		FilePath: page.Path,
+		FilePath: blogEntry.Path,
 	}
-	bContent, err := s.muConverter.Convert(page.Content, ctx)
+	bContent, err := s.muConverter.Convert(blogEntry.Content, ctx)
 	if err != nil {
-		return b, fmt.Errorf("fail to convert %s with error %w", page.Path, err)
+		return b, fmt.Errorf("fail to convert %s with error %w", path, err)
 	}
 
 	b.InnerText = template.HTML(bContent)
-	b.HasMermaid = page.Meta.HasMermaid
-	b.HasMathJax = page.Meta.HasMathJax
+	b.HasMermaid = blogEntry.HasMermaid
+	b.HasMathJax = blogEntry.HasMathJax
 	return b, nil
 }
 

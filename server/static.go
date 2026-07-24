@@ -8,29 +8,21 @@ import (
 	"strings"
 )
 
-func (s *Server) RegisterFileServer(mux *http.ServeMux) {
+func (s *Server) handleStatic(staticFS fs.FS, mux *http.ServeMux) http.HandlerFunc {
 	// Root file server at "static/public"
 	// /static/js/vendor.js maps to static/public/js/vendor.js
-	publicFS, err := fs.Sub(assets, "static/public")
+	publicFS, err := fs.Sub(staticFS, "static/public")
 	if err != nil {
 		panic(err)
 	}
 
 	fileServer := http.FileServer(http.FS(publicFS))
-
-	handler := s.secureFileServer(publicFS, fileServer)
-
-	mux.Handle("/static/", http.StripPrefix("/static/", handler))
-	/*
-			mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		    r.URL.Path = "/static/favicon.ico"
-		    handler.ServeHTTP(w, r)
-		})
-	*/
+	return s.secureFileServer(publicFS, fileServer)
+	// mux.Handle("/static/", http.StripPrefix("/static/", handler))
 }
 
-func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		path := filepath.Clean(r.URL.Path)
 
 		// BLOCK ACCESS TO TEMPLATES
@@ -40,7 +32,6 @@ func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.Handler {
 			return
 		}
 
-		// ... existing IsDir() and Open() checks ...
 		f, err := root.Open(strings.TrimPrefix(path, "/"))
 		if err != nil {
 			s.handleError(w, r, 404, fmt.Sprintf("File %s not found", path))
@@ -55,5 +46,5 @@ func (s *Server) secureFileServer(root fs.FS, next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(w, r)
-	})
+	}
 }

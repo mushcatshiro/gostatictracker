@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mushcatshiro/gostatictracker/gvfs"
+	"github.com/mushcatshiro/gostatictracker/blog"
 )
 
 const editorTextBody = `---
@@ -96,7 +96,7 @@ func (s *Server) processEditorView(path string) (EditorTmplMeta, error) {
 		// to handle non standard utf-8 char
 		// to include all assets
 		p, err := s.blogSiteManager.GetSpecificPageByPath(path, false)
-		if errors.Is(err, gvfs.ErrPageDoesNotExists) {
+		if errors.Is(err, blog.ErrPageDoesNotExists) {
 			return etm, errors.New("page does not exists")
 		}
 		if err != nil {

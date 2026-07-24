@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/mushcatshiro/gostatictracker/blog"
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/gvfs"
-	"github.com/mushcatshiro/gostatictracker/markup"
 	"github.com/spf13/afero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -22,8 +22,7 @@ type Server struct {
 	router            *http.ServeMux
 	db                *sql.DB
 	googleOauthConfig *oauth2.Config
-	blogSiteManager   *gvfs.SiteManager
-	muConverter       markup.Converter
+	blogManager       *blog.BlogManager
 	tmpl              *template.Template
 }
 
@@ -39,7 +38,7 @@ func New(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := dbop.ConnectDB(connStr)
+	conn, err := dbop.ConnectDB(connStr, config.DB.DbType)
 	if err != nil {
 		return nil, err
 	}
@@ -67,15 +66,12 @@ func New(config Config) (*Server, error) {
 		return &Server{}, fmt.Errorf("%v", err)
 	}
 
-	muc := markup.NewGoldmarkConverter()
-
 	s := &Server{
 		config:            config,
 		router:            http.NewServeMux(), // instead of global
 		db:                conn,
 		googleOauthConfig: oauthConfig,
 		blogSiteManager:   &bsm,
-		muConverter:       muc,
 		tmpl:              templates,
 	}
 

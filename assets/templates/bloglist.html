@@ -1,0 +1,12 @@
+{{ define "content" }}
+<ul>
+  {{ range .BlogEntryMetas }}
+  <li>
+    <a href="{{ .FullURL }}">{{ .Title }}</a> {{ .LastModifiedDate }}
+    {{ if $.IsAuth }}
+    <a href="{{ .EditURL }}" hx-get="{{ .EditURL }}" hx-target="#content" hx-push-url="true">Edit</a>
+    {{ end }}
+  </li>
+  {{ end }}
+</ul>
+{{ end }}

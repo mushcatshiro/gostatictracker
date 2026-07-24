@@ -1,0 +1,55 @@
+{{ define "content" }}
+<div class="row-controls">
+  <button id="upload-btn" onclick="toggleElement('upload-container')">Upload Content</button>
+  <div class="dropdown">
+    <button id="assets-btn" onclick="toggleElement('asset-dropdown')">View Assets</button>
+    <div id="asset-dropdown" onclick="event.stopPropagation()">
+      <ul id="asset-list"></ul>
+    </div>
+  </div>
+
+  <div id="upload-container" onclick="event.stopPropagation()">
+    <form
+      hx-post="/upload"
+      hx-encoding="multipart/form-data"
+      hx-target="#asset-list"
+      hx-swap="beforeend"
+      hx-on::after-request="toggleElement('upload-container')"
+    >
+      <label>Select Images:</label>
+      <input type="file" name="images" multiple accept="image/*">
+      <label>Paste Links (One per line):</label>
+      <textarea name="links" class="links-input" placeholder="https://..."></textarea>
+      <button type="submit">Upload Assets</button>
+    </form>
+  </div>
+  <div class="submit-btn">
+    <form
+         hx-post="/editor"
+         hx-target="#vim-textarea"
+         hx-push-url="true"
+         hx-include="#vim-textarea"
+      >
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</div>
+
+<div class="row-editor">
+  <div id="vim-mode-indicator">INSERT</div>
+  {{ if .TextBody }}
+  <textarea id="vim-textarea" name="content">{{ .FrontMatter }}
+{{ .TextBody }}</textarea>
+  {{ else }}
+  <textarea
+    id="vim-textarea"
+    name="content"
+    placeholder="Vim Editor Ready... (Esc for Normal Mode, i for Insert)"
+  >{{ .FrontMatter }}</textarea>
+  {{ end }}
+</div>
+
+<div class="row-preview">
+</div>
+<script src="/static/editor.js" defer></script>
+{{ end }}

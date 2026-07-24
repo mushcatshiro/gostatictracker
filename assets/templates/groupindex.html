@@ -1,0 +1,12 @@
+<!-- list for event by group + link to default render mode -->
+{{ define "content" }}
+<div>
+<ul>
+  {{ range .GroupEntries }}
+  <li>
+    {{ .GroupName }} <a href="{{ .URL }}">go to view</a>
+  </li>
+  {{ end }}
+</ul>
+</div>
+{{ end }}

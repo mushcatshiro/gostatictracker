@@ -1,0 +1,348 @@
+:root {
+  --width: 720px;
+  --font-main: Verdana, sans-serif;
+  --font-secondary: Verdana, sans-serif;
+  --font-scale: 1em;
+  --background-color: #fff;
+  --heading-color: #222;
+  --text-color: #444;
+  --link-color: #3273dc;
+  --visited-color: #8b6fcb;
+  --code-background-color: #f2f2f2;
+  --code-color: #222;
+  --blockquote-color: #222;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background-color: #01242e;
+    --heading-color: #eee;
+    --text-color: #ddd;
+    --link-color: #8cc2dd;
+    --visited-color: #8b6fcb;
+    --code-background-color: #000;
+    --code-color: #ddd;
+    --blockquote-color: #ccc;
+  }
+}
+
+body {
+  font-family: var(--font-secondary);
+  font-size: var(--font-scale);
+  margin: auto;
+  padding: 20px;
+  max-width: var(--width);
+  text-align: left;
+  background-color: var(--background-color);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-main);
+  color: var(--heading-color);
+}
+
+a {
+  color: var(--link-color);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+nav a {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+strong,
+b {
+  color: var(--heading-color);
+}
+
+button {
+  margin: 0;
+  cursor: pointer;
+}
+
+time {
+  font-family: monospace;
+  font-style: normal;
+  font-size: 15px;
+}
+
+main {
+  line-height: 1.6;
+}
+
+table {
+  width: 100%;
+}
+
+hr {
+  border: 0;
+  border-top: 1px dashed;
+}
+
+img {
+  max-width: 100%;
+}
+
+code {
+  font-family: monospace;
+  padding: 2px;
+  background-color: var(--code-background-color);
+  color: var(--code-color);
+  border-radius: 3px;
+}
+
+blockquote {
+  border-left: 1px solid #999;
+  color: var(--code-color);
+  padding-left: 20px;
+  font-style: italic;
+}
+
+footer {
+  padding: 25px 0;
+  text-align: center;
+}
+
+.title:hover {
+  text-decoration: none;
+}
+
+.title h1 {
+  font-size: 1.5em;
+}
+
+.inline {
+  width: auto !important;
+}
+
+.highlight,
+.code {
+  padding: 1px 15px;
+  background-color: var(--code-background-color);
+  color: var(--code-color);
+  border-radius: 3px;
+  margin-block-start: 1em;
+  margin-block-end: 1em;
+  overflow-x: auto;
+}
+
+
+ul.blog-posts {
+  list-style-type: none;
+  padding: unset;
+}
+
+ul.blog-posts li {
+  display: flex;
+}
+
+ul.blog-posts li span {
+  flex: 0 0 130px;
+}
+
+ul.blog-posts li a:visited {
+  color: var(--visited-color);
+}
+
+form {
+  display: inline-block;
+}
+
+form input.search-input {
+  display: inline-block;
+  margin: 0px;
+  padding: 1px;
+}
+
+form button.search-button {
+  padding: 2px;
+  color: #EEE;
+  background-color: #000;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 0.3s ease; /* Smooth fade on hover */
+}
+
+form button.search-button:hover {
+  opacity: 0.8;
+}
+
+/* editor css section */
+
+/* Layout & Container Styling */
+.row-controls {
+  display: flex;
+  gap: 10px;
+  margin: 1rem;
+  position: relative;
+}
+
+.row-editor, .row-preview {
+  margin-top: 15px;
+}
+
+/* Base Form Control Uniformity */
+button, input[type="file"], textarea {
+  font-family: var(--font-secondary);
+  color: var(--text-color);
+  background-color: var(--code-background-color);
+  border: 1px solid var(--heading-color);
+  border-radius: 3px;
+  padding: 6px 12px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: var(--heading-color);
+  color: var(--background-color);
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Textareas & Inputs */
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 50px;
+  height: auto;
+  overflow: hidden;
+  resize: vertical;
+}
+
+#vim-textarea {
+  min-height: 300px;
+}
+
+/* Dropdowns & Popups styling */
+.dropdown {
+  position: relative;
+}
+
+#asset-dropdown, #upload-container {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  background-color: var(--background-color);
+  border: 1px solid var(--heading-color);
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-top: 5px;
+}
+
+#upload-container input[type="file"],
+#upload-container textarea {
+  width: 100%;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* Visibility hook for your JS file toggle class */
+.visible {
+  display: block !important;
+}
+
+/* --- Dynamic Form Styling Additions --- */
+
+/* 1. Extend Base Form Controls to include all text-based inputs */
+button,
+input[type="file"],
+input[type="text"],
+input[type="url"],
+input[type="datetime-local"],
+textarea {
+  font-family: var(--font-secondary);
+  color: var(--text-color);
+  background-color: var(--code-background-color);
+  border: 1px solid var(--heading-color);
+  border-radius: 3px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  width: 100%; /* Full width for cleaner alignment */
+}
+
+/* Reset button width so it doesn't span 100% like inputs */
+button {
+  width: auto;
+  background-color: var(--heading-color);
+  color: var(--background-color);
+  font-weight: bold;
+}
+
+/* 2. Layout for the dynamic entry rows */
+.entry-row {
+  background-color: transparent;
+  padding: 20px;
+  border: 1px dashed var(--text-color); /* Matches your <hr> style */
+  border-radius: 4px;
+  margin-bottom: 25px;
+}
+
+.field-group {
+  margin-bottom: 15px;
+}
+
+.field-group label {
+  display: block;
+  font-weight: bold;
+  color: var(--heading-color);
+  margin-bottom: 5px;
+}
+
+/* 3. Side-by-side date inputs */
+.date-group {
+  display: flex;
+  gap: 15px;
+}
+
+.date-group .date-input {
+  flex: 1;
+}
+
+/* 4. Action Buttons styling */
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-remove {
+  background-color: transparent;
+  color: var(--heading-color);
+  border: 1px solid var(--heading-color);
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+
+.btn-remove:hover {
+  background-color: var(--heading-color);
+  color: var(--background-color);
+}
+
+/* 5. Read-only inputs UX */
+input[readonly] {
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-style: dashed;
+}
+

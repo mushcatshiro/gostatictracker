@@ -1,0 +1,12 @@
+<!-- list view always show all -->
+{{ define "content" }}
+<div>
+<ul>
+  {{ range .Event }}
+  <li>
+    {{ .Title }} <a href="{{ .URL }}">go to view</a>
+  </li>
+  {{ end }}
+</ul>
+</div>
+{{ end }}

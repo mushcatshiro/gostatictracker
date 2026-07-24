@@ -1,0 +1,19 @@
+SELECT
+  id,
+  start,
+  "end",
+  actualStart,
+  actualEnd,
+  insertTime,
+	"group",
+  defaultMode,
+  repeat,
+  allDay,
+  title,
+  url,
+  description,
+  pid,
+  priority,
+  metadata,
+  status
+FROM records

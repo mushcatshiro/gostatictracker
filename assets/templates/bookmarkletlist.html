@@ -1,0 +1,16 @@
+<!-- bookmarklet list view -->
+{{ define "content" }}
+{{ if .IsAuth }}
+<button href="{{ .SetupScript }}">Bookmark It!</button>
+{{ end }}
+<h2>Bookmarklet List</h2>
+<ul>
+{{ range .Bookmarklets }}
+  <li>
+    <a href="{{ .URL }}">{{ .Title }}</a>
+    <span>{{ .Description }}</span>
+    <span>{{ .InsertTime }}</span>
+  </li>
+{{ end }}
+</ul>
+{{ end }}

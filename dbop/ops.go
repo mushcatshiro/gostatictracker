@@ -8,6 +8,8 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
+// TODO: create reserved group names in a separate table + their records esp
+// urls
 func (db *DB) InitDB(truncate, drop bool) error {
 	// deletes all rows while keeping table structure intact
 	qTruncTables, err := db.getSql("truncate-tables.sql")

@@ -62,7 +62,7 @@ func ParseInput(inp string) (models.Schedule, error) {
 		return s, err
 	}
 	s.Month = moSeg
-	dowSeg, err := validate(segments[4], "month", 0, 7)
+	dowSeg, err := validate(segments[4], "day of week", 0, 7)
 	if err != nil {
 		return s, err
 	}

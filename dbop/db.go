@@ -150,6 +150,11 @@ func AppendWhereClause(q, identifier string, f models.Record) (string, []any) {
 			`"mode" = %s%d`, identifier, len(conditions)+1))
 		args = append(args, f.DefaultMode)
 	}
+	if f.URL != "" {
+		conditions = append(conditions, fmt.Sprintf(
+			`"url" = %s%d`, identifier, len(conditions)+1))
+		args = append(args, f.DefaultMode)
+	}
 	if f.Status > 0 && f.Status < 4 {
 		conditions = append(conditions, fmt.Sprintf(
 			`"status" = %s%d`, identifier, len(conditions)+1))

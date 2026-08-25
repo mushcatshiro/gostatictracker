@@ -1,17 +1,14 @@
 package server
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
 
+	"github.com/mushcatshiro/gostatictracker/assets"
 	"github.com/mushcatshiro/gostatictracker/blog"
 	"github.com/mushcatshiro/gostatictracker/dbop"
-	"github.com/mushcatshiro/gostatictracker/gvfs"
+	"github.com/mushcatshiro/gostatictracker/render"
 	"github.com/spf13/afero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -20,14 +17,14 @@ import (
 type Server struct {
 	config            Config
 	router            *http.ServeMux
-	db                *sql.DB
+	db                *dbop.DB
 	googleOauthConfig *oauth2.Config
 	blogManager       *blog.BlogManager
-	tmpl              *template.Template
+	renderEngine      *render.RenderEngine
 }
 
 func New(config Config) (*Server, error) {
-	connStr, err := dbop.GenerateConnStr(
+	db, err := dbop.NewDB(
 		config.DB.DbType,
 		config.DB.User,
 		config.DB.Password,
@@ -38,11 +35,7 @@ func New(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, err := dbop.ConnectDB(connStr, config.DB.DbType)
-	if err != nil {
-		return nil, err
-	}
-	err = dbop.InitDB(conn, false, false)
+	err = db.InitDB(false, false)
 	if err != nil {
 		return nil, err
 	}
@@ -54,25 +47,24 @@ func New(config Config) (*Server, error) {
 		Endpoint:     google.Endpoint,
 	}
 
-	templates, err := template.ParseFS(assets, "static/templates/*.html")
+	re, err := render.NewRenderEngine(assets.TemplateFS)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse templates: %w", err)
+		return nil, err
 	}
 
 	fs := afero.NewReadOnlyFs(afero.NewOsFs())
-	bsm := gvfs.NewSiteManager(fs)
-	err = bsm.BuildIndex(context.Background(), config.Blog.BlogRoot)
+	bsm, err := blog.NewBlogManager(fs, config.BlogConfig.BlogRoot)
 	if err != nil {
-		return &Server{}, fmt.Errorf("%v", err)
+		return nil, err
 	}
 
 	s := &Server{
 		config:            config,
-		router:            http.NewServeMux(), // instead of global
-		db:                conn,
+		router:            http.NewServeMux(),
+		db:                db,
 		googleOauthConfig: oauthConfig,
-		blogSiteManager:   &bsm,
-		tmpl:              templates,
+		blogManager:       bsm,
+		renderEngine:      re,
 	}
 
 	s.RegisterRoutes()

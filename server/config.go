@@ -6,6 +6,7 @@ type ServerConfig struct {
 	Domain    string `mapstructure:"domain"`
 	Port      string `mapstructure:"port"`
 	Protected bool   `mapstructure:"protected"`
+	SiteName  string `mapstructure:"sitename"`
 }
 
 type DBConfig struct {
@@ -39,7 +40,7 @@ type Config struct {
 	DB                DBConfig          `mapstructure:"db"`
 	Auth              AuthConfig        `mapstructure:"auth"`
 	GoogleOauthConfig GoogleOauthConfig `mapstructure:"googleOauth"`
-	Blog              BlogConfig        `mapstructure:"blog"`
+	BlogConfig        BlogConfig        `mapstructure:"blog"`
 }
 
 func LoadConfig() (Config, error) {

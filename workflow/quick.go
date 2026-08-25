@@ -1,6 +1,5 @@
 package workflow
 
-
 func CreateZhihu() {}
 
 func CreateReddit() {}

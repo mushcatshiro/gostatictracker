@@ -47,7 +47,7 @@ func (s *Server) RegisterRoutes() {
 	s.router.HandleFunc("GET /bookmarklet", s.renderBookmarkletView())
 	s.router.HandleFunc("GET /api/bookmarklet", Chain(s.handleInsertBookmarklet(), apiMiddlewares...))
 
-	s.router.HandleFunc("GET /editor/new", Chain(s.renderEditorView(), securedStack...))
+	s.router.HandleFunc("GET /editor", Chain(s.renderEditorView(), securedStack...))
 	s.router.HandleFunc("GET /editor/{title...}", Chain(s.renderEditorView(), securedStack...))
 
 	s.router.HandleFunc("GET /error", s.handleError())

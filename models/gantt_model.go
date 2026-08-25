@@ -2,7 +2,20 @@ package models
 
 import "time"
 
-type GanttEvent struct {
+func (r *Record) ToGanttRecord() GanttRecord {
+	return GanttRecord{
+		ID: r.ID,
+		Start: r.Start,
+		End: r.End,
+		Group: r.Group,
+		AllDay: r.AllDay,
+		Title: r.Title,
+		URL: r.URL,
+		Description: r.Description,
+	}
+}
+
+type GanttRecord struct {
 	ID          int64      `json:"id"`
 	Start       *time.Time `json:"start"`
 	End         *time.Time `json:"end"`
@@ -13,7 +26,7 @@ type GanttEvent struct {
 	Description string     `json:"description"`
 }
 
-func (ge *GanttEvent) ToEvent() Record {
+func (ge *GanttRecord) ToRecord() Record {
 	return Record {
 		ID:          ge.ID,
 		Start:       ge.Start,

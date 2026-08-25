@@ -3,34 +3,36 @@ package blog
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"runtime"
-	"sync"
 
-	"github.com/mushcatshiro/gostatictracker/models"
 	"github.com/spf13/afero"
 	"golang.org/x/sync/errgroup"
 )
 
 var ErrPageDoesNotExists = errors.New("page does not exists")
 
-type BlogConf struct {
-	AllowedExts []string
-}
-
 type BlogManager struct {
-	Fs           *afero.Afero
-	Cfg          BlogConf
-	BlogEntries  map[string]models.BlogEntry
-	PendingRepos map[string]string
-	Mu           sync.RWMutex
+	Fs       *afero.Afero
+	basePath string
 }
 
-func NewBlogManager(baseFs afero.Fs) BlogManager {
-	p := make(map[string]models.BlogEntry)
-	return BlogManager{
-		Fs:          &afero.Afero{Fs: baseFs},
-		BlogEntries: p,
+func NewBlogManager(fs afero.Fs, path string) (*BlogManager, error) {
+	info, err := fs.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("blog path does not exist: %s", path)
+		}
+		return nil, fmt.Errorf("error accessing blog path: %w", err)
 	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("blog path is not a directory, it is a file: %s", path)
+	}
+	return &BlogManager{
+		Fs:       &afero.Afero{Fs: fs},
+		basePath: path,
+	}, nil
 }
 
 func (bm *BlogManager) BuildIndex(ctx context.Context, root string) error {

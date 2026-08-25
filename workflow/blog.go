@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/mushcatshiro/gostatictracker/blog"
 	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
@@ -13,19 +14,20 @@ import (
 )
 
 func ListBlogPosts(
-	w io.Writer, auth bool, db dbop.DB, re render.RenderEngine,
+	w io.Writer, brm models.BaseRenderMeta, db dbop.DB, bm blog.BlogManager, re render.RenderEngine,
 ) error {
 	f := models.Record{Group: models.GBlogpost}
-	if auth {
+	if brm.IsAuth {
 		f.Status = common.NOTSTARTED
 	} else {
-		f.Status= common.COMPLETED
+		f.Status = common.COMPLETED
 	}
 	bs, err := db.ReadBlogRecords(f)
 	if err != nil {
 		return err
 	}
-	rm := models.RenderMeta{TemplateName: "bloglist.html", Data: bs}
+	bplm := models.BlogPostListMeta{BaseRenderMeta: brm, Records: bs}
+	rm := models.RenderMeta{TemplateName: "bloglist.html", Data: bplm}
 	err = re.Render(w, rm)
 	if err != nil {
 		return err
@@ -34,17 +36,23 @@ func ListBlogPosts(
 }
 
 func DisplayBlogPost(
-	w io.Writer, auth bool, f models.Record, db dbop.DB, re render.RenderEngine,
+	w io.Writer, brm models.BaseRenderMeta, f models.Record, db dbop.DB,
+	bm blog.BlogManager, re render.RenderEngine,
 ) error {
-	f.Group = models.GBlogpost
-	if auth {
+	// f.Group = models.GBlogpost
+	if brm.IsAuth {
 		f.Status = common.NOTSTARTED
 	}
-	b, err := db.ReadRecord(f)
+	b, err := db.ReadBlogRecordByUrl(f)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("no blog found with title: %s or id: %d", f.Title, f.ID)
 		}
+		return err
+	}
+	// content,
+	_, err = bm.GetSpecificBlogByPath(b.Title)
+	if err != nil {
 		return err
 	}
 	rm := models.RenderMeta{TemplateName: "blog.html", Data: b}
@@ -70,10 +78,15 @@ func EditBlogPost(
 func PreviewBlogPost() {}
 
 func CreateBlogPostRecord(
-	w io.Writer, auth bool, r models.Record, db dbop.DB, re render.RenderEngine,
+	w io.Writer, auth bool, r models.Record, content string, db dbop.DB,
+	re render.RenderEngine,
 ) error {
 	// reads from form (web) and persist Record to db
 	// render editor + Record (immutable)
+
+	slug := blog.ToSlug(r.Title)
+	r.URL = slug
+
 	id, err := db.InsertRecord(r)
 	if err != nil {
 		return err

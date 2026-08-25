@@ -7,13 +7,13 @@ import (
 	"github.com/mushcatshiro/gostatictracker/models"
 )
 
-func RenderKanban(moloe map[string][]models.Event, groupName string) (string, error) {
+func RenderKanban(molor map[string][]models.Record, groupName string) (string, error) {
 	var htmlString string
 	var slElmList []elm
 
 	for idx := common.NOTSTARTED; idx <= common.CANCELLED; idx++ {
 		titleName := idx.String()
-		listOfEvent, ok := moloe[titleName]
+		listOfEvent, ok := molor[titleName]
 		if !ok {
 			return "", fmt.Errorf("missing title %s", titleName)
 		}

@@ -1,17 +1,14 @@
 package workflow
 
 import (
-	"database/sql"
-	"errors"
-	"fmt"
 	"io"
 	"time"
 
 	"github.com/mushcatshiro/gostatictracker/common"
 	"github.com/mushcatshiro/gostatictracker/dbop"
 	"github.com/mushcatshiro/gostatictracker/models"
-	"github.com/mushcatshiro/gostatictracker/render"
 	"github.com/mushcatshiro/gostatictracker/reminder"
+	"github.com/mushcatshiro/gostatictracker/render"
 )
 
 func CreateNewReminder(
@@ -74,7 +71,7 @@ func CompleteCurrentTrigger(id int64, db dbop.DB) error {
 		return err
 	}
 	r.Start = sched.Next()
-	return db.UpdateRecord(r)  // TODO: create specific update sql
+	return db.UpdateRecord(r) // TODO: create specific update sql
 }
 
 func TerminateTrigger(id int64, db dbop.DB) error {
@@ -83,5 +80,5 @@ func TerminateTrigger(id int64, db dbop.DB) error {
 		return err
 	}
 	r.Status = common.COMPLETED
-	return db.UpdateRecord(r)  // TODO: create specific update sql
+	return db.UpdateRecord(r) // TODO: create specific update sql
 }

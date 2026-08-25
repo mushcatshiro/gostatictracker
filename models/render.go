@@ -38,16 +38,9 @@ type BookmarkletIndexRenderMeta struct {
 	SetupScript  string
 }
 
-type BlogEntryMeta struct {
+type BlogPostListMeta struct {
 	BaseRenderMeta
-	BlogEntry
-	EditURL   string
-	InnerText template.HTML
-}
-
-type BlogIndexRenderMeta struct {
-	BaseRenderMeta
-	BlogEntryMetas []BlogEntryMeta
+	Records   []BlogRecord
 }
 
 type BlogRenderMeta struct {

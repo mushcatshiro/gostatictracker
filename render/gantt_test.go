@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func mockGetGanttRenderMetadata(mockData []models.GanttEvent, isDayView bool) ganttRenderMetadata {
+func mockGetGanttRenderMetadata(mockData []models.GanttRecord, isDayView bool) models.GanttRenderMetadata {
 	groupStartTime := mockData[0].Start
 	groupEndTime := mockData[len(mockData)-1].End
 	var divisor int
@@ -19,22 +19,22 @@ func mockGetGanttRenderMetadata(mockData []models.GanttEvent, isDayView bool) ga
 	} else {
 		divisor = 7 * 24
 	}
-	return ganttRenderMetadata{
-		isDayView:            isDayView,
-		groupStartTime:       groupStartTime,
-		groupEndTime:         groupEndTime,
-		groupName:            "test",
-		rowTextInRectPadding: 4,
-		rectToTextMargin:     2,
-		textYOffset:          6.3,
-		rowRectMargin:        2,
-		rowRectHeight:        10,
-		headersOffset:        (24 + 2) * 3,
-		baseHeaderRectWidth:  30,
-		headerRectHeight:     24,
-		headerRectMargin:     2,
-		headerTextYOffset:    2,
-		divisor:              divisor,
+	return models.GanttRenderMetadata{
+		IsDayView:            isDayView,
+		GroupStartTime:       groupStartTime,
+		GroupEndTime:         groupEndTime,
+		GroupName:            "test",
+		RowTextInRectPadding: 4,
+		RectToTextMargin:     2,
+		TextYOffset:          6.3,
+		RowRectMargin:        2,
+		RowRectHeight:        10,
+		HeadersOffset:        (24 + 2) * 3,
+		BaseHeaderRectWidth:  30,
+		HeaderRectHeight:     24,
+		HeaderRectMargin:     2,
+		HeaderTextYOffset:    2,
+		Divisor:              divisor,
 	}
 }
 
@@ -61,12 +61,12 @@ func TestGetRowRectWidth(t *testing.T) {
 
 func TestGetGanttRows(t *testing.T) {
 	// hardcoded `ganttRenderMetadata`
-	d0 := mock.GetDayViewMockDataAs(func(e models.Event) models.GanttEvent {
-		return e.ToGanttEvent()
+	d0 := mock.GetDayViewMockDataAs(func(e models.Record) models.GanttRecord {
+		return e.ToGanttRecord()
 	})
 	g0 := mockGetGanttRenderMetadata(d0, true)
 
-	r0 := eventGanttRow{
+	r0 := ganttRow{
 		RectX:       0,
 		RectY:       78,
 		RectWidth:   192,
@@ -79,7 +79,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       84.3,
 		TextVal:     "Mock task 1",
 	}
-	r1 := eventGanttRow{
+	r1 := ganttRow{
 		RectX:       64,
 		RectY:       90,
 		RectWidth:   160,
@@ -92,7 +92,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       96.3,
 		TextVal:     "Mock task 2",
 	}
-	r2 := eventGanttRow{
+	r2 := ganttRow{
 		RectX:       128,
 		RectY:       102,
 		RectWidth:   160,
@@ -105,7 +105,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       108.3,
 		TextVal:     "Mock task 3",
 	}
-	r3 := eventGanttRow{
+	r3 := ganttRow{
 		RectX:       128,
 		RectY:       114,
 		RectWidth:   192,
@@ -118,7 +118,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       120.3,
 		TextVal:     "Mock task 4",
 	}
-	r4 := eventGanttRow{
+	r4 := ganttRow{
 		RectX:       128,
 		RectY:       126,
 		RectWidth:   160,
@@ -131,7 +131,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       132.3,
 		TextVal:     "Mock task 5",
 	}
-	r5 := eventGanttRow{
+	r5 := ganttRow{
 		RectX:       96,
 		RectY:       138,
 		RectWidth:   224,
@@ -144,7 +144,7 @@ func TestGetGanttRows(t *testing.T) {
 		TextY:       144.3,
 		TextVal:     "Mock task 6",
 	}
-	r6 := eventGanttRow{
+	r6 := ganttRow{
 		RectX:       32,
 		RectY:       150,
 		RectWidth:   288,
@@ -171,12 +171,12 @@ func TestGetGanttRows(t *testing.T) {
 		assert.Equal(t, r6, resultGanttEventRow[6])
 	})
 
-	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Event) models.GanttEvent {
-		return e.ToGanttEvent()
+	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Record) models.GanttRecord {
+		return e.ToGanttRecord()
 	})
 	g1 := mockGetGanttRenderMetadata(d1, true)
 
-	r7 := eventGanttRow{
+	r7 := ganttRow{
 		RectX:       0,
 		RectY:       78,
 		RectWidth:   64,
@@ -199,25 +199,25 @@ func TestGetGanttRows(t *testing.T) {
 }
 
 func TestGetGanttHeaders(t *testing.T) {
-	d0 := mock.GetDayViewMockDataAs(func(e models.Event) models.GanttEvent {
-		return e.ToGanttEvent()
+	d0 := mock.GetDayViewMockDataAs(func(e models.Record) models.GanttRecord {
+		return e.ToGanttRecord()
 	})
 	g0 := mockGetGanttRenderMetadata(d0, true)
-	yh0 := eventGanttHeader{
+	yh0 := ganttHeader{
 		RectX:     0,
 		RectWidth: 158,
 		TextX:     79,
 		TextY:     14,
 		TextVal:   "2024",
 	}
-	mh0 := eventGanttHeader{
+	mh0 := ganttHeader{
 		RectX:     0,
 		RectWidth: 158,
 		TextX:     79,
 		TextY:     40,
 		TextVal:   "12",
 	}
-	dh0 := eventGanttHeader{
+	dh0 := ganttHeader{
 		RectX:     0,
 		RectWidth: 30,
 		TextX:     15,
@@ -236,25 +236,25 @@ func TestGetGanttHeaders(t *testing.T) {
 		assert.Equal(t, dh0, dh[0])
 	})
 
-	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Event) models.GanttEvent {
-		return e.ToGanttEvent()
+	d1 := mock.GetDayViewOverflowMockDataAs(func(e models.Record) models.GanttRecord {
+		return e.ToGanttRecord()
 	})
 	g1 := mockGetGanttRenderMetadata(d1, true)
-	yh0 = eventGanttHeader{
+	yh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 158,
 		TextX:     79,
 		TextY:     14,
 		TextVal:   "2025",
 	}
-	mh0 = eventGanttHeader{
+	mh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 158,
 		TextX:     79,
 		TextY:     40,
 		TextVal:   "1",
 	}
-	dh0 = eventGanttHeader{
+	dh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 30,
 		TextX:     15,
@@ -273,25 +273,25 @@ func TestGetGanttHeaders(t *testing.T) {
 		assert.Equal(t, dh0, dh[0])
 	})
 
-	d2 := mock.GetWeekViewMockDataAs(func(e models.Event) models.GanttEvent {
-		return e.ToGanttEvent()
+	d2 := mock.GetWeekViewMockDataAs(func(e models.Record) models.GanttRecord {
+		return e.ToGanttRecord()
 	})
 	g2 := mockGetGanttRenderMetadata(d2, false)
-	yh0 = eventGanttHeader{
+	yh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 94,
 		TextX:     47,
 		TextY:     14,
 		TextVal:   "2024",
 	}
-	mh0 = eventGanttHeader{
+	mh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 94,
 		TextX:     47,
 		TextY:     40,
 		TextVal:   "12",
 	}
-	dh0 = eventGanttHeader{
+	dh0 = ganttHeader{
 		RectX:     0,
 		RectWidth: 30,
 		TextX:     15,

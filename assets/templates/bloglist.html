@@ -1,10 +1,10 @@
 {{ define "content" }}
 <ul>
-  {{ range .BlogEntryMetas }}
+  {{ range .Records }}
   <li>
-    <a href="{{ .FullURL }}">{{ .Title }}</a> {{ .LastModifiedDate }}
+    <a href="/blog/{{ .URL }}">{{ .Title }}</a> {{ .InsertTime }}
     {{ if $.IsAuth }}
-    <a href="{{ .EditURL }}" hx-get="{{ .EditURL }}" hx-target="#content" hx-push-url="true">Edit</a>
+    <a href="/editor/{{ .URL }}">Edit</a>
     {{ end }}
   </li>
   {{ end }}

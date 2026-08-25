@@ -46,3 +46,22 @@ func (db *DB) ReadBlogRecords(f models.Record) ([]models.BlogRecord, error) {
 	}
 	return bs, nil
 }
+
+func (db *DB) ReadBlogRecordByUrl(f models.Record) (models.BlogRecord, error) {
+	var br models.BlogRecord
+	qSelectRecord, err := db.getSql("select-blog-record.sql")
+	if err != nil {
+		return br, err
+	}
+	q, args := AppendWhereClause(
+		qSelectRecord, db.identifier, f,
+	)
+	err = db.QueryRow(q, args...).Scan(
+		&br.ID,
+		&br.Title,
+		&br.URL,
+		&br.InsertTime,
+		&br.Metadata,
+	)
+	return br, nil
+}

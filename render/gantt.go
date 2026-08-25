@@ -19,7 +19,7 @@ import (
 
 const TimeLayout = "01-02-2006" // MM-DD-YYYY
 
-type eventGanttHeader struct {
+type ganttHeader struct {
 	RectX     int
 	RectWidth int
 	TextX     int
@@ -28,7 +28,7 @@ type eventGanttHeader struct {
 	DataDate  string
 }
 
-type eventGanttRow struct {
+type ganttRow struct {
 	RectX       int
 	RectY       int
 	RectWidth   int
@@ -42,17 +42,17 @@ type eventGanttRow struct {
 	TextVal     string
 }
 
-type eventGanttBase struct {
+type ganttBase struct {
 	HeaderRectWidth  int
 	HeaderRectHeight int
 	RowRectHeight    int
 	SvgWidth         int
 	SvgHeight        int
 	Group            string
-	Years            []eventGanttHeader
-	Months           []eventGanttHeader
-	Days             []eventGanttHeader
-	Rows             []eventGanttRow
+	Years            []ganttHeader
+	Months           []ganttHeader
+	Days             []ganttHeader
+	Rows             []ganttRow
 }
 
 func getTextEstimateWidth(text string) int {
@@ -102,10 +102,10 @@ func processOverFlowUnits(maxWidth, rowEndWidth int, g models.GanttRenderMetadat
 	return overflowUnits
 }
 
-func getGanttRows(events []models.GanttEvent, g models.GanttRenderMetadata, debug bool) ([]eventGanttRow, int) {
+func getGanttRows(events []models.GanttRecord, g models.GanttRenderMetadata, debug bool) ([]ganttRow, int) {
 	// TODO
 	// support actual start, actual end rendering including start, stop button
-	rSlice := []eventGanttRow{}
+	rSlice := []ganttRow{}
 
 	var maxWidth, rowEndWidth int
 
@@ -147,7 +147,7 @@ func getGanttRows(events []models.GanttEvent, g models.GanttRenderMetadata, debu
 		} else {
 			description = event.Description
 		}
-		e := eventGanttRow{
+		e := ganttRow{
 			RectX:       rectX,
 			RectY:       rectY,
 			RectWidth:   rowRectWidth,
@@ -167,7 +167,7 @@ func getGanttRows(events []models.GanttEvent, g models.GanttRenderMetadata, debu
 	return rSlice, overFlowUnits
 }
 
-func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGanttHeader, []eventGanttHeader, []eventGanttHeader) {
+func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]ganttHeader, []ganttHeader, []ganttHeader) {
 	startTime := *g.GroupStartTime
 	endTime := *g.GroupEndTime
 
@@ -186,9 +186,9 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 		endTime = isoweek.StartTime(ey, ew, time.UTC)
 	}
 
-	yearGanttHeader := []eventGanttHeader{}
-	monthGanttHeader := []eventGanttHeader{}
-	dayGanttHeader := []eventGanttHeader{}
+	yearGanttHeader := []ganttHeader{}
+	monthGanttHeader := []ganttHeader{}
+	dayGanttHeader := []ganttHeader{}
 
 	var iterYear, iterDay, iterWeek, trackWeek, dIdx, monthRectEndX, yearRectEndX int
 	var cumForMonth, cumForYear int
@@ -198,9 +198,9 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 		iterYear, iterMonth, iterDay = startTime.Date()
 		_, iterWeek = startTime.ISOWeek()
 
-		var d eventGanttHeader
+		var d ganttHeader
 		if g.IsDayView {
-			d = eventGanttHeader{
+			d = ganttHeader{
 				RectX:     dIdx * (g.BaseHeaderRectWidth + g.HeaderRectMargin),
 				RectWidth: g.BaseHeaderRectWidth,
 				TextX:     dIdx*(g.BaseHeaderRectWidth+g.HeaderRectMargin) + int(g.BaseHeaderRectWidth/2),
@@ -218,7 +218,7 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 				// startTime will result in the next year's first day
 				t := isoweek.StartTime(iterYear, iterWeek, time.UTC)
 				_, _, iterDay = t.Date()
-				d = eventGanttHeader{
+				d = ganttHeader{
 					RectX:     dIdx * (g.BaseHeaderRectWidth + g.HeaderRectMargin),
 					RectWidth: g.BaseHeaderRectWidth,
 					TextX:     dIdx*(g.BaseHeaderRectWidth+g.HeaderRectMargin) + int(g.BaseHeaderRectWidth/2),
@@ -236,7 +236,7 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 
 		if startTime.AddDate(0, 0, 1).Month() != startTime.Month() {
 			currentMonthWidth := (cumForMonth * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
-			m := eventGanttHeader{
+			m := ganttHeader{
 				RectX:     monthRectEndX,
 				RectWidth: currentMonthWidth,
 				TextX:     monthRectEndX + int(currentMonthWidth/2),
@@ -249,7 +249,7 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 		}
 		if startTime.AddDate(0, 0, 1).Year() != startTime.Year() {
 			currentYearWidth := (cumForYear * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
-			y := eventGanttHeader{
+			y := ganttHeader{
 				RectX:     yearRectEndX,
 				RectWidth: currentYearWidth,
 				TextX:     yearRectEndX + int(currentYearWidth/2),
@@ -264,7 +264,7 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 	}
 	if cumForMonth > 0 {
 		currentMonthWidth := (cumForMonth * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
-		m := eventGanttHeader{
+		m := ganttHeader{
 			RectX:     monthRectEndX,
 			RectWidth: currentMonthWidth,
 			TextX:     monthRectEndX + int(currentMonthWidth/2),
@@ -275,7 +275,7 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 	}
 	if cumForYear > 0 {
 		currentYearWidth := (cumForYear * (g.BaseHeaderRectWidth + g.HeaderRectMargin)) - g.HeaderRectMargin
-		y := eventGanttHeader{
+		y := ganttHeader{
 			RectX:     yearRectEndX,
 			RectWidth: currentYearWidth,
 			TextX:     yearRectEndX + int(currentYearWidth/2),
@@ -286,9 +286,9 @@ func getGanttHeaders(g models.GanttRenderMetadata, overflowUnits int) ([]eventGa
 	return yearGanttHeader, monthGanttHeader, dayGanttHeader
 }
 
-func getGanttEventBase(events []models.GanttEvent, g models.GanttRenderMetadata, debug bool) eventGanttBase {
+func getGanttEventBase(events []models.GanttRecord, g models.GanttRenderMetadata, debug bool) ganttBase {
 	// allow headerRectWidth, headerRectHeight, rowRectHeight to have default values
-	e := eventGanttBase{
+	e := ganttBase{
 		HeaderRectWidth:  g.BaseHeaderRectWidth,
 		HeaderRectHeight: g.HeaderRectHeight,
 		RowRectHeight:    g.RowRectHeight,
@@ -308,7 +308,7 @@ func getGanttEventBase(events []models.GanttEvent, g models.GanttRenderMetadata,
 	return e
 }
 
-func RenderGanttHTML(events []models.GanttEvent, file *os.File, g models.GanttRenderMetadata, debug bool) error {
+func RenderGanttHTML(events []models.GanttRecord, file *os.File, g models.GanttRenderMetadata, debug bool) error {
 	var t *template.Template
 	var err error
 
@@ -322,7 +322,7 @@ func RenderGanttHTML(events []models.GanttEvent, file *os.File, g models.GanttRe
 	return err
 }
 
-func buildGanttElmTree(events []models.GanttEvent, g models.GanttRenderMetadata) elm {
+func buildGanttElmTree(events []models.GanttRecord, g models.GanttRenderMetadata) elm {
 	// should only take in GanttEventBase
 	geb := getGanttEventBase(events, g, false)
 	gss := buildGanttStyleString(geb.HeaderRectWidth, geb.HeaderRectHeight, geb.RowRectHeight)
@@ -388,7 +388,7 @@ func RenderGantt(conn *sql.DB, renderTargetPath string, debug bool) {
 	}
 }
 
-func RenderGanttV2(events []models.GanttEvent, g models.GanttRenderMetadata, groupName string) (string, error) {
+func RenderGanttV2(events []models.GanttRecord, g models.GanttRenderMetadata, groupName string) (string, error) {
 	if len(events) == 0 {
 		return "", fmt.Errorf("no rows found for group %s", groupName)
 	}
